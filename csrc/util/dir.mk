@@ -23,7 +23,8 @@ INSTALLED_PROGRAMS = $(PROGRAMS)
 
 default all: $(SCRIPTSRC) $(PROGRAMS)
 
-ccndstart ccndstop ccndstatus ccndlogging ccnget ccnput: $(SCRIPTSRC) shebang
+# ccnd-autoconfig requires bash (uses #!/usr/bin/env bash)
+ccndstart ccndstop ccndstatus ccndlogging ccnget ccnput ccnd-publish-local-info: $(SCRIPTSRC) shebang
 	./shebang $(SH) $(@:=.sh) > $@
 	chmod +x $@
 
