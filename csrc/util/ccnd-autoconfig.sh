@@ -43,7 +43,7 @@ function run-autoconfig {
     ccndc -t 10 add "/local/ndn" udp  224.0.23.170 59695
 
     # Get info from local hub, if available
-    info=`ccncat -s 2 /local/ndn/udp`
+    info=`ccnpeek -w 1 -vs 2 -c /local/ndn/udp 2>/dev/null` # wait at most 1 second
     if [ "x$info" = "x" ]; then
        echo "Local hub is not availble, trying to use DNS to get local configuration"
        # Try to use DNS search list to get default route information
