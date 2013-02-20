@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Source file: util/ccnd-autoconfig.sh
 #
 # Script that tries to (automatically) discover of a local ccnd gateway
