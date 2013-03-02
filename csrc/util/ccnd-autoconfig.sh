@@ -20,6 +20,8 @@
 D=`dirname "$0"`
 export PATH="$D:$PATH"
 
+DIG=${DIR:-"/usr/bin/dig"}
+
 function do-need-to-reconfig {
     face=`ccndstatus | grep "ccnx:/autoconf-route face" | awk '{print $3}'`
     if [ "x$face" == "x" ]; then
@@ -42,18 +44,29 @@ function run-autoconfig {
     # Set temporary multicast face
     ccndc -t 10 add "/local/ndn" udp  224.0.23.170 59695
 
+    ###########################################################
+    # Part one. Auto-discovery of ccnd in the same subnetwork #
+    ###########################################################
+
     # Get info from local hub, if available
     info=`ccnpeek -w 1 -vs 2 -c /local/ndn/udp 2>/dev/null` # wait at most 1 second
     if [ "x$info" = "x" ]; then
-       echo "Local hub is not availble, trying to use DNS to get local configuration"
-       # Try to use DNS search list to get default route information
-       ccndc srv
+       echo "Part one failed: local hub is not availble, trying to use DNS to get local configuration"
+       # # Try to use DNS search list to get default route information
+       # ccndc srv
 
-       if [ $MCAST_EXISTED -eq 1 ]; then
-          # destroying multicast face
-          ccndstatus | grep 224.0.23.170:59695 | awk '{print $2}' | xargs ccndc destroy face
+       ##############################################
+       # Part two. Fallback configuration using DNS #
+       ##############################################
+
+       # Don't use "ccndc srv", because we need to remember the created automatic route
+       info=`$DIG +search +short +cmd +tries=2 +ndots=10 _ccnx._udp srv | head -1 | awk '{print $4,$3}'`
+       if [ "x$info" = "x" ]; then
+           echo "Part two failed: DNS query for _ccnx._udp srv returned nothing"
+
+           # @todo Fallback on part three
+           return 1
        fi
-       return 1
     fi
 
     echo Setting default route to a local hub: "$info"
