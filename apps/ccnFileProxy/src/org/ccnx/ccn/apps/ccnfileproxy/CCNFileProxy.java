@@ -166,11 +166,11 @@ public class CCNFileProxy implements CCNFilterListener {
 	}
 	
 	/**
-	 * Actually write the file; should probably run in a separate thread.
+	 * Actually write the file.
 	 * @param fileNamePostfix
 	 * @throws IOException 
 	 */
-	protected boolean writeFile(Interest outstandingInterest) throws IOException {
+	protected boolean writeFile(final Interest outstandingInterest) throws IOException {
 		
 		File fileToWrite = ccnNameToFilePath(outstandingInterest.name());
 		Log.info("CCNFileProxy: extracted request for file: " + fileToWrite.getAbsolutePath() + " exists? ", fileToWrite.exists());
@@ -179,14 +179,15 @@ public class CCNFileProxy implements CCNFilterListener {
 			return false;
 		}
 		
-		FileInputStream fis = null;
+		FileInputStream tempFis = null;
 		try {
-			fis = new FileInputStream(fileToWrite);
+			tempFis = new FileInputStream(fileToWrite);
 		} catch (FileNotFoundException fnf) {
 			Log.warning("Unexpected: file we expected to exist doesn't exist: {0}!", fileToWrite.getAbsolutePath());
 			return false;
 		}
-		
+		final FileInputStream fis = tempFis;
+        
 		// Set the version of the CCN content to be the last modification time of the file.
 		CCNTime modificationTime = new CCNTime(fileToWrite.lastModified());
 		ContentName versionedName = 
@@ -195,20 +196,29 @@ public class CCNFileProxy implements CCNFilterListener {
 
 		// CCNFileOutputStream will use the version on a name you hand it (or if the name
 		// is unversioned, it will version it).
-		CCNFileOutputStream ccnout = new CCNFileOutputStream(versionedName, _handle);
+		final CCNFileOutputStream ccnout = new CCNFileOutputStream(versionedName, _handle);
 		
 		// We have an interest already, register it so we can write immediately.
 		ccnout.addOutstandingInterest(outstandingInterest);
 		
-		byte [] buffer = new byte[BUF_SIZE];
-		
-		int read = fis.read(buffer);
-		while (read >= 0) {
-			ccnout.write(buffer, 0, read);
-			read = fis.read(buffer);
-		} 
-		fis.close();
-		ccnout.close(); // will flush
+        // Run in a separate thread to not block incoming interests.
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    byte [] buffer = new byte[BUF_SIZE];		
+                    int read = fis.read(buffer);
+                    while (read >= 0) {
+                        ccnout.write(buffer, 0, read);
+                        read = fis.read(buffer);
+                    } 
+                    fis.close();
+                    ccnout.close(); // will flush
+                } catch (IOException e) {
+                    Log.warning("IOException writing file {0}: {1}: {2}", 
+                            outstandingInterest.name(), e.getClass().getName(), e.getMessage());
+                }
+            }
+        }).start();
 		
 		return true;
 	}
