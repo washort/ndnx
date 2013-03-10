@@ -19,6 +19,9 @@ SCRIPTSRC = shebang \
 
 PROGRAMS = ccndstart ccndstop ccndstatus ccntestloop ccndlogging ccnget ccnput \
 	ccnd-autoconfig ccnd-publish-local-info ccnrpolicyedit
+
+PYTHON_SCRIPTS = ndn-name-dnsifier.py
+
 INSTALLED_PROGRAMS = $(PROGRAMS)
 
 default all: $(SCRIPTSRC) $(PROGRAMS)
