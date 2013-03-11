@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+function usage {
+    cat <<EOF
+Usage:
+    $0 [-h]
+
+      Path of the extracted key can be controlled through HOME or CCNX_DIR environmental variable.
+      If CCNX_DIR is set, the script will extract public key from $CCNX_DIR/.ccnx_keystore.
+      Otherwise, the script will attempt to extract public key from $HOME/.ccnx/.ccnx_keystore
+
+      Keystore password can be defined through CCNX_KEYSTORE_PASSWORD environment variable,
+      if not explicitly defined, the default CCNx keystore password will be used
+
+      Examples:
+
+         $0 > pubkey.pem
+         sudo HOME=/opt/local/etc/ccnx $0 > pubkey.pem
+         CCNX_DIR=key-dir $0 > pubkey.pem
+
+EOF
+  exit 1
+}
+
+function error {
+    echo -e "\E[91mERROR: $1\E[0m"
+}
+
+while getopts "h" flag; do
+    case "$flag" in
+        *)
+            usage
+            ;;
+    esac
+done
+
+if [ "x$CCNX_DIR" != "x" ]; then
+    KEYSTORE="$CCNX_DIR/.ccnx_keystore"
+else
+    KEYSTORE="$HOME/.ccnx/.ccnx_keystore"
+fi
+
+if [ ! -f "$KEYSTORE" ]; then
+    error "[$KEYSTORE] file not found or insufficient permissions to read the file"
+    error "Please check permissions or configure CCNX_DIR or HOME variables"
+    exit 1
+fi
+
+export KEY_PASSWORD=${CCNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
+
+openssl pkcs12 -in "$KEYSTORE" -password env:KEY_PASSWORD -clcerts -nokeys -nomacver | openssl x509
