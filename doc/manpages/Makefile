@@ -52,6 +52,7 @@ PAGE_NAMES =        		\
 	ccnprintlink		\
 	ccnrepoimport		\
 	ccntestloop 		\
+        ccnd-autoconfig \
 
 
 PROJECT_NUMBER = 0.7.1
