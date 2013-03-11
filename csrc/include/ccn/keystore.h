@@ -9,6 +9,7 @@
  * Part of the CCNx C Library.
  *
  * Copyright (C) 2009 Palo Alto Research Center, Inc.
+ *           (c) 2013 University of California, Los Angeles
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1
@@ -26,6 +27,7 @@
 #define CCN_KEYSTORE_DEFINED
 
 #include <stddef.h>
+#include <ccn/charbuf.h>
 
 /*
  * opaque type for key storage
@@ -52,4 +54,29 @@ ssize_t ccn_keystore_public_key_digest_length(struct ccn_keystore *p);
 const unsigned char *ccn_keystore_public_key_digest(struct ccn_keystore *p);
 const struct ccn_certificate *ccn_keystore_certificate(struct ccn_keystore *p);
 int ccn_keystore_file_init(char *filename, char *password, char *subject, int keylength, int validity_days);
+
+/**
+ * @brief Get name of the public key (from .pubcert file)
+ * @param keystore pointer to initialized keystore object
+ * @returns const pointer to fully formatted public key name in ccnb format or NULL if .pubcert is missing or invalid
+ */
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_name (struct ccn_keystore *keystore);
+
+/**
+ * @brief Get raw content object of the public key (from .pubcert file)
+ * @param keystore pointer to initialized keystore object
+ * @returns const pointer to raw public key content object or NULL if .pubcert is missing or invalid
+ */
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_content_object (struct ccn_keystore *keystore);
+
+/**
+ * @brief Get raw content object of the meta information of the public key (from .pubcert file)
+ * @param keystore pointer to initialized keystore object
+ * @returns const pointer to raw public key meta info content object or NULL if .pubcert is missing or invalid
+ */
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_meta_content_object (struct ccn_keystore *keystore);
+
 #endif

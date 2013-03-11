@@ -2591,6 +2591,63 @@ ccn_get_public_key(struct ccn *h,
     return(res);
 }
 
+int
+ccn_get_public_key_and_name(struct ccn *h,
+                            const struct ccn_signing_params *params,
+                            struct ccn_charbuf *digest_result,
+                            struct ccn_charbuf *pubkey_data,
+                            struct ccn_charbuf *pubkey_name)
+{
+    struct hashtb_enumerator ee;
+    struct hashtb_enumerator *e = &ee;
+    struct ccn_keystore *keystore = NULL;
+    struct ccn_signing_params sp = CCN_SIGNING_PARAMS_INIT;
+    int res;
+    res = ccn_chk_signing_params(h, params, &sp, NULL, NULL, NULL, NULL);
+    if (res < 0)
+        return(res);
+    hashtb_start(h->keystores, e);
+    if (hashtb_seek(e, sp.pubid, sizeof(sp.pubid), 0) == HT_OLD_ENTRY) {
+        struct ccn_keystore **pk = e->data;
+        keystore = *pk;
+        if (digest_result != NULL) {
+            digest_result->length = 0;
+            ccn_charbuf_append(digest_result,
+                               ccn_keystore_public_key_digest(keystore),
+                               ccn_keystore_public_key_digest_length(keystore));
+        }
+        if (pubkey_data != NULL) {
+            struct ccn_buf_decoder decoder;
+            struct ccn_buf_decoder *d;
+            const unsigned char *p;
+            size_t size;
+            pubkey_data->length = 0;
+            ccn_append_pubkey_blob(pubkey_data, ccn_keystore_public_key(keystore));
+            d = ccn_buf_decoder_start(&decoder, pubkey_data->buf, pubkey_data->length);
+            res = ccn_buf_match_blob(d, &p, &size);
+            if (res >= 0) {
+                memmove(pubkey_data->buf, p, size);
+                pubkey_data->length = size;
+                res = 0;
+            }
+        }
+        if (pubkey_name != NULL) {
+            const struct ccn_charbuf *name = ccn_keystore_get_pubkey_name (keystore);
+
+            if (name != NULL) {
+                ccn_charbuf_append_charbuf (pubkey_name, name);
+            }
+        }
+    }
+    else {
+        res = NOTE_ERR(h, -1);
+        hashtb_delete(e);
+    }
+    hashtb_end(e);
+    return(res);
+}
+
+
 static int
 ccn_load_or_create_key(struct ccn *h,
                        const char *keystore,
