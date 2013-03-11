@@ -20,7 +20,8 @@ SCRIPTSRC = shebang \
 PROGRAMS = ccndstart ccndstop ccndstatus ccntestloop ccndlogging ccnget ccnput \
 	 ccnd-publish-local-info ccnrpolicyedit
 
-OTHER_SCRIPTS = ndn-name-dnsifier.py ccnd-autoconfig ndn-install-pubcert
+OTHER_SCRIPTS = ndn-name-dnsifier.py ccnd-autoconfig ndn-install-pubcert \
+	ndn-extract-public-key ndn-sign-key
 
 INSTALLED_PROGRAMS = $(PROGRAMS) $(OTHER_SCRIPTS)
 
