@@ -168,14 +168,15 @@ ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
                     ccn_charbuf_destroy(&p->pubkey_meta_content_object);
                 }
                 else {
-                    struct ccn_indexbuf comps;
+                    struct ccn_indexbuf *comps;
                     struct ccn_parsed_ContentObject pco;
                     int valid_name = 0;
 
+                    comps = ccn_indexbuf_create ();
                     p->pubkey_name = ccn_charbuf_create();
                     ccn_name_init(p->pubkey_name);
 
-                    res = ccn_parse_ContentObject(p->pubkey_content_object->buf, p->pubkey_content_object->length, &pco, &comps);
+                    res = ccn_parse_ContentObject(p->pubkey_content_object->buf, p->pubkey_content_object->length, &pco, comps);
 
                     if (res >= 0) {
                         if (pco.type == CCN_CONTENT_KEY) {
@@ -198,12 +199,12 @@ ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
                                 ccn_pubkey_free(pubkey);
 
                                 if (res >= 0) {
-                                    for (unsigned int i = 0; i < comps.n - 1; i++) {
+                                    for (unsigned int i = 0; i < comps->n - 1; i++) {
                                         const unsigned char *compPtr;
                                         const char KEY_ID_PREFIX [] = { 0xc1, '.', 'M', '.', 'K', 0x00 };
                                         size_t size;
 
-                                        res = ccn_name_comp_get (p->pubkey_content_object->buf, &comps, i, &compPtr, &size);
+                                        res = ccn_name_comp_get (p->pubkey_content_object->buf, comps, i, &compPtr, &size);
                                         if (res < 0)
                                             break;
 
@@ -237,6 +238,8 @@ ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
                     if (res < 0) {
                         ccn_charbuf_destroy (&p->pubkey_name);
                     }
+
+                    ccn_indexbuf_destroy (&comps);
                 }
             }
 
@@ -546,4 +549,22 @@ Bail:
         pkcs12 = NULL;
     }
     return (ans);
+}
+
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_name (struct ccn_keystore *keystore)
+{
+  return keystore->pubkey_name;
+}
+
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_content_object (struct ccn_keystore *keystore)
+{
+  return keystore->pubkey_content_object;
+}
+
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_meta_content_object (struct ccn_keystore *keystore)
+{
+  return keystore->pubkey_meta_content_object;
 }
