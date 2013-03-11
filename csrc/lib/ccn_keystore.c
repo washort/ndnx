@@ -5,6 +5,7 @@
  * Part of the CCNx C Library.
  *
  * Copyright (C) 2009 Palo Alto Research Center, Inc.
+ *           (c) 2013 University of California, Los Angeles
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1
@@ -32,6 +33,10 @@
 #include <openssl/rand.h>
 
 #include <ccn/keystore.h>
+#include <ccn/charbuf.h>
+#include <ccn/ccn.h>
+#include <ccn/signing.h>
+#include <ccn/uri.h>
 
 struct ccn_keystore {
     int initialized;
@@ -41,6 +46,9 @@ struct ccn_keystore {
     char *digest_algorithm;
     ssize_t pubkey_digest_length;
     unsigned char pubkey_digest[SHA256_DIGEST_LENGTH];
+    struct ccn_charbuf *pubkey_content_object;
+    struct ccn_charbuf *pubkey_meta_content_object;
+    struct ccn_charbuf *pubkey_name;
 };
 
 struct ccn_keystore *
@@ -62,9 +70,196 @@ ccn_keystore_destroy(struct ccn_keystore **p)
             X509_free((*p)->certificate);
         if ((*p)->digest_algorithm != NULL)
             free((*p)->digest_algorithm);
+        if ((*p)->pubkey_content_object != NULL)
+            ccn_charbuf_destroy (&(*p)->pubkey_content_object);
+        if ((*p)->pubkey_meta_content_object != NULL)
+            ccn_charbuf_destroy (&(*p)->pubkey_meta_content_object);
+        if ((*p)->pubkey_name != NULL)
+            ccn_charbuf_destroy (&(*p)->pubkey_name);
         free(*p);
         *p = NULL;
     }
+}
+
+/**
+ * @brief Get .pubcert file from keystore filename
+ *
+ * .pubcert file is constructed by appending .pubcert suffix to the keystore filename
+ *
+ * Note that the caller is reponsible to clean up returned value
+ */
+static char *
+ccn_keystore_pubcert_from_keystore_file (const char *keystoreFilename)
+{
+    char *pubcert;
+#define PUBCERT_SUFFIX ".pubcert"
+#define PUBCERT_SUFFIX_LEN 8
+
+    int len;
+
+    if(keystoreFilename == NULL)
+        return NULL;
+
+    len = strlen(keystoreFilename);
+    if (len == 0)
+        return NULL;
+
+    pubcert = (char*)malloc(len + PUBCERT_SUFFIX_LEN + 1);
+    memcpy(pubcert, keystoreFilename, len);
+    memcpy(pubcert + len, PUBCERT_SUFFIX, PUBCERT_SUFFIX_LEN + 1);
+
+    return pubcert;
+}
+
+/* returns
+ *  res >= 0    res characters remaining to be processed from data
+ *  decoder state will be set appropriately
+ */
+static size_t
+process_ccnb_data_once(struct ccn_skeleton_decoder *d, unsigned char *data, size_t n, struct ccn_charbuf *output)
+{
+    size_t s;
+
+    s = ccn_skeleton_decode(d, data, n);
+    if (!CCN_FINAL_DSTATE(d->state))
+        return (0);
+    ccn_charbuf_append (output, data, s);
+    return s;
+}
+
+
+static int
+ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
+{
+    int fd;
+    char *pubcert_file;
+    struct ccn_skeleton_decoder skel_decoder = {0};
+    struct ccn_skeleton_decoder *d = &skel_decoder;
+
+    const int MAX_SIZE_PUBCERT = 8192;
+    unsigned char buf[MAX_SIZE_PUBCERT];
+    ssize_t len;
+    int state;
+    int res;
+
+    pubcert_file = ccn_keystore_pubcert_from_keystore_file(keystoreFilename);
+
+    if(pubcert_file != NULL) {
+        fd = open(pubcert_file, O_RDONLY);
+        if (-1 != fd) {
+            // do magic
+
+            state = 0;
+            len = read(fd, buf, MAX_SIZE_PUBCERT);
+            if(len > 0) {
+                p->pubkey_content_object = ccn_charbuf_create();
+                p->pubkey_meta_content_object = ccn_charbuf_create();
+
+                res = process_ccnb_data_once (d, buf, len, p->pubkey_content_object);
+                if (res > 0) {
+                    res = process_ccnb_data_once(d, buf+res, len-res, p->pubkey_meta_content_object);
+                }
+
+                if (res <= 0 || d->state < 0) {
+                    fprintf (stderr, "ERROR: [%s] file exists, but does not contain valid certification of the public key or key meta info\n",
+                             pubcert_file);
+
+                    ccn_charbuf_destroy(&p->pubkey_content_object);
+                    ccn_charbuf_destroy(&p->pubkey_meta_content_object);
+                }
+                else {
+                    struct ccn_indexbuf *comps;
+                    struct ccn_parsed_ContentObject pco;
+                    int valid_name = 0;
+
+                    comps = ccn_indexbuf_create ();
+                    p->pubkey_name = ccn_charbuf_create();
+                    ccn_name_init(p->pubkey_name);
+
+                    res = ccn_parse_ContentObject(p->pubkey_content_object->buf, p->pubkey_content_object->length, &pco, comps);
+
+                    if (res >= 0) {
+                        if (pco.type == CCN_CONTENT_KEY) {
+                            const unsigned char *content;
+                            size_t len;
+
+                            res = ccn_content_get_value (p->pubkey_content_object->buf, pco.offset[CCN_PCO_E], &pco, &content, &len);
+                            if (res >= 0) {
+                                struct ccn_pkey *pubkey = 0;
+
+                                pubkey = ccn_d2i_pubkey (content, len);
+                                if (EVP_PKEY_cmp (p->public_key, (const EVP_PKEY *)pubkey) == 1) {
+                                    res = 1;
+                                }
+                                else {
+                                    fprintf (stderr, "ERROR: [%s] contains a valid key object, but it does not match used private/public key\n",
+                                             pubcert_file);
+                                    res = -1;
+                                }
+                                ccn_pubkey_free(pubkey);
+
+                                if (res >= 0) {
+                                    for (unsigned int i = 0; i < comps->n - 1; i++) {
+                                        const unsigned char *compPtr;
+                                        const char KEY_ID_PREFIX [] = { 0xc1, '.', 'M', '.', 'K', 0x00 };
+                                        size_t size;
+
+                                        res = ccn_name_comp_get (p->pubkey_content_object->buf, comps, i, &compPtr, &size);
+                                        if (res < 0)
+                                            break;
+
+                                        res = ccn_name_append (p->pubkey_name, compPtr, size);
+                                        if (res < 0)
+                                            break;
+
+                                        // check for pubkey ID component: %C1.M.K%00F%8D%E9%C3%EE4%7F%C1Mjqro%C6L%8DGV%91%90%03%24%ECt%95n%F3%9E%A6i%F1%C9
+                                        if(size > sizeof(KEY_ID_PREFIX) &&
+                                           memcmp(compPtr, KEY_ID_PREFIX, sizeof(KEY_ID_PREFIX)) == 0) {
+                                            valid_name = 1;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            res = -1;
+                            fprintf (stderr, "ERROR: [%s] contains a valid ContentObject, but it is not a KEY object\n",
+                                     pubcert_file);
+                        }
+                    }
+
+                    if (res >= 0 && !valid_name) {
+                        fprintf (stderr, "ERROR: [%s] contains a valid ContentObject, but its name does not conform to NDN key naming\n",
+                                 pubcert_file);
+                        fprintf (stderr, "       Allow to proceed, but public key name's correctness is not guaranteed\n");
+                    }
+
+                    if (res < 0) {
+                        ccn_charbuf_destroy (&p->pubkey_name);
+                    }
+
+                    ccn_indexbuf_destroy (&comps);
+                }
+            }
+
+            free(pubcert_file);
+            close(fd);
+
+            /* if (!CCN_FINAL_DSTATE(d->state)) { */
+            /*     fprintf(stderr, "%s state %d\n", */
+            /*             (d->state < 0) ? "error" : "incomplete", d->state); */
+            /*     return 1; */
+            /* } */
+            return 0;
+        }
+        else {
+            perror(pubcert_file);
+            return 1;
+        }
+        free(pubcert_file);
+    }
+    return 1;
 }
 
 int
@@ -112,11 +307,16 @@ ccn_keystore_init(struct ccn_keystore *p, char *filename, char *password)
     if (digest_obj) {
         digest_size = 1 + OBJ_obj2txt(NULL, 0, digest_obj, 1);
         p->digest_algorithm = calloc(1, digest_size);
-        OBJ_obj2txt(p->digest_algorithm, digest_size, digest_obj, 1);        
+        OBJ_obj2txt(p->digest_algorithm, digest_size, digest_obj, 1);
     } else {
         p->digest_algorithm = NULL;
     }
-    
+
+    /**
+     * Last step: load (if it exists) public key certificate and meta information
+     */
+    ccn_keystore_init_pubcert(p, filename);
+
     p->initialized = 1;
     return (0);
 }
@@ -349,4 +549,22 @@ Bail:
         pkcs12 = NULL;
     }
     return (ans);
+}
+
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_name (struct ccn_keystore *keystore)
+{
+  return keystore->pubkey_name;
+}
+
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_content_object (struct ccn_keystore *keystore)
+{
+  return keystore->pubkey_content_object;
+}
+
+const struct ccn_charbuf *
+ccn_keystore_get_pubkey_meta_content_object (struct ccn_keystore *keystore)
+{
+  return keystore->pubkey_meta_content_object;
 }

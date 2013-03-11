@@ -47,6 +47,7 @@ cmd/ccntimestamps
 cmd/dataresponsetest
 cmd/ccnc
 cmd/ccnsnew
+cmd/ndn-pubkey-name
 lib/Makefile
 lib/basicparsetest
 lib/ccn_verifysig
