@@ -15,14 +15,14 @@
 SCRIPTSRC = shebang \
 	ccndstart.sh ccndstop.sh ccndstatus.sh ccndlogging.sh ccnget.sh ccnput.sh \
 	ccntestloop-trampoline \
-	ccnd-autoconfig.sh ccnd-publish-local-info.sh ccnrpolicyedit.sh
+	ccnd-publish-local-info.sh ccnrpolicyedit.sh
 
 PROGRAMS = ccndstart ccndstop ccndstatus ccntestloop ccndlogging ccnget ccnput \
-	ccnd-autoconfig ccnd-publish-local-info ccnrpolicyedit
+	 ccnd-publish-local-info ccnrpolicyedit
 
-PYTHON_SCRIPTS = ndn-name-dnsifier.py
+OTHER_SCRIPTS = ndn-name-dnsifier.py ccnd-autoconfig ndn-install-pubcert
 
-INSTALLED_PROGRAMS = $(PROGRAMS)
+INSTALLED_PROGRAMS = $(PROGRAMS) $(OTHER_SCRIPTS)
 
 default all: $(SCRIPTSRC) $(PROGRAMS)
 
