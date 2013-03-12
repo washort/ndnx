@@ -1,5 +1,5 @@
 # doc/manpages/Makefile
-# 
+#
 # Part of the CCNx distribution.
 #
 # Copyright (C) 2010, 2013 Palo Alto Research Center, Inc.
@@ -71,9 +71,9 @@ INDEXED_HTML = $(DERIVED_HTML) $(SRC_HTML)
 default:
 	: To build the documentation: $(MAKE) documentation
 
-documentation: html
+documentation dist-docs: html
 
-all dist-docs: html manpages
+all: manpages
 
 manpages: $(DERIVED_MAN)
 
@@ -87,6 +87,15 @@ clean:
 
 clean-documentation:
 	rm -f $(NONSOURCE)
+
+install: manpages
+	@test -d $(DINST_MAN)/man1 || (echo $(DINST_MAN)/man1 does not exist.  Please mkdir -p $(DINST_MAN)/man1 if this is what you intended. && exit 2)
+	for i in $(DERIVED_MAN); do \
+           $(INSTALL) -g 0 -o 0 -m 0644 $$i $(DINST_MAN)/man1; \
+	done
+
+uninstall:
+	for i in $(DERIVED_MAN); do test -z "$$i" || $(RM) $(DINST_MAN)/man1/$$i.gz; done
 
 .gitignore: Makefile
 	@for i in $(NONSOURCE); do echo $$i; done > $@
@@ -105,7 +114,7 @@ index.txt: $(INDEXED_HTML) .genindex.sh
 	rm -f index.html
 	sh .genindex.sh $(INDEXED_HTML) > index.txt
 
-$(DERIVED_HTML): $(@:.html=.txt) 
+$(DERIVED_HTML): $(@:.html=.txt)
 	asciidoc -a revnumber="$(PROJECT_NUMBER)" -d manpage $(@:.html=.txt)
 
 $(DERIVED_PDF): $(@:.pdf=.txt)
