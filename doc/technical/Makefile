@@ -52,10 +52,11 @@ INDEXED_HTML = $(DERIVED_HTML) $(SRC_HTML)
 SCHEMA = ../../schema
 XSDSRC = $(SCHEMA)/ccnx.xsd $(SCHEMA)/repository.xsd $(SCHEMA)/security.xsd
 DTDSRC = $(SCHEMA)/ccnx.dtd $(SCHEMA)/repository.dtd $(SCHEMA)/security.dtd
-default:
+all default:
 	: To build the documentation: $(MAKE) documentation
 
-all documentation dist-docs html: $(DERIVED_HTML) $(DERIVED_INDEX)
+documentation dist-docs html: $(DERIVED_HTML) $(DERIVED_INDEX)
+
 
 clean-documentation: _always
 	rm -f $(DERIVED_HTML) $(DERIVED_INDEX) $(DEBRIS)
