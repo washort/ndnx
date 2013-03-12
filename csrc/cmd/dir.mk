@@ -153,30 +153,6 @@ ccnhexdumpdata: ccnhexdumpdata.o
 ccninitkeystore: ccninitkeystore.o
 	$(CC) $(CFLAGS) -o $@ ccninitkeystore.o $(LDLIBS) $(OPENSSL_LIBS) -lcrypto
 
-ccn_digest.o:
-	$(CC) $(CFLAGS) $(OPENSSL_CFLAGS) -c ccn_digest.c
-
-ccn_keystore.o:
-	$(CC) $(CFLAGS) $(OPENSSL_CFLAGS) -c ccn_keystore.c
-
-ccn_signing.o:
-	$(CC) $(CFLAGS) $(OPENSSL_CFLAGS) -c ccn_signing.c
-
-ccn_merkle_path_asn1.o:
-	$(CC) $(CFLAGS) $(OPENSSL_CFLAGS) -c ccn_merkle_path_asn1.c
-
-ccn_verifysig.o:
-	$(CC) $(CFLAGS) $(OPENSSL_CFLAGS) -c ccn_verifysig.c
-
-ccn_verifysig: ccn_verifysig.o
-	$(CC) $(CFLAGS) -o $@ ccn_verifysig.o $(LDLIBS) $(OPENSSL_LIBS) -lcrypto
-
-signbenchtest.o:
-	$(CC) $(CFLAGS) $(OPENSSL_CFLAGS) -c signbenchtest.c
-
-signbenchtest: signbenchtest.o
-	$(CC) $(CFLAGS) -o $@ signbenchtest.o $(LDLIBS) $(OPENSSL_LIBS) -lcrypto 
-
 ccndumppcap: ccndumppcap.o
 	$(CC) $(CFLAGS) -o $@ ccndumppcap.o $(LDLIBS) $(OPENSSL_LIBS) -lcrypto -lpcap
 
