@@ -57,6 +57,8 @@ default all: dtag_check lib $(PROGRAMS)
 
 all: ccn_verifysig
 
+$(PROGRAMS) $(DEBRIS): libccn.a
+
 install: install_headers
 install_headers:
 	@test -d $(DINST_INC) || (echo $(DINST_INC) does not exist.  Please mkdir -p $(DINST_INC) if this is what you intended. && exit 2)
