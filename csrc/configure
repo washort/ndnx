@@ -58,6 +58,7 @@ ProvideDefault INSTALL_BASE = /usr/local
 ProvideDefault INSTALL_INCLUDE = '$(INSTALL_BASE)/include'
 ProvideDefault INSTALL_LIB = '$(INSTALL_BASE)/lib'
 ProvideDefault INSTALL_BIN = '$(INSTALL_BASE)/bin'
+ProvideDefault INSTALL_MAN = '$(INSTALL_BASE)/man'
 
 ProvideDefault PCAP_PROGRAMS = ccndumppcap
 ProvideDefault RESOLV_LIBS = -lresolv
@@ -82,6 +83,7 @@ cat <<'EOF' >> conf.mk
 DINST_BIN = $(DESTDIR)$(INSTALL_BIN)
 DINST_INC = $(DESTDIR)$(INSTALL_INCLUDE)
 DINST_LIB = $(DESTDIR)$(INSTALL_LIB)
+DINST_MAN = $(DESTDIR)$(INSTALL_MAN)
 EOF
 
 echo ============= conf.mk =============>&2
