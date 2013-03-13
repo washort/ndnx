@@ -48,7 +48,7 @@ TryScript "local" "$@"
 
 # CFLAGS take some extra care.
 # Save these as COPT in conf.mk
-echo COPT = ${CFLAGS:="-g"} >> conf.mk
+echo COPT = ${CFLAGS:="-std=c99 -g"} >> conf.mk
 
 # Finally, provide default values and pick up overrides from the environment
 ProvideDefault CWARNFLAGS
