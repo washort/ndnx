@@ -192,7 +192,7 @@ resetDiffData(struct sync_diff_data *sdd) {
     sdd->twX = SyncTreeWorkerFree(sdd->twX);
     sdd->twY = SyncTreeWorkerFree(sdd->twY);
     if (ev != NULL && ev->evdata == sdd) {
-        sdd->ev = NULL;
+        //sdd->ev = NULL;
         ccn_schedule_cancel(root->base->sd->sched, ev);
     }
 }
@@ -210,7 +210,7 @@ resetUpdateData(struct sync_update_data *ud) {
     ud->tw = SyncTreeWorkerFree(ud->tw);
     struct ccn_scheduled_event *ev = ud->ev;
     if (ev != NULL && ev->evdata == ud) {
-        ud->ev = NULL;
+        //ud->ev = NULL;
         ccn_schedule_cancel(root->base->sd->sched, ev);
     }
 }
@@ -312,7 +312,7 @@ kickCompare(struct sync_diff_data *sdd, int micros) {
     struct ccn_scheduled_event *ev = sdd->ev;
     if (ev != NULL && ev->evdata == sdd) {
         // this one may wait too long, kick it now!
-        sdd->ev = NULL;
+        //sdd->ev = NULL;
         ccn_schedule_cancel(base->sd->sched, ev);
     }
     sdd->ev = ccn_schedule_event(base->sd->sched,
@@ -331,7 +331,7 @@ kickUpdate(struct sync_update_data *ud, int micros) {
     struct ccn_scheduled_event *ev = ud->ev;
     if (ev != NULL && ev->evdata == ud) {
         // this one may wait too long, kick it now!
-        ud->ev = NULL;
+        //ud->ev = NULL;
         ccn_schedule_cancel(base->sd->sched, ev);
     }
     ud->ev = ccn_schedule_event(base->sd->sched,
@@ -932,6 +932,7 @@ compareAction(struct ccn_schedule *sched,
                 // give the client a last shot at the data
                 sdd->add_closure->add(sdd->add_closure, NULL);
             delay = -1;
+			sdd->ev = NULL;
             break;
         }
         case sync_diff_state_error: {
@@ -1614,7 +1615,7 @@ sync_diff_stop(struct sync_diff_data *sdd) {
     if (ev != NULL && ev->evdata == sdd) {
         // no more callbacks
         ccn_schedule_cancel(root->base->sd->sched, ev);
-        sdd->ev = NULL;
+        //sdd->ev = NULL;
     }
     resetDiffData(sdd);
     return 1; 
