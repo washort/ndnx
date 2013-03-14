@@ -20,24 +20,30 @@ function usage {
   fi
   cat <<EOF
 Usage:
-    $0 [-h] [-f] <pubcert-file>
+    $0 [-h] [-f] [-v] <pubcert-file>
 
         The script performs the following operations:
           - reads <pubcert-file>
           - checks if pubcert file corresponds to .ccnx_keystore
           - installs pubcert file to .ccnx_keystore.pubcert (will not overwrite unless -f is specified)
+
+		If -v is specified, then the output will be more verbose.
 EOF
 
   exit 1
 }
 
 FORCE=0
+VERBOSE=0
 
 while getopts "hf" flag; do
     case "$flag" in
         f)
             FORCE=1
             ;;
+		v)
+			VERBOSE=1
+			;;
         h | ?)
             usage
             ;;
@@ -60,9 +66,13 @@ export CCNX_DIR=${CCNX_DIR:-$HOME/.ccnx}
 
 pubcert_base64=`${CCN_CCNBTOXML} -b "$PUBCERT_FILE" 2>/dev/null | grep ContentObject | head -1 | ${SED} 's|^.*<Content ccnbencoding="base64Binary">\(.*\)</Content>.*$|\1|g'`
 
-keystore_base64=`$OPENSSL pkcs12 -in "$CCNX_DIR/.ccnx_keystore" -password env:KEY_PASSWORD -clcerts -nokeys -nomacver | $OPENSSL x509 -pubkey -noout | $OPENSSL rsa -pubin -pubout -inform PEM -outform DER 2> /dev/null | $BASE64`
+keystore_base64=`$OPENSSL pkcs12 -in "$CCNX_DIR/.ccnx_keystore" -password env:KEY_PASSWORD -clcerts -nokeys -nomacver | $OPENSSL x509 -pubkey -noout | $OPENSSL rsa -pubin -pubout -inform PEM -outform DER 2> /dev/null | $BASE64 | tr -d '\n'`
 
 if [ "x$pubcert_base64" != "x$keystore_base64" ]; then
+	if [ $VERBOSE -eq 1 ]; then
+		echo "PUBCERT: $pubcert_base64"
+		echo "KEYSTORE: $keystore_base64"
+	fi
     echo -e "\E[91mERROR: Invalid pubcert file [$PUBCERT_FILE] or it does not match key in [$CCNX_DIR/.ccnx_keystore]\E[0m"
     exit 1
 fi
