@@ -113,10 +113,10 @@ fi
 
 PUBCERT="$(dirname $PEM_FILE)/$(basename $PEM_FILE .pem).pubcert"
 
-pubkey_base64=`$OPENSSL x509 -in "$PEM_FILE" -pubkey -noout | $OPENSSL rsa -pubin -pubout -inform PEM -outform DER 2> /dev/null | $BASE64 | tr -d '\n'`
+pubkey_base64=`$OPENSSL x509 -in "$PEM_FILE" -pubkey -noout | $OPENSSL rsa -pubin -pubout -inform PEM -outform DER 2> /dev/null | $BASE64 | tr -d '\n\r\f'`
 pubkey_binhash=`echo $pubkey_base64 | $BASE64 --decode | $OPENSSL dgst -sha256 -binary | $HEXDUMP -v -e '1/1 "^%02x"' | sed -e 's/\^/\%/g'`
 
-info_base64=`echo "<Meta><Name>$IDENTITY</Name><Affiliation>$AFFILIATION</Affiliation><Valid_to>$VALID_TO</Valid_to></Meta>" | $BASE64 | tr -d '\n'`
+info_base64=`echo "<Meta><Name>$IDENTITY</Name><Affiliation>$AFFILIATION</Affiliation><Valid_to>$VALID_TO</Valid_to></Meta>" | $BASE64 | tr -d '\n\r\f'`
 
 export KEY_PASSWORD=${CCNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
 
