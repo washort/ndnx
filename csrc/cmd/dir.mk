@@ -28,6 +28,7 @@ INSTALLED_PROGRAMS = \
     ccninitkeystore \
     ccnlibtest \
     ccnsyncwatch ccnsyncslice \
+    ndn-pubkey-name \
     $(EXPAT_PROGRAMS) $(PCAP_PROGRAMS)
 
 PROGRAMS = $(INSTALLED_PROGRAMS) \
@@ -51,7 +52,8 @@ CSRC =  ccn_ccnbtoxml.c ccn_splitccnb.c ccn_xmltoccnb.c ccnbasicconfig.c \
        ccninitkeystore.c ccnls.c ccnnamelist.c ccnpoke.c ccnrm.c ccnsendchunks.c \
        ccnseqwriter.c \
        ccnsnew.c \
-       ccnsyncwatch.c ccnsyncslice.c ccn_fetch_test.c ccnlibtest.c ccnslurp.c dataresponsetest.c 
+       ccnsyncwatch.c ccnsyncslice.c ccn_fetch_test.c ccnlibtest.c ccnslurp.c dataresponsetest.c \
+       ndn-pubkey-name.c
 
 default all: $(PROGRAMS)
 # Don't try to build broken programs right now.
@@ -189,6 +191,9 @@ ccnsyncwatch: ccnsyncwatch.o
 
 ccnsyncslice: ccnsyncslice.o
 	$(CC) $(CFLAGS) -o $@ ccnsyncslice.o $(SYNCLIBS) $(LDLIBS) $(OPENSSL_LIBS) -lcrypto
+
+ndn-pubkey-name: ndn-pubkey-name.o
+	$(CC) $(CFLAGS) -o $@ ndn-pubkey-name.o $(LDLIBS) $(OPENSSL_LIBS) -lcrypto
 
 clean:
 	rm -f *.o libccn.a libccn.1.$(SHEXT) $(PROGRAMS) depend

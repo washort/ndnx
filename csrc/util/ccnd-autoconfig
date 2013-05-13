@@ -52,8 +52,6 @@ function run-autoconfig {
     info=`ccnpeek -w 1 -vs 2 -c /local/ndn/udp 2>/dev/null` # wait at most 1 second
     if [ "x$info" = "x" ]; then
        echo "Part one failed: local hub is not availble, trying to use DNS to get local configuration"
-       # # Try to use DNS search list to get default route information
-       # ccndc srv
 
        ##############################################
        # Part two. Fallback configuration using DNS #
@@ -62,11 +60,30 @@ function run-autoconfig {
        # Don't use "ccndc srv", because we need to remember the created automatic route
        info=`$DIG +search +short +cmd +tries=2 +ndots=10 _ccnx._udp srv | head -1 | awk '{print $4,$3}'`
        if [ "x$info" = "x" ]; then
-           echo "Part two failed: DNS query for _ccnx._udp srv returned nothing"
+           echo "Part two failed: DNS query for _ccnx._udp srv returned nothing, trying part three"
 
-           # @todo Fallback on part three
-           return 1
+           PUBKEY_NAME=`ndn-pubkey-name`
+
+           if [ -z "$PUBKEY_NAME" ]; then
+               echo "ERROR: Part three failed: public key name is not configured"
+               echo "Refer to ``man ccnd-autconfig''  for more information about how to set up public key name"
+               return 1
+           fi
+
+           DNS_QUERY="_ccnx._udp.`ndn-name-dnsifier.py -r 1 -l 2 "$PUBKEY_NAME"`._homehub._autoconf.named-data.net"
+
+           info=`$DIG +search +short +cmd +tries=2 +ndots=10 "$DNS_QUERY" srv | head -1 | awk '{print $4,$3}'`
+           if [ "x$info" = "x" ]; then
+               echo "ERROR: Part three failed: DNS query for "$DNS_QUERY" srv returned nothing"
+               return 1
+           else
+               echo "OK: part three succeeded: $info"
+           fi
+       else
+           echo "OK: part two succeeded: $info"
        fi
+    else
+        echo "OK: part one succeded: $info"
     fi
 
     echo Setting default route to a local hub: "$info"

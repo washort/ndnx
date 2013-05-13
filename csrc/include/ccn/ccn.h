@@ -845,6 +845,27 @@ int ccn_get_public_key(struct ccn *h,
                        struct ccn_charbuf *digest_result,
                        struct ccn_charbuf *result);
 
+/**
+ * @brief Get public key and public key name associated with signing params
+ *
+ * Same as ccn_get_public_key, but also attempts to load public key name, if possible.
+ * If public key name is unknown, pubkey_name will not be modified
+ *
+ * Place the public key associated with the params into result
+ * buffer, and its digest into digest_result.
+ *
+ * This is for one of our signing keys, not just any key.
+ * Result buffers may be NULL if the corresponding result is not wanted.
+ *
+ * @returns 0 for success, negative for error
+ */
+int
+ccn_get_public_key_and_name(struct ccn *h,
+                            const struct ccn_signing_params *params,
+                            struct ccn_charbuf *digest_result,
+                            struct ccn_charbuf *pubkey_data,
+                            struct ccn_charbuf *pubkey_name);
+
 int ccn_chk_signing_params(struct ccn *h,
                            const struct ccn_signing_params *params,
                            struct ccn_signing_params *result,
