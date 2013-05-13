@@ -161,7 +161,7 @@ ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
                 }
 
                 if (res <= 0 || d->state < 0) {
-                    fprintf (stderr, "ERROR: [%s] file exists, but does not contain valid certification of the public key or key meta info\n",
+                    fprintf (stderr, "WARNING: [%s] file exists, but does not contain valid certification of the public key or key meta info\n",
                              pubcert_file);
 
                     ccn_charbuf_destroy(&p->pubkey_content_object);
@@ -192,7 +192,7 @@ ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
                                     res = 1;
                                 }
                                 else {
-                                    fprintf (stderr, "ERROR: [%s] contains a valid key object, but it does not match used private/public key\n",
+                                    fprintf (stderr, "WARNING: [%s] contains a valid key object, but it does not match used private/public key\n",
                                              pubcert_file);
                                     res = -1;
                                 }
@@ -224,13 +224,13 @@ ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
                         }
                         else {
                             res = -1;
-                            fprintf (stderr, "ERROR: [%s] contains a valid ContentObject, but it is not a KEY object\n",
+                            fprintf (stderr, "WARNING: [%s] contains a valid ContentObject, but it is not a KEY object\n",
                                      pubcert_file);
                         }
                     }
 
                     if (res >= 0 && !valid_name) {
-                        fprintf (stderr, "ERROR: [%s] contains a valid ContentObject, but its name does not conform to NDN key naming\n",
+                        fprintf (stderr, "WARNING: [%s] contains a valid ContentObject, but its name does not conform to NDN key naming\n",
                                  pubcert_file);
                         fprintf (stderr, "       Allow to proceed, but public key name's correctness is not guaranteed\n");
                     }
@@ -253,8 +253,8 @@ ccn_keystore_init_pubcert(struct ccn_keystore *p, const char *keystoreFilename)
             /* } */
             return 0;
         }
-        else {
-            perror(pubcert_file);
+        else { 
+            //perror(pubcert_file);
             return 1;
         }
         free(pubcert_file);
