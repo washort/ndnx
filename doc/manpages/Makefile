@@ -55,7 +55,7 @@ PAGE_NAMES =        		\
         ccnd-autoconfig \
 
 
-PROJECT_NUMBER = 0.7.2rc1
+PROJECT_NUMBER = 0.7.2
 SRC_TXT     = $(PAGE_NAMES:=.1.txt)
 DERIVED_HTML= $(PAGE_NAMES:=.1.html)
 DERIVED_PDF = $(PAGE_NAMES:=.1.pdf)
