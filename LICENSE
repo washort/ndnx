@@ -1,8 +1,11 @@
-CCNx Licenses.
+NDNx Licenses.
 
+Portions Copyright (C) 2013 Regents of the University of California.
+
+Based on the CCNx C Library by PARC.
 Copyright (c) 2009, 2010 Palo Alto Research Center, Inc.
 
-This CCNx software is free software: some portions are distributed under the
+This NDNx software is free software: some portions are distributed under the
 GNU General Public License version 2 (GPL) and other portions are
 distributed under the GNU Lesser General Public License version 2.1
 (LGPL), both subject to exemptions given below.  Each file contains a
