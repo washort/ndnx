@@ -1,4 +1,4 @@
-Required software for building CCNx on Solaris:
+Required software for building NDNx on Solaris:
 
 	GNU make (usually /usr/bin/gmake or /usr/sfw/bin/gmake)
 	GNU install (usually /usr/bin/ginstall or /usr/sfw/bin/ginstall)

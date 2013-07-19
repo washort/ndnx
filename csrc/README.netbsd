@@ -1,4 +1,4 @@
-Building CCNx on NetBSD
+Building NDNx on NetBSD
 
 Install the needed packages (as root):
 Set your PKG_PATH appropriately for your installation - it will
@@ -28,7 +28,7 @@ To build all documentation as well ("make documentation"), install these:
 	pkg_add -v asciidoc
 	pkg_add -v doxygen
 
-Now you can return to a normal user account and build ccnx using the
+Now you can return to a normal user account and build ndnx using the
 generic instructions.
 
 You may find that you need to set JAVA_HOME, for instance to
@@ -36,6 +36,6 @@ You may find that you need to set JAVA_HOME, for instance to
 
 On some versions of java, it may be necessary to set the java system property
 java.net.preferIPv4Stack=true; the symptom is that java apps cannot connect
-to ccnd.  This no longer seems to be a problem with the version
+to ndnd.  This no longer seems to be a problem with the version
 openjdk7-1.7.0.147.20110811nb2 in pkgsrc.
-See http://redmine.ccnx.org/issues/100648 if you think you are seeing this.
+See http://redmine.ndnx.org/issues/100648 if you think you are seeing this.

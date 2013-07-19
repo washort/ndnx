@@ -2,7 +2,7 @@
 <!DOCTYPE xs:schema PUBLIC "-//W3C//DTD XMLSCHEMA 200102//EN" "XMLSchema.dtd">
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-       <xs:include schemaLocation="ccnx.xsd"/> <!-- using Name, Component, Base64BinaryType -->
+       <xs:include schemaLocation="ndnx.xsd"/> <!-- using Name, Component, Base64BinaryType -->
 
        <xs:annotation>
                <xs:documentation xml:lang="en">

@@ -1,7 +1,10 @@
 # util/dir.mk
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2013 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -13,27 +16,27 @@
 #
 
 SCRIPTSRC = shebang \
-	ccndstart.sh ccndstop.sh ccndstatus.sh ccndlogging.sh ccnget.sh ccnput.sh \
-	ccntestloop-trampoline \
-	ccnd-publish-local-info.sh ccnrpolicyedit.sh
+	ndndstart.sh ndndstop.sh ndndstatus.sh ndndlogging.sh ndnget.sh ndnput.sh \
+	ndntestloop-trampoline \
+	ndnd-publish-local-info.sh ndnrpolicyedit.sh
 
-PROGRAMS = ccndstart ccndstop ccndstatus ccntestloop ccndlogging ccnget ccnput \
-	 ccnd-publish-local-info ccnrpolicyedit
+PROGRAMS = ndndstart ndndstop ndndstatus ndntestloop ndndlogging ndnget ndnput \
+	 ndnd-publish-local-info ndnrpolicyedit
 
-OTHER_SCRIPTS = ndn-name-dnsifier.py ccnd-autoconfig ndn-install-pubcert \
+OTHER_SCRIPTS = ndn-name-dnsifier.py ndnd-autoconfig ndn-install-pubcert \
 	ndn-extract-public-key ndn-sign-key
 
 INSTALLED_PROGRAMS = $(PROGRAMS) $(OTHER_SCRIPTS)
 
 default all: $(SCRIPTSRC) $(PROGRAMS)
 
-# ccnd-autoconfig requires bash (uses #!/usr/bin/env bash)
-ccndstart ccndstop ccndstatus ccndlogging ccnget ccnput ccnd-publish-local-info: $(SCRIPTSRC) shebang
+# ndnd-autoconfig requires bash (uses #!/usr/bin/env bash)
+ndndstart ndndstop ndndstatus ndndlogging ndnget ndnput ndnd-publish-local-info: $(SCRIPTSRC) shebang
 	./shebang $(SH) $(@:=.sh) > $@
 	chmod +x $@
 
-ccntestloop: ccntestloop-trampoline shebang
-	./shebang $(SH) ccntestloop-trampoline > $@
+ndntestloop: ndntestloop-trampoline shebang
+	./shebang $(SH) ndntestloop-trampoline > $@
 	chmod +x $@
 
 clean:

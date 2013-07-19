@@ -6,12 +6,12 @@
 
 # In Shell 0
 
-cd CCN/ccnx
+cd NDN/ndnx
 make
 
 # In Shell 1
 
-cd CCN/ccnx/csrc/sync_exp
+cd NDN/ndnx/csrc/sync_exp
 export PATH=.:../sync:../../bin:$PATH
 . ./setup
 Setup
@@ -20,12 +20,12 @@ StartTest
 
 # In Shell 2
 
-cd CCN/ccnx/csrc/sync_exp
+cd NDN/ndnx/csrc/sync_exp
 export PATH=.:../sync:../../bin:$PATH
-export CCNS_DEBUG=INFO
+export NDNS_DEBUG=INFO
 . settings
 . functions
-WithCCND 0 gdb ./sync_trax
+WithNDND 0 gdb ./sync_trax
 
 run -topo /parc/sync -prefix /root/beer -secs 600 >gdb.txt
 

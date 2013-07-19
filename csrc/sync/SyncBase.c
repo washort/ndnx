@@ -1,9 +1,12 @@
 /**
  * @file sync/SyncBase.c
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  */
 /*
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011-2012 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -26,7 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ccn/uri.h>
+#include <ndn/uri.h>
 
 // Error support
 
@@ -92,7 +95,7 @@ getEnvLimited(char *key, int lo, int hi, int def) {
  */
 static int
 sync_start_default(struct sync_plumbing *sd,
-                   struct ccn_charbuf *state_buf) {
+                   struct ndn_charbuf *state_buf) {
     
     if (sd == NULL) return -1;
     struct SyncBaseStruct *base = (struct SyncBaseStruct *) sd->sync_data;
@@ -103,130 +106,130 @@ sync_start_default(struct sync_plumbing *sd,
     // called when there is a Repo that is ready for Sync activity
     struct SyncPrivate *priv = base->priv;
     
-    int enable = getEnvLimited("CCNS_ENABLE", 0, 1, 1);
+    int enable = getEnvLimited("NDNS_ENABLE", 0, 1, 1);
     
     if (enable <= 0) return -1;
     
-    char *debugStr = getenv("CCNS_DEBUG");
+    char *debugStr = getenv("NDNS_DEBUG");
     int debug = 0;
     // TBD: use a centralized definition that is NOT in Repo
     if (debugStr == NULL)
-        debug = CCNL_NONE;
+        debug = NDNL_NONE;
     else if (strcasecmp(debugStr, "NONE") == 0)
-        debug = CCNL_NONE;
+        debug = NDNL_NONE;
     else if (strcasecmp(debugStr, "SEVERE") == 0)
-        debug = CCNL_SEVERE;
+        debug = NDNL_SEVERE;
     else if (strcasecmp(debugStr, "ERROR") == 0)
-        debug = CCNL_ERROR;
+        debug = NDNL_ERROR;
     else if (strcasecmp(debugStr, "WARNING") == 0)
-        debug = CCNL_WARNING;
+        debug = NDNL_WARNING;
     else if (strcasecmp(debugStr, "INFO") == 0)
-        debug = CCNL_INFO;
+        debug = NDNL_INFO;
     else if (strcasecmp(debugStr, "FINE") == 0)
-        debug = CCNL_FINE;
+        debug = NDNL_FINE;
     else if (strcasecmp(debugStr, "FINER") == 0)
-        debug = CCNL_FINER;
+        debug = NDNL_FINER;
     else if (strcasecmp(debugStr, "FINEST") == 0)
-        debug = CCNL_FINEST;
+        debug = NDNL_FINEST;
     base->debug = debug;
     
     // enable/disable storing of sync tree nodes
     // default is to store
-    priv->useRepoStore = getEnvLimited("CCNS_REPO_STORE", 0, 1, 1);
+    priv->useRepoStore = getEnvLimited("NDNS_REPO_STORE", 0, 1, 1);
     
     // enable/disable stable recovery point
     // default is to disable recovery, but to calculate stable points
-    priv->stableEnabled = getEnvLimited("CCNS_STABLE_ENABLED", 0, 1, 1);
+    priv->stableEnabled = getEnvLimited("NDNS_STABLE_ENABLED", 0, 1, 1);
     
     // get faux error percent
-    priv->fauxErrorTrigger = getEnvLimited("CCNS_FAUX_ERROR",
+    priv->fauxErrorTrigger = getEnvLimited("NDNS_FAUX_ERROR",
                                            0, 99, 0);
     
     // get private flags for SyncActions
-    priv->syncActionsPrivate = getEnvLimited("CCNS_ACTIONS_PRIVATE",
+    priv->syncActionsPrivate = getEnvLimited("NDNS_ACTIONS_PRIVATE",
                                              0, 255, 3);
     
     // heartbeat rate
-    priv->heartbeatMicros = getEnvLimited("CCNS_HEARTBEAT_MICROS",
+    priv->heartbeatMicros = getEnvLimited("NDNS_HEARTBEAT_MICROS",
                                           10000, 10*1000000, 200000);
     
     // root advise lifetime
-    priv->rootAdviseFresh = getEnvLimited("CCNS_ROOT_ADVISE_FRESH",
+    priv->rootAdviseFresh = getEnvLimited("NDNS_ROOT_ADVISE_FRESH",
                                           1, 30, 4);
     
     // root advise lifetime
-    priv->rootAdviseLifetime = getEnvLimited("CCNS_ROOT_ADVISE_LIFETIME",
+    priv->rootAdviseLifetime = getEnvLimited("NDNS_ROOT_ADVISE_LIFETIME",
                                              1, 30, 20);
     
     // root advise lifetime
-    priv->fetchLifetime = getEnvLimited("CCNS_NODE_FETCH_LIFETIME",
+    priv->fetchLifetime = getEnvLimited("NDNS_NODE_FETCH_LIFETIME",
                                         1, 30, 4);
     
     // max node or content fetches busy per root
-    priv->maxFetchBusy = getEnvLimited("CCNS_MAX_FETCH_BUSY",
+    priv->maxFetchBusy = getEnvLimited("NDNS_MAX_FETCH_BUSY",
                                        1, 100, 6);
     
     // max number of compares busy
-    priv->maxComparesBusy = getEnvLimited("CCNS_MAX_COMPARES_BUSY",
+    priv->maxComparesBusy = getEnvLimited("NDNS_MAX_COMPARES_BUSY",
                                           1, 100, 4);
     
     // # of bytes permitted for RootAdvise delta mode
-    priv->deltasLimit = getEnvLimited("CCNS_DELTAS_LIMIT",
+    priv->deltasLimit = getEnvLimited("NDNS_DELTAS_LIMIT",
                                       0, 8000, 0);
     
     // scope for generated interests
-    priv->syncScope = getEnvLimited("CCNS_SYNC_SCOPE",
+    priv->syncScope = getEnvLimited("NDNS_SYNC_SCOPE",
                                     0, 2, 2);
     
     
-    if (base->debug >= CCNL_INFO) {
+    if (base->debug >= NDNL_INFO) {
         char temp[1024];
         int pos = 0;
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        "CCNS_ENABLE=%d",
+                        "NDNS_ENABLE=%d",
                         enable);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_DEBUG=%s",
+                        ",NDNS_DEBUG=%s",
                         debugStr);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_REPO_STORE=%d",
+                        ",NDNS_REPO_STORE=%d",
                         priv->useRepoStore);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_STABLE_ENABLED=%d",
+                        ",NDNS_STABLE_ENABLED=%d",
                         priv->stableEnabled);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_FAUX_ERROR=%d",
+                        ",NDNS_FAUX_ERROR=%d",
                         priv->fauxErrorTrigger);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_ACTIONS_PRIVATE=%d",
+                        ",NDNS_ACTIONS_PRIVATE=%d",
                         priv->syncActionsPrivate);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_HEARTBEAT_MICROS=%d",
+                        ",NDNS_HEARTBEAT_MICROS=%d",
                         priv->heartbeatMicros);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_ROOT_ADVISE_FRESH=%d",
+                        ",NDNS_ROOT_ADVISE_FRESH=%d",
                         priv->rootAdviseFresh);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_ROOT_ADVISE_LIFETIME=%d",
+                        ",NDNS_ROOT_ADVISE_LIFETIME=%d",
                         priv->rootAdviseLifetime);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_NODE_FETCH_LIFETIME=%d",
+                        ",NDNS_NODE_FETCH_LIFETIME=%d",
                         priv->fetchLifetime);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_MAX_FETCH_BUSY=%d",
+                        ",NDNS_MAX_FETCH_BUSY=%d",
                         priv->maxFetchBusy);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_MAX_COMPARES_BUSY=%d",
+                        ",NDNS_MAX_COMPARES_BUSY=%d",
                         priv->maxComparesBusy);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_DELTAS_LIMIT=%d",
+                        ",NDNS_DELTAS_LIMIT=%d",
                         priv->deltasLimit);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
-                        ",CCNS_SYNC_SCOPE=%d",
+                        ",NDNS_SYNC_SCOPE=%d",
                         priv->syncScope);
         pos += snprintf(temp+pos, sizeof(temp)-pos,
                         ",defer_verification=%d",
-                        ccn_defer_verification(sd->ccn, -1));
+                        ndn_defer_verification(sd->ndn, -1));
         sync_msg(base, "%s, %s", here, temp);
     }
     
@@ -254,7 +257,7 @@ SyncFreeBase(struct SyncBaseStruct **bp) {
             if (priv->prefixAccum != NULL)
                 SyncFreeNameAccumAndNames(priv->prefixAccum);
             if (priv->comps != NULL)
-                ccn_indexbuf_destroy(&priv->comps);
+                ndn_indexbuf_destroy(&priv->comps);
             // free the name accums in the filter list
             if (priv->filters != NULL) {
                 for (nal = priv->filters; nal != NULL; nal = nalNext) {
@@ -266,8 +269,8 @@ SyncFreeBase(struct SyncBaseStruct **bp) {
             if (priv->saveMethods != NULL) {
                 free(priv->saveMethods);
             }
-            ccn_charbuf_destroy(&priv->sliceCmdPrefix);
-            ccn_charbuf_destroy(&priv->localHostPrefix);
+            ndn_charbuf_destroy(&priv->sliceCmdPrefix);
+            ndn_charbuf_destroy(&priv->localHostPrefix);
             free(priv);
             free(base);
         }
@@ -276,7 +279,7 @@ SyncFreeBase(struct SyncBaseStruct **bp) {
 
 static int
 sync_notify_default(struct sync_plumbing *sd,
-                    struct ccn_charbuf *name,
+                    struct ndn_charbuf *name,
                     int enum_index,
                     uint64_t seq_num) {
     struct SyncBaseStruct *base = (struct SyncBaseStruct *) sd->sync_data;
@@ -288,13 +291,13 @@ sync_notify_default(struct sync_plumbing *sd,
 
 extern void
 sync_stop_default(struct sync_plumbing *sd,
-                  struct ccn_charbuf *state_buf) {
+                  struct ndn_charbuf *state_buf) {
     char *here = "Sync.sync_stop";
     if (sd == NULL) return;
     struct SyncBaseStruct *base = (struct SyncBaseStruct *) sd->sync_data;
     if (base == NULL || base->sd != sd) return;
     int debug = base->debug;
-    if (debug >= CCNL_INFO)
+    if (debug >= NDNL_INFO)
         sync_msg(base, "%s", here);
     sd->sync_data = NULL;
     base->sd = NULL;
@@ -318,12 +321,12 @@ SyncNewBase(struct sync_plumbing *sd) {
     base->priv = priv;
     priv->topoAccum = SyncAllocNameAccum(4);
     priv->prefixAccum = SyncAllocNameAccum(4);
-    priv->sliceCmdPrefix = ccn_charbuf_create();
-    priv->localHostPrefix = ccn_charbuf_create();
-    priv->comps = ccn_indexbuf_create();
+    priv->sliceCmdPrefix = ndn_charbuf_create();
+    priv->localHostPrefix = ndn_charbuf_create();
+    priv->comps = ndn_indexbuf_create();
     priv->lastCacheClean = now;
-    ccn_name_from_uri(priv->localHostPrefix, "/%C1.M.S.localhost");
-    ccn_name_from_uri(priv->sliceCmdPrefix, "/%C1.M.S.localhost/%C1.S.cs");
+    ndn_name_from_uri(priv->localHostPrefix, "/%C1.M.S.localhost");
+    ndn_name_from_uri(priv->sliceCmdPrefix, "/%C1.M.S.localhost/%C1.S.cs");
     return base;
 }
 

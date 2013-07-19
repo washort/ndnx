@@ -1,7 +1,7 @@
 /**
  * @file sync/SyncActions.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1
@@ -15,10 +15,10 @@
  * Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef CCN_SyncActions
-#define CCN_SyncActions
+#ifndef NDN_SyncActions
+#define NDN_SyncActions
 
-#include <ccn/charbuf.h>
+#include <ndn/charbuf.h>
 #include "SyncBase.h"
 #include "SyncRoot.h"
 #include "SyncUtil.h"
@@ -50,8 +50,8 @@ struct SyncActionData {
     struct SyncHashCacheEntry *ce;
     struct SyncCompareData *comp;
     void *client_handle;
-    struct ccn_charbuf *prefix;
-    struct ccn_charbuf *hash;
+    struct ndn_charbuf *prefix;
+    struct ndn_charbuf *hash;
     int64_t startTime;
     enum SyncRegisterActionKind kind;
     enum SyncActionState state;

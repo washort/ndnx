@@ -1,7 +1,10 @@
 # tests/settings
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009, 2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -11,5 +14,5 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
 #
-: ${CCN_LOCAL_PORT_BASE:=63000}
+: ${NDN_LOCAL_PORT_BASE:=63000}
 LONG_LINES=100000

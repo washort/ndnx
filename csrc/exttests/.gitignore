@@ -2,13 +2,13 @@ Makefile
 *-post.html
 *-pre.html
 *-status-*.html
-*.ccnb
+*.ndnb
 *.err
 *.out
-*face*.ccnb
+*face*.ndnb
 *post.html
 *pre.html
-*reg*.ccnb
+*reg*.ndnb
 *status*.html
 FAILING
 SKIPPED
@@ -16,11 +16,11 @@ STATUS
 STATUS/
 after.txt
 before.txt
-ccnr.?.log
+ndnr.?.log
 depend
 deps
 ephemeral*
-heartbeat.ccnb
+heartbeat.ndnb
 lastblocks.txt
 log
 logs
@@ -34,4 +34,4 @@ testfile
 testrepo
 testrepo-v?
 testrepo?
-unanswered.ccnb
+unanswered.ndnb

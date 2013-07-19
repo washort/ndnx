@@ -1,9 +1,12 @@
 /**
  * @file skel_decode_test.c
- * A simple test program for exercising ccn_skeleton_decoder.
+ * A simple test program for exercising ndn_skeleton_decoder.
  * 
- * A CCNx program.
+ * A NDNx program.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2009 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -26,18 +29,18 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ccn/charbuf.h>
-#include <ccn/coding.h>
+#include <ndn/charbuf.h>
+#include <ndn/coding.h>
 
 static const char *tt_name[8] = {
-    [CCN_EXT] = "CCN_EXT",
-    [CCN_TAG] = "CCN_TAG",
-    [CCN_DTAG] = "CCN_DTAG",
-    [CCN_ATTR] = "CCN_ATTR",
-    [CCN_DATTR] = "CCN_DATTR",
-    [CCN_BLOB] = "CCN_BLOB",
-    [CCN_UDATA] = "CCN_UDATA",
-    [CCN_NO_TOKEN] = "CCN_CLOSE"
+    [NDN_EXT] = "NDN_EXT",
+    [NDN_TAG] = "NDN_TAG",
+    [NDN_DTAG] = "NDN_DTAG",
+    [NDN_ATTR] = "NDN_ATTR",
+    [NDN_DATTR] = "NDN_DATTR",
+    [NDN_BLOB] = "NDN_BLOB",
+    [NDN_UDATA] = "NDN_UDATA",
+    [NDN_NO_TOKEN] = "NDN_CLOSE"
 };
 
 #define SHOW_HEX_STATE 1
@@ -45,13 +48,13 @@ static const char *tt_name[8] = {
 static int
 process_test(unsigned char *data, size_t n, int flags)
 {
-    struct ccn_skeleton_decoder skel_decoder = {0};
-    struct ccn_skeleton_decoder *d = &skel_decoder;
+    struct ndn_skeleton_decoder skel_decoder = {0};
+    struct ndn_skeleton_decoder *d = &skel_decoder;
     int res = 0;
     size_t s;
-    d->state |= flags & CCN_DSTATE_PAUSE;
+    d->state |= flags & NDN_DSTATE_PAUSE;
 retry:
-    s = ccn_skeleton_decode(d, data, n);
+    s = ndn_skeleton_decode(d, data, n);
     if (flags & SHOW_HEX_STATE)
         fprintf(stderr, "state = 0x%x\n", d->state);
     if (d->state < 0) {
@@ -63,9 +66,9 @@ retry:
         fprintf(stderr, "nothing to do\n");
     }
     else {
-        if (d->state & CCN_DSTATE_PAUSE)
+        if (d->state & NDN_DSTATE_PAUSE)
             fprintf(stderr, "Token type %s(%d) at index %d; el %d nest %d; ",
-                tt_name[CCN_GET_TT_FROM_DSTATE(d->state)],
+                tt_name[NDN_GET_TT_FROM_DSTATE(d->state)],
                 (int)d->numval,
                 (int)d->token_index,
                 (int)d->element_index,
@@ -78,7 +81,7 @@ retry:
         }
         fprintf(stderr, "\n");
     }
-    if (!CCN_FINAL_DSTATE(d->state)) {
+    if (!NDN_FINAL_DSTATE(d->state)) {
         res = 1;
         fprintf(stderr, "incomplete state %d after %d of %d chars\n",
             (int)d->state, (int)s, (int)n);
@@ -89,13 +92,13 @@ retry:
 static int
 process_fd(int fd, int flags)
 {
-    struct ccn_charbuf *c = ccn_charbuf_create();
+    struct ndn_charbuf *c = ndn_charbuf_create();
     ssize_t len;
     int res = 0;
     for (;;) {
-        unsigned char *p = ccn_charbuf_reserve(c, 80);
+        unsigned char *p = ndn_charbuf_reserve(c, 80);
         if (p == NULL) {
-            perror("ccn_charbuf_reserve");
+            perror("ndn_charbuf_reserve");
             res = 1;
             break;
         }
@@ -111,7 +114,7 @@ process_fd(int fd, int flags)
     }
     fprintf(stderr, " <!-- input is %6lu bytes -->\n", (unsigned long)c->length);
     res |= process_test(c->buf, c->length, flags);
-    ccn_charbuf_destroy(&c);
+    ndn_charbuf_destroy(&c);
     return(res);
 }
 
@@ -142,11 +145,11 @@ main(int argc, char **argv)
     int flags = 0;
     for (i = 1; argv[i] != 0; i++) {
         if (0 == strcmp(argv[i], "-d")) {
-            flags |= CCN_DSTATE_PAUSE;
+            flags |= NDN_DSTATE_PAUSE;
             continue;
         }
         if (0 == strcmp(argv[i], "-D")) {
-            flags |= CCN_DSTATE_PAUSE | SHOW_HEX_STATE;
+            flags |= NDN_DSTATE_PAUSE | SHOW_HEX_STATE;
             continue;
         }
         fprintf(stderr, "<!-- Processing %s -->\n", argv[i]);

@@ -1,7 +1,10 @@
 # tests/test_destroyface
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -11,39 +14,39 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
 #
-AFTER : test_single_ccnd test_newface test_prefixreg
-BEFORE : test_single_ccnd_teardown
+AFTER : test_single_ndnd test_newface test_prefixreg
+BEFORE : test_single_ndnd_teardown
 
 # By default, we'll destroy the face that test_newface made.
-: ${FACEID:=`ccnbx -d newface-response.ccnb Content | ccnbx -d - FaceID`}
+: ${FACEID:=`ndnbx -d newface-response.ndnb Content | ndnbx -d - FaceID`}
 echo FACEID=$FACEID
 
-rm -f destroyface*.ccnb
-ccndsmoketest || SkipTest no ccnd
+rm -f destroyface*.ndnb
+ndndsmoketest || SkipTest no ndnd
 
-# Get our CCNDID
-. test_ccndid
+# Get our NDNDID
+. test_ndndid
 
 # Create the body of a face destroy request.
-ccn_xmltoccnb -w - <<EOF >destroyface.ccnb
+ndn_xmltondnb -w - <<EOF >destroyface.ndnb
 <FaceInstance>
   <Action>destroyface</Action>
-  <PublisherPublicKeyDigest ccnbencoding="hexBinary">$CCNDID</PublisherPublicKeyDigest>
+  <PublisherPublicKeyDigest ndnbencoding="hexBinary">$NDNDID</PublisherPublicKeyDigest>
   <FaceID>$FACEID</FaceID>
 </FaceInstance>
 EOF
 
 # The name does not matter for the request, but make it unique.
-REQNAME=`openssl dgst -sha1 destroyface.ccnb | sed -e 's/^.*=[ ]*//'`
+REQNAME=`openssl dgst -sha1 destroyface.ndnb | sed -e 's/^.*=[ ]*//'`
 
 echo REQNAME is $REQNAME >&2
 
-cat destroyface.ccnb | ccnpoke -f -x 30 /$REQNAME
+cat destroyface.ndnb | ndnpoke -f -x 30 /$REQNAME
 
-ccnslurp /$REQNAME
+ndnslurp /$REQNAME
 
 # Pull it out to use in the destroyface request.  Base-64 encode it for the benefit of the shell.
-DFBLOB="`ccnpeek /$REQNAME | openssl enc -base64`"
+DFBLOB="`ndnpeek /$REQNAME | openssl enc -base64`"
 
 echo DFBLOB is $DFBLOB >&2
 
@@ -54,26 +57,26 @@ test -z "$DFBLOB" && Failed forming DFBLOB
 cat <<EOF >destroyface-request.xml
 <Interest>
   <Name>
-    <Component ccnbencoding="text">ccnx</Component>
-    <Component ccnbencoding="hexBinary">$CCNDID</Component>
-    <Component ccnbencoding="text">destroyface</Component>
-    <Component ccnbencoding="base64Binary">$DFBLOB</Component>
+    <Component ndnbencoding="text">ndnx</Component>
+    <Component ndnbencoding="hexBinary">$NDNDID</Component>
+    <Component ndnbencoding="text">destroyface</Component>
+    <Component ndnbencoding="base64Binary">$DFBLOB</Component>
   </Name>
   <Scope>1</Scope>
 </Interest>
 EOF
-ccn_xmltoccnb -w destroyface-request.xml || Fail botch constructing destroyface-request.ccnb
+ndn_xmltondnb -w destroyface-request.xml || Fail botch constructing destroyface-request.ndnb
 
-CCNDStatus > destroyface-pre.html
+NDNDStatus > destroyface-pre.html
 
 # Try out the destroyface request
-ccndsmoketest -b -t 4000 send destroyface-request.ccnb recv > destroyface-response.ccnb
+ndndsmoketest -b -t 4000 send destroyface-request.ndnb recv > destroyface-response.ndnb
 
-CCNDStatus > destroyface-post.html
+NDNDStatus > destroyface-post.html
 
-cmp -s /dev/null destroyface-response.ccnb && Fail did not get destroyface response
+cmp -s /dev/null destroyface-response.ndnb && Fail did not get destroyface response
 
-ccn_ccnbtoxml destroyface-response.ccnb || Fail could not parse destroyface response
+ndn_ndnbtoxml destroyface-response.ndnb || Fail could not parse destroyface response
 
-ccnbx -d destroyface-response.ccnb Content | ccn_ccnbtoxml -x -
+ndnbx -d destroyface-response.ndnb Content | ndn_ndnbtoxml -x -
 rm destroyface-request.xml

@@ -5,18 +5,18 @@ function usage {
 Usage:
     $0 [-h]
 
-      Path of the extracted key can be controlled through HOME or CCNX_DIR environmental variable.
-      If CCNX_DIR is set, the script will extract public key from $CCNX_DIR/.ccnx_keystore.
-      Otherwise, the script will attempt to extract public key from $HOME/.ccnx/.ccnx_keystore
+      Path of the extracted key can be controlled through HOME or NDNX_DIR environmental variable.
+      If NDNX_DIR is set, the script will extract public key from $NDNX_DIR/.ndnx_keystore.
+      Otherwise, the script will attempt to extract public key from $HOME/.ndnx/.ndnx_keystore
 
-      Keystore password can be defined through CCNX_KEYSTORE_PASSWORD environment variable,
-      if not explicitly defined, the default CCNx keystore password will be used
+      Keystore password can be defined through NDNX_KEYSTORE_PASSWORD environment variable,
+      if not explicitly defined, the default NDNx keystore password will be used
 
       Examples:
 
          $0 > pubkey.pem
-         sudo HOME=/opt/local/etc/ccnx $0 > pubkey.pem
-         CCNX_DIR=key-dir $0 > pubkey.pem
+         sudo HOME=/opt/local/etc/ndnx $0 > pubkey.pem
+         NDNX_DIR=key-dir $0 > pubkey.pem
 
 EOF
   exit 1
@@ -34,18 +34,18 @@ while getopts "h" flag; do
     esac
 done
 
-if [ "x$CCNX_DIR" != "x" ]; then
-    KEYSTORE="$CCNX_DIR/.ccnx_keystore"
+if [ "x$NDNX_DIR" != "x" ]; then
+    KEYSTORE="$NDNX_DIR/.ndnx_keystore"
 else
-    KEYSTORE="$HOME/.ccnx/.ccnx_keystore"
+    KEYSTORE="$HOME/.ndnx/.ndnx_keystore"
 fi
 
 if [ ! -f "$KEYSTORE" ]; then
     error "[$KEYSTORE] file not found or insufficient permissions to read the file"
-    error "Please check permissions or configure CCNX_DIR or HOME variables"
+    error "Please check permissions or configure NDNX_DIR or HOME variables"
     exit 1
 fi
 
-export KEY_PASSWORD=${CCNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
+export KEY_PASSWORD=${NDNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
 
 openssl pkcs12 -in "$KEYSTORE" -password env:KEY_PASSWORD -clcerts -nokeys -nomacver | openssl x509

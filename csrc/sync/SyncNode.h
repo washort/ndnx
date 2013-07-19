@@ -1,8 +1,11 @@
 /**
  * @file sync/SyncNode.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -21,11 +24,11 @@
  * SyncNode is the basic support for node objects in Sync.
  */
 
-#ifndef CCN_SyncNode
-#define CCN_SyncNode
+#ifndef NDN_SyncNode
+#define NDN_SyncNode
 
 #include <stdio.h>
-#include <ccn/ccn.h>
+#include <ndn/ndn.h>
 #include "SyncMacros.h"
 
 struct SyncBaseStruct;  // defined in SyncBase.h
@@ -60,11 +63,11 @@ struct SyncLongHashStruct {
 /**
  * A SyncNodeComposite object holds the necessary data for a sync tree node.
  * It is the instantiated version, and there are routines for converting to
- * and from the ccnb encoded version, which has a very different format than
+ * and from the ndnb encoded version, which has a very different format than
  * the type presented here.
  *
  * This type may be used while building a new node from components, and it may
- * be used for a node representation parsed from an external ccnb encoding.
+ * be used for a node representation parsed from an external ndnb encoding.
  * 
  */
 struct SyncNodeComposite {
@@ -79,12 +82,12 @@ struct SyncNodeComposite {
     int refLen;           /**< number of references */
     int refLim;           /**< space allocated for references */
     struct SyncNodeElem *refs;    /**< pointer to references array */
-    struct ccn_charbuf *cb;       /**< pointer to ccnb encoding */
+    struct ndn_charbuf *cb;       /**< pointer to ndnb encoding */
     struct SyncLongHashStruct longHash;  /**< space for accumulated hash */
-    struct ccn_charbuf *hash;     /**< combined hash (no tag, requires SyncEndComposite) */
-    struct ccn_charbuf *minName;  /**< minimum name */
-    struct ccn_charbuf *maxName;  /**< maximum name */
-    struct ccn_charbuf *content;  /**< the signed content node (may be NULL) */
+    struct ndn_charbuf *hash;     /**< combined hash (no tag, requires SyncEndComposite) */
+    struct ndn_charbuf *minName;  /**< minimum name */
+    struct ndn_charbuf *maxName;  /**< maximum name */
+    struct ndn_charbuf *content;  /**< the signed content node (may be NULL) */
 };
 
 /**
@@ -102,16 +105,16 @@ SyncCheckCompErr(struct SyncNodeComposite *nc);
 /**
  * Makes a decoder from an offset range using the node charbuf.
  */
-struct ccn_buf_decoder *
-SyncInitDecoderFromOffset(struct ccn_buf_decoder *d,
+struct ndn_buf_decoder *
+SyncInitDecoderFromOffset(struct ndn_buf_decoder *d,
                           struct SyncNodeComposite *nc,
                           ssize_t start, ssize_t stop);
 
 /**
  * Makes a decoder from an element.
  */
-struct ccn_buf_decoder *
-SyncInitDecoderFromElem(struct ccn_buf_decoder *d,
+struct ndn_buf_decoder *
+SyncInitDecoderFromElem(struct ndn_buf_decoder *d,
                         struct SyncNodeComposite *nc,
                         struct SyncNodeElem *ep);
 
@@ -149,7 +152,7 @@ enum SyncCompareResult {
  * Compares a name against the min and max names in the node.
  */
 enum SyncCompareResult
-SyncNodeCompareMinMax(struct SyncNodeComposite *nc, struct ccn_charbuf *name);
+SyncNodeCompareMinMax(struct SyncNodeComposite *nc, struct ndn_charbuf *name);
 
 /**
  * Compares a name against the leaf in the element.
@@ -157,7 +160,7 @@ SyncNodeCompareMinMax(struct SyncNodeComposite *nc, struct ccn_charbuf *name);
 enum SyncCompareResult
 SyncNodeCompareLeaf(struct SyncNodeComposite *nc,
                     struct SyncNodeElem *ep,
-                    struct ccn_charbuf *name);
+                    struct ndn_charbuf *name);
 
 ////////////////////////////////////////
 // Routines for building CompositeNodes
@@ -191,7 +194,7 @@ SyncExtendComposite(struct SyncNodeComposite *nc,
  */
 void
 SyncNodeMaintainMinMax(struct SyncNodeComposite *nc,
-                       const struct ccn_charbuf *name);
+                       const struct ndn_charbuf *name);
 
 /**
  * extends the references section of a composite object with a new name,
@@ -200,7 +203,7 @@ SyncNodeMaintainMinMax(struct SyncNodeComposite *nc,
  */
 void
 SyncNodeAddName(struct SyncNodeComposite *nc,
-                const struct ccn_charbuf *name);
+                const struct ndn_charbuf *name);
 
 /**
  * extends the references section of a composite object with a new node,
@@ -212,10 +215,10 @@ SyncNodeAddNode(struct SyncNodeComposite *nc,
                 struct SyncNodeComposite *node);
 
 /**
- * appends the ccnb encoding for the long hash of nc to cb
+ * appends the ndnb encoding for the long hash of nc to cb
  */
 int
-SyncNodeAppendLongHash(struct ccn_charbuf *cb, struct SyncNodeComposite *nc);
+SyncNodeAppendLongHash(struct ndn_charbuf *cb, struct SyncNodeComposite *nc);
 
 /**
  * endComposite finishes up the encoding, appending the composite fields
@@ -243,7 +246,7 @@ SyncWriteComposite(struct SyncNodeComposite *nc, FILE *f);
  * @returns nc->err
  */
 int
-SyncParseComposite(struct SyncNodeComposite *nc, struct ccn_buf_decoder *d);
+SyncParseComposite(struct SyncNodeComposite *nc, struct ndn_buf_decoder *d);
 
 struct SyncNodeComposite *
 SyncNodeFromBytes(struct SyncRootStruct *root, const unsigned char *cp, size_t cs);
@@ -251,11 +254,11 @@ SyncNodeFromBytes(struct SyncRootStruct *root, const unsigned char *cp, size_t c
 struct SyncNodeComposite *
 SyncNodeFromParsedObject(struct SyncRootStruct *root,
                          const unsigned char *msg,
-                         struct ccn_parsed_ContentObject *pco);
+                         struct ndn_parsed_ContentObject *pco);
 
 struct SyncNodeComposite *
 SyncNodeFromInfo(struct SyncRootStruct *root,
-                 struct ccn_upcall_info *info);
+                 struct ndn_upcall_info *info);
 
 
 #endif

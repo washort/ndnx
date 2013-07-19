@@ -1,7 +1,10 @@
 # conf/Darwin.mk
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,7 +15,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 SHEXT=dylib
-SHLIBNAME=libccn.1.$(SHEXT)
+SHLIBNAME=libndn.1.$(SHEXT)
 SHLIBDEPS=/usr/lib/dylib1.o
 SHARED_LD_FLAGS = -dylib -arch `/usr/bin/arch` -install_name $(SHLIBNAME) $(OPENSSL_LIBS) -all_load /usr/lib/dylib1.o -lcrypto -lSystem
 PLATCFLAGS=-fno-common

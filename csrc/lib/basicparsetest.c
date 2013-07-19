@@ -1,8 +1,11 @@
 /**
  * @file basicparsetest.c
  * 
- * A CCNx test program.
+ * A NDNx test program.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2009 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -23,20 +26,20 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ccn/ccn.h>
-#include <ccn/charbuf.h>
-#include <ccn/coding.h>
-#include <ccn/face_mgmt.h>
-#include <ccn/sockcreate.h>
-#include <ccn/reg_mgmt.h>
-#include <ccn/header.h>
+#include <ndn/ndn.h>
+#include <ndn/charbuf.h>
+#include <ndn/coding.h>
+#include <ndn/face_mgmt.h>
+#include <ndn/sockcreate.h>
+#include <ndn/reg_mgmt.h>
+#include <ndn/header.h>
 
 /**
  * This is for testing.
  *
- * Reads ccnb-encoded data from stdin and 
+ * Reads ndnb-encoded data from stdin and 
  * tries parsing with various parsers, and when successful turns
- * the result back into ccnb and tests for goodness.
+ * the result back into ndnb and tests for goodness.
  *
  */
 int
@@ -44,97 +47,97 @@ main (int argc, char **argv)
 {
     unsigned char buf[8800];
     ssize_t size;
-    struct ccn_face_instance *face_instance;
-    struct ccn_forwarding_entry *forwarding_entry;
-    struct ccn_header *header;
+    struct ndn_face_instance *face_instance;
+    struct ndn_forwarding_entry *forwarding_entry;
+    struct ndn_header *header;
     int res = 1;
-    struct ccn_charbuf *c = ccn_charbuf_create();
+    struct ndn_charbuf *c = ndn_charbuf_create();
     int i;
-    struct ccn_parsed_interest parsed_interest = {0};
-    struct ccn_parsed_interest *pi = &parsed_interest;
-    struct ccn_parsed_Link parsed_link = {0};
-    struct ccn_parsed_Link *pl = &parsed_link;
-    struct ccn_buf_decoder decoder;
-    struct ccn_buf_decoder *d;
+    struct ndn_parsed_interest parsed_interest = {0};
+    struct ndn_parsed_interest *pi = &parsed_interest;
+    struct ndn_parsed_Link parsed_link = {0};
+    struct ndn_parsed_Link *pl = &parsed_link;
+    struct ndn_buf_decoder decoder;
+    struct ndn_buf_decoder *d;
 
 
     size = read(0, buf, sizeof(buf));
     if (size < 0)
         exit(0);
     
-    face_instance = ccn_face_instance_parse(buf, size);
+    face_instance = ndn_face_instance_parse(buf, size);
     if (face_instance != NULL) {
         printf("face_instance OK\n");
         c->length = 0;
-        res = ccnb_append_face_instance(c, face_instance);
+        res = ndnb_append_face_instance(c, face_instance);
         if (res != 0)
             printf("face_instance append failed\n");
         if (memcmp(buf, c->buf, c->length) != 0)
             printf("face_instance mismatch\n");
-        ccn_face_instance_destroy(&face_instance);
-        face_instance = ccn_face_instance_parse(c->buf, c->length);
+        ndn_face_instance_destroy(&face_instance);
+        face_instance = ndn_face_instance_parse(c->buf, c->length);
         if (face_instance == NULL) {
             printf("face_instance reparse failed\n");
             res = 1;
         }
     }
-    ccn_face_instance_destroy(&face_instance);
+    ndn_face_instance_destroy(&face_instance);
     
-    forwarding_entry = ccn_forwarding_entry_parse(buf, size);
+    forwarding_entry = ndn_forwarding_entry_parse(buf, size);
     if (forwarding_entry != NULL) {
         printf("forwarding_entry OK\n");
         c->length = 0;
-        res = ccnb_append_forwarding_entry(c, forwarding_entry);
+        res = ndnb_append_forwarding_entry(c, forwarding_entry);
         if (res != 0)
             printf("forwarding_entry append failed\n");
         if (memcmp(buf, c->buf, c->length) != 0)
             printf("forwarding_entry mismatch\n");
-        ccn_forwarding_entry_destroy(&forwarding_entry);
-        forwarding_entry = ccn_forwarding_entry_parse(c->buf, c->length);
+        ndn_forwarding_entry_destroy(&forwarding_entry);
+        forwarding_entry = ndn_forwarding_entry_parse(c->buf, c->length);
         if (forwarding_entry == NULL) {
             printf("forwarding_entry reparse failed\n");
             res = 1;
         }
     }
-    ccn_forwarding_entry_destroy(&forwarding_entry);
+    ndn_forwarding_entry_destroy(&forwarding_entry);
     
-    header = ccn_header_parse(buf, size);
+    header = ndn_header_parse(buf, size);
     if (header != NULL) {
         printf("header OK\n");
         c->length = 0;
-        res = ccnb_append_header(c, header);
+        res = ndnb_append_header(c, header);
         if (res != 0)
             printf("header append failed\n");
         if (memcmp(buf, c->buf, c->length) != 0)
             printf("header mismatch\n");
-        ccn_header_destroy(&header);
-        header = ccn_header_parse(c->buf, c->length);
+        ndn_header_destroy(&header);
+        header = ndn_header_parse(c->buf, c->length);
         if (header == NULL) {
             printf("header reparse failed\n");
             res = 1;
         }
     }
-    ccn_header_destroy(&header);
+    ndn_header_destroy(&header);
 
-    i = ccn_parse_interest(buf, size, pi, NULL);
+    i = ndn_parse_interest(buf, size, pi, NULL);
     if (i >= 0) {
         res = 0;
         printf("interest OK lifetime %jd (%d seconds)\n",
-               ccn_interest_lifetime(buf, pi),
-               ccn_interest_lifetime_seconds(buf, pi));
+               ndn_interest_lifetime(buf, pi),
+               ndn_interest_lifetime_seconds(buf, pi));
     }
 
-    d = ccn_buf_decoder_start(&decoder, buf, size);
-    i = ccn_parse_Link(d, pl, NULL);
+    d = ndn_buf_decoder_start(&decoder, buf, size);
+    i = ndn_parse_Link(d, pl, NULL);
     if (i >= 0) {
         res = 0;
         printf("link OK\n");
     }
 
-    d = ccn_buf_decoder_start(&decoder, buf, size);
-    i = ccn_parse_Collection_start(d);
+    d = ndn_buf_decoder_start(&decoder, buf, size);
+    i = ndn_parse_Collection_start(d);
     if (i >= 0) {
-        while ((i = ccn_parse_Collection_next(d, pl, NULL)) > 0) {
+        while ((i = ndn_parse_Collection_next(d, pl, NULL)) > 0) {
 	  printf("collection link OK\n");
         }
         if (i == 0) {

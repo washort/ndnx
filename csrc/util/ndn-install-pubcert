@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 D=`dirname "$0"`
-CCN_CCNBTOXML=ccn_ccnbtoxml
+NDN_NDNBTOXML=ndn_ndnbtoxml
 
 OPENSSL=openssl
 HEXDUMP=hexdump
@@ -24,8 +24,8 @@ Usage:
 
         The script performs the following operations:
           - reads <pubcert-file>
-          - checks if pubcert file corresponds to .ccnx_keystore
-          - installs pubcert file to .ccnx_keystore.pubcert (will not overwrite unless -f is specified)
+          - checks if pubcert file corresponds to .ndnx_keystore
+          - installs pubcert file to .ndnx_keystore.pubcert (will not overwrite unless -f is specified)
 
 		If -v is specified, then the output will be more verbose.
 EOF
@@ -61,23 +61,23 @@ if [ ! -f "$PUBCERT_FILE" ]; then
     exit 1
 fi
 
-export KEY_PASSWORD=${CCNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
-export CCNX_DIR=${CCNX_DIR:-$HOME/.ccnx}
+export KEY_PASSWORD=${NDNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
+export NDNX_DIR=${NDNX_DIR:-$HOME/.ndnx}
 
-pubcert_base64=`${CCN_CCNBTOXML} -b "$PUBCERT_FILE" 2>/dev/null | grep ContentObject | head -1 | ${SED} 's|^.*<Content ccnbencoding="base64Binary">\(.*\)</Content>.*$|\1|g'`
+pubcert_base64=`${NDN_NDNBTOXML} -b "$PUBCERT_FILE" 2>/dev/null | grep ContentObject | head -1 | ${SED} 's|^.*<Content ndnbencoding="base64Binary">\(.*\)</Content>.*$|\1|g'`
 
-keystore_base64=`$OPENSSL pkcs12 -in "$CCNX_DIR/.ccnx_keystore" -password env:KEY_PASSWORD -clcerts -nokeys -nomacver | $OPENSSL x509 -pubkey -noout | $OPENSSL rsa -pubin -pubout -inform PEM -outform DER 2> /dev/null | $BASE64 | tr -d '\n\r\f'`
+keystore_base64=`$OPENSSL pkcs12 -in "$NDNX_DIR/.ndnx_keystore" -password env:KEY_PASSWORD -clcerts -nokeys -nomacver | $OPENSSL x509 -pubkey -noout | $OPENSSL rsa -pubin -pubout -inform PEM -outform DER 2> /dev/null | $BASE64 | tr -d '\n\r\f'`
 
 if [ "x$pubcert_base64" != "x$keystore_base64" ]; then
     if [ "x$VERBOSE" = "x1" ]; then
         echo "PUBCERT: $pubcert_base64"
         echo "KEYSTORE: $keystore_base64"
     fi
-    echo -e "\E[91mERROR: Invalid pubcert file [$PUBCERT_FILE] or it does not match key in [$CCNX_DIR/.ccnx_keystore]\E[0m"
+    echo -e "\E[91mERROR: Invalid pubcert file [$PUBCERT_FILE] or it does not match key in [$NDNX_DIR/.ndnx_keystore]\E[0m"
     exit 1
 fi
 
-DST=$CCNX_DIR/.ccnx_keystore.pubcert
+DST=$NDNX_DIR/.ndnx_keystore.pubcert
 
 if [ "x$DST" == "x$PUBCERT_FILE" ]; then
     echo -e "\E[91mERROR: Specified pubcert file is already installed\E[0m"

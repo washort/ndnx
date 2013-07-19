@@ -1,7 +1,10 @@
 # technical/.genindex.sh
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,7 +15,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 cat <<EOF
-CCNx Technical Documentation Index
+NDNx Technical Documentation Index
 ==================================
 
 == Technical Documentation

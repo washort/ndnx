@@ -2,8 +2,11 @@
 #
 # Functions for supporting the test_* scripts
 #
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -36,21 +39,21 @@ SkipTest () {
   exit 9
 }
 
-WithCCND () {
+WithNDND () {
   local port;
-  port=$((CCN_LOCAL_PORT_BASE+$1))
+  port=$((NDN_LOCAL_PORT_BASE+$1))
   shift
-  CCN_LOCAL_PORT=$port "$@"
+  NDN_LOCAL_PORT=$port "$@"
 }
 
-CheckForCCND () {
-  WithCCND $1 ccndsmoketest && return 0
-  echo "***" ccnd $1 is not ready yet ... >&2
+CheckForNDND () {
+  WithNDND $1 ndndsmoketest && return 0
+  echo "***" ndnd $1 is not ready yet ... >&2
   return 1
 }
 
-CCNDStatus () {
-  echo 'GET / ' | ccndsmoketest -b -T localhost send - recv recv
+NDNDStatus () {
+  echo 'GET / ' | ndndsmoketest -b -T localhost send - recv recv
 }
 
 ExpectLines () {

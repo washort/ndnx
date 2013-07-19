@@ -1,7 +1,7 @@
-CCNx Basic Name Conventions
+NDNx Basic Name Conventions
 ===========================
 
-The CCNx protocol does not specify any assignment of meaning to names,
+The NDNx protocol does not specify any assignment of meaning to names,
 only their structure.  All assignment of meaning comes from
 application, institution, and/or global conventions.  Application
 developers are free to design their own custom conventions.  In order
@@ -14,7 +14,7 @@ conventions are shared by many applications.  In practice, such
 conventions should be implemented consistently in libraries.
 
 This document specifies basic conventions implemented in the libraries
-of the CCNx Reference Implementation addressing the following issues:
+of the NDNx Reference Implementation addressing the following issues:
 
  - Encoding of human-readable name components
  - Globally-unique name prefixes
@@ -37,10 +37,10 @@ will of course not be human-readable.
 == Globally-unique name prefixes
 
 The first component of a globally-meaningful name should be
-a DNS name.  Although the CCNx protocol does not rely on DNS, as a
+a DNS name.  Although the NDNx protocol does not rely on DNS, as a
 transition strategy it is helpful to take advantage of the existing
 DNS collection of globally-unique names.  Furthermore, the DNS can be
-used to look up IP addresses for creating IP tunnels to provide CCNx
+used to look up IP addresses for creating IP tunnels to provide NDNx
 protocol connectivity between sites.
 
 It is not necessary to use globally-meaningful names exclusively.  In
@@ -69,7 +69,7 @@ occurring anywhere in a `UTF-8` encoded string.  These are the (hex)
 octet values `C0`, `C1`, and `F5` to `FF`.  In addition, the null
 octet `00` is used for string termination and so does not encode a
 usable character.  Thus these make good 'markers' to identify
-components of a CCNx name that play special functional roles such as
+components of a NDNx name that play special functional roles such as
 for versioning and sequence numbering.  
 
 These conventions assign the prohibited octet values to specific
@@ -81,7 +81,7 @@ additional octets according to the conventions for that marker.
 
 The first byte of a version component is `0xFD`. Versions are named
 based (primarily) on time.  The remaining bytes are a big-endian
-binary encoding of the time in link:Timestamp.html[CCNx Timestamp
+binary encoding of the time in link:Timestamp.html[NDNx Timestamp
 format]. 
 
 The publisher generating the version stamp should try to avoid
@@ -93,11 +93,11 @@ It should also avoid generating stamps that are unreasonably far in the future.
 .........
 February 13, 2009 3:31:30 PM PST = 1234567890.000 seconds since January 1, 1970 UT
 1234567890 = 0x499602d2
-<Component ccnbencoding="hexBinary">FD 0 499602d2 000</Component>
-<Component ccnbencoding="base64Binary">/QSZYC0gAA==</Component>
+<Component ndnbencoding="hexBinary">FD 0 499602d2 000</Component>
+<Component ndnbencoding="base64Binary">/QSZYC0gAA==</Component>
 .........
 
-Versions, when present, commonly occupy the next-to-last component of the CCNx
+Versions, when present, commonly occupy the next-to-last component of the NDNx
 name, not counting the digest component.  It is normal to have
 versions within versions, however, so version components MUST be
 interpreted contextually (see meta-data section).
@@ -121,12 +121,12 @@ are other components that start with these two bytes.
 
 .Example: Sequence 257 is
 .......................................................
-<Component ccnbencoding="hexBinary">000101</Component>
+<Component ndnbencoding="hexBinary">000101</Component>
 or
-<Component ccnbencoding="base64Binary">AAEB</Component>
+<Component ndnbencoding="base64Binary">AAEB</Component>
 .......................................................
 
-Sequence numbers typically occupy the final component of the CCNx name
+Sequence numbers typically occupy the final component of the NDNx name
 (again, not counting the digest component).
 
 == Extensible Command Markers (Marker C1)
@@ -148,7 +148,7 @@ by tilde characters (~).
 
 The UTF-8 arguments, if any, may be followed by a single, optional, binary argument.
 A general binary argument is prefixed by the byte 0x00. A binary argument that
-is ccnb-encoded data is prefixed by the byte 0xC1.
+is ndnb-encoded data is prefixed by the byte 0xC1.
 
 Note that early versions of the command marker syntax did not use a
 separator character between the operation and/or final UTF-8 argument
@@ -160,20 +160,20 @@ repositories.
 
 .Example of General Command:
 ............................
-%C1.org.ccnx.frobnicate~1~37
+%C1.org.ndnx.frobnicate~1~37
 ............................
 
-would be a command in the namespace `org.ccnx`, where the operation is
+would be a command in the namespace `org.ndnx`, where the operation is
 `frobnicate`, which takes two arguments, in this case given as `1` and `37`.
 
-Namespaces containing only capital letters are reserved for CCNx
+Namespaces containing only capital letters are reserved for NDNx
 standard application protocols.  The protocols defined so far are
 listed below:
 
 === Repository Protocol (Namespace `R`)
 
 The repository protocol is used for clients to control repositories
-which are stores of CCNx content, usually persistent stores.
+which are stores of NDNx content, usually persistent stores.
 
 Start Write Command::
    `%C1.R.sw` - request repository to retrieve and store content.  The
@@ -265,8 +265,8 @@ This is used to denote a portion of the name tree used for service discovery.
 %C1.M.SRV
 ............................
 For example
-`/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY`
-will get the local ccnd's public key.
+`/%C1.M.S.localhost/%C1.M.SRV/ndnd/KEY`
+will get the local ndnd's public key.
 Similarly for other services.
 
 == Metadata 
@@ -282,7 +282,7 @@ metadata namespace marker.
 Metadata content is stored under this name component, named under human-readable
 names (as they are unlikely to collide with user-specified filenames).
 
-A header is a CCN content stream that provides summary file-level
+A header is a NDN content stream that provides summary file-level
 information about the set of content to which it is attached by name.
 The name of a header is '.header' (again human-readable UTF-8).  Note
 that a header is itself a file that has its own versions and segments

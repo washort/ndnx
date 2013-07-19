@@ -1,7 +1,10 @@
 # sync/dir.mk
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,8 +15,8 @@
 # FOR A PARTICULAR PURPOSE.
 #
 
-CCNLIBDIR = ../lib
-LDLIBS = -L$(CCNLIBDIR) $(MORE_LDLIBS) -lccn -L. -lccnsync
+NDNLIBDIR = ../lib
+LDLIBS = -L$(NDNLIBDIR) $(MORE_LDLIBS) -lndn -L. -lndnsync
 
 INSTALLED_PROGRAMS = 
 
@@ -41,7 +44,7 @@ HSRC = IndexSorter.h SyncActions.h SyncBase.h SyncHashCache.h SyncMacros.h \
        SyncNode.h SyncPrivate.h SyncRoot.h SyncTreeWorker.h SyncUtil.h \
        sync_plumbing.h sync_diff.h 
 
-LIBS = libccnsync.a
+LIBS = libndnsync.a
 LIB_OBJS = IndexSorter.o SyncBase.o SyncHashCache.o SyncNode.o SyncRoot.o \
        SyncTreeWorker.o SyncUtil.o SyncActions.o sync_diff.o sync_api.o
 
@@ -50,11 +53,11 @@ all: $(BROKEN_PROGRAMS)
 
 test: default
 
-$(PROGRAMS): $(CCNLIBDIR)/libccn.a $(LIBS)
+$(PROGRAMS): $(NDNLIBDIR)/libndn.a $(LIBS)
 
 lib:	$(LIBS)
 
-libccnsync.a:	$(LIB_OBJS)
+libndnsync.a:	$(LIB_OBJS)
 	$(RM) $@
 	$(AR) crus $@ $(LIB_OBJS)
 
@@ -77,55 +80,55 @@ check test: SyncTest $(SCRIPTSRC)
 # but must be updated manually.
 ###############################
 IndexSorter.o: IndexSorter.c IndexSorter.h
-SyncActions.o: SyncActions.c ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h \
-  ../include/ccn/schedule.h SyncActions.h SyncBase.h \
-  ../include/ccn/loglevels.h sync_plumbing.h SyncRoot.h SyncUtil.h \
+SyncActions.o: SyncActions.c ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h \
+  ../include/ndn/schedule.h SyncActions.h SyncBase.h \
+  ../include/ndn/loglevels.h sync_plumbing.h SyncRoot.h SyncUtil.h \
   IndexSorter.h SyncNode.h SyncMacros.h SyncPrivate.h SyncTreeWorker.h \
   SyncHashCache.h
-SyncBase.o: SyncBase.c SyncMacros.h SyncBase.h ../include/ccn/loglevels.h \
-  sync_plumbing.h ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h SyncPrivate.h \
-  SyncRoot.h SyncUtil.h IndexSorter.h ../include/ccn/uri.h
-SyncHashCache.o: SyncHashCache.c SyncBase.h ../include/ccn/loglevels.h \
-  sync_plumbing.h ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h SyncHashCache.h \
+SyncBase.o: SyncBase.c SyncMacros.h SyncBase.h ../include/ndn/loglevels.h \
+  sync_plumbing.h ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h SyncPrivate.h \
+  SyncRoot.h SyncUtil.h IndexSorter.h ../include/ndn/uri.h
+SyncHashCache.o: SyncHashCache.c SyncBase.h ../include/ndn/loglevels.h \
+  sync_plumbing.h ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h SyncHashCache.h \
   SyncNode.h SyncMacros.h SyncRoot.h SyncUtil.h IndexSorter.h
-SyncNode.o: SyncNode.c SyncNode.h ../include/ccn/ccn.h \
-  ../include/ccn/coding.h ../include/ccn/charbuf.h \
-  ../include/ccn/indexbuf.h SyncMacros.h SyncRoot.h SyncUtil.h \
+SyncNode.o: SyncNode.c SyncNode.h ../include/ndn/ndn.h \
+  ../include/ndn/coding.h ../include/ndn/charbuf.h \
+  ../include/ndn/indexbuf.h SyncMacros.h SyncRoot.h SyncUtil.h \
   IndexSorter.h
-SyncRoot.o: SyncRoot.c ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h \
-  ../include/ccn/digest.h ../include/ccn/schedule.h ../include/ccn/uri.h \
-  ../include/ccn/loglevels.h SyncMacros.h SyncPrivate.h SyncBase.h \
+SyncRoot.o: SyncRoot.c ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h \
+  ../include/ndn/digest.h ../include/ndn/schedule.h ../include/ndn/uri.h \
+  ../include/ndn/loglevels.h SyncMacros.h SyncPrivate.h SyncBase.h \
   sync_plumbing.h SyncRoot.h SyncUtil.h IndexSorter.h SyncHashCache.h
-SyncTest.o: SyncTest.c SyncActions.h ../include/ccn/charbuf.h SyncBase.h \
-  ../include/ccn/loglevels.h sync_plumbing.h ../include/ccn/ccn.h \
-  ../include/ccn/coding.h ../include/ccn/indexbuf.h SyncRoot.h SyncUtil.h \
+SyncTest.o: SyncTest.c SyncActions.h ../include/ndn/charbuf.h SyncBase.h \
+  ../include/ndn/loglevels.h sync_plumbing.h ../include/ndn/ndn.h \
+  ../include/ndn/coding.h ../include/ndn/indexbuf.h SyncRoot.h SyncUtil.h \
   IndexSorter.h SyncHashCache.h SyncNode.h SyncMacros.h SyncPrivate.h \
-  SyncTreeWorker.h ../include/ccn/digest.h ../include/ccn/fetch.h \
-  ../include/ccn/uri.h ../include/ccn/seqwriter.h
+  SyncTreeWorker.h ../include/ndn/digest.h ../include/ndn/fetch.h \
+  ../include/ndn/uri.h ../include/ndn/seqwriter.h
 SyncTreeWorker.o: SyncTreeWorker.c SyncMacros.h SyncNode.h \
-  ../include/ccn/ccn.h ../include/ccn/coding.h ../include/ccn/charbuf.h \
-  ../include/ccn/indexbuf.h SyncTreeWorker.h SyncHashCache.h SyncUtil.h \
+  ../include/ndn/ndn.h ../include/ndn/coding.h ../include/ndn/charbuf.h \
+  ../include/ndn/indexbuf.h SyncTreeWorker.h SyncHashCache.h SyncUtil.h \
   IndexSorter.h
-SyncUtil.o: SyncUtil.c SyncBase.h ../include/ccn/loglevels.h \
-  sync_plumbing.h ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h SyncHashCache.h \
+SyncUtil.o: SyncUtil.c SyncBase.h ../include/ndn/loglevels.h \
+  sync_plumbing.h ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h SyncHashCache.h \
   SyncNode.h SyncMacros.h SyncPrivate.h SyncRoot.h SyncUtil.h \
-  IndexSorter.h ../include/ccn/uri.h
+  IndexSorter.h ../include/ndn/uri.h
 UpdateSketch.o: UpdateSketch.c
-sync_api.o: sync_api.c ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h \
-  ../include/ccn/digest.h ../include/ccn/loglevels.h \
-  ../include/ccn/schedule.h ../include/ccn/sync.h ../include/ccn/uri.h \
-  ../include/ccn/ccn_private.h sync_diff.h SyncHashCache.h SyncRoot.h \
+sync_api.o: sync_api.c ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h \
+  ../include/ndn/digest.h ../include/ndn/loglevels.h \
+  ../include/ndn/schedule.h ../include/ndn/sync.h ../include/ndn/uri.h \
+  ../include/ndn/ndn_private.h sync_diff.h SyncHashCache.h SyncRoot.h \
   SyncTreeWorker.h SyncUtil.h IndexSorter.h SyncNode.h SyncMacros.h \
   SyncPrivate.h SyncBase.h sync_plumbing.h
-sync_diff.o: sync_diff.c ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h \
-  ../include/ccn/digest.h ../include/ccn/schedule.h ../include/ccn/sync.h \
-  ../include/ccn/uri.h IndexSorter.h SyncNode.h SyncMacros.h \
-  SyncPrivate.h SyncBase.h ../include/ccn/loglevels.h sync_plumbing.h \
+sync_diff.o: sync_diff.c ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h \
+  ../include/ndn/digest.h ../include/ndn/schedule.h ../include/ndn/sync.h \
+  ../include/ndn/uri.h IndexSorter.h SyncNode.h SyncMacros.h \
+  SyncPrivate.h SyncBase.h ../include/ndn/loglevels.h sync_plumbing.h \
   SyncRoot.h SyncUtil.h SyncTreeWorker.h SyncHashCache.h sync_diff.h

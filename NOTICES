@@ -1,4 +1,4 @@
-CCNx Notices
+NDNx Notices
 
 This work is free software; you can redistribute it and/or modify it under
 the terms of the appropriate licenses as covered in the file LICENSE
@@ -32,7 +32,7 @@ for any purpose.
 
 The U.S. Government Department of Commerce, Bureau of Industry and
 Security (BIS), has classified this software as Export Commodity 
-Control Number (ECCN) 5D002.C.1, which includes information security
+Control Number (ENDN) 5D002.C.1, which includes information security
 software using or performing cryptographic functions with asymmetric
 algorithms.  The form and manner of this distribution makes it
 eligible for export under the License Exception ENC Technology
@@ -41,12 +41,12 @@ Administration Regulations, Section 740.13) for both object
 code and source code.
 
 The included cryptographic software is the Bouncy Castle provider which
-is itself classified under ECCN 5D002 and approved for export under
+is itself classified under ENDN 5D002 and approved for export under
 License Exception TSU.  It is included in this distribution for the
 convenience of users.
 
-For more information about export control of CCNx software, please see
-the page http://www.ccnx.org/exports
+For more information about export control of NDNx software, please see
+the page http://www.ndnx.org/exports
 
 -------------------------
 BOUNCY CASTLE 
@@ -192,8 +192,8 @@ IN THE SOFTWARE.
 Crystal Clear
 
 The Crystal Clear icon library from wikimedia.com is used for icons in the
-Android Services package (android/CCNx-Android-Services) and the Android
-Chat application (android/apps/CCNx-Android-Chat).  The icons are
+Android Services package (android/NDNx-Android-Services) and the Android
+Chat application (android/apps/NDNx-Android-Chat).  The icons are
 used and modified under this license:
 
 This library is free software; you can redistribute it and/or modify it under

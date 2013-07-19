@@ -2,8 +2,11 @@
  * @file hashtb.c
  * @brief Hash table.
  * 
- * Part of the CCNx C Library.
+ * Part of the NDNx C Library.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2009 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -22,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ccn/hashtb.h>
+#include <ndn/hashtb.h>
 
 struct node;
 struct node {

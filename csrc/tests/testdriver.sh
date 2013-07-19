@@ -1,7 +1,10 @@
 # tests/testdriver.sh
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009, 2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -29,11 +32,11 @@ cd $(dirname "$0")
 
 # Set up PATH so the tested programs are used, rather than any that
 # might be installed.
-export PATH=.:../ccnd:../libexec:../cmd:../lib:../util:$PATH:./stubs
+export PATH=.:../ndnd:../libexec:../cmd:../lib:../util:$PATH:./stubs
 
-# If there are any ccnds running on test ports, wait a minute and retry.
+# If there are any ndnds running on test ports, wait a minute and retry.
 TestBusy () {
-	(. settings; ls /tmp/.ccnd.sock.$((CCN_LOCAL_PORT_BASE/10))[01234] 2>/dev/null)
+	(. settings; ls /tmp/.ndnd.sock.$((NDN_LOCAL_PORT_BASE/10))[01234] 2>/dev/null)
 }
 TestBusy && { echo There is something else happening, waiting one minute ... ; sleep 60; }
 TestBusy && exit 1

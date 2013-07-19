@@ -1,7 +1,10 @@
-# Top level Makefile for CCNx
+# Top level Makefile for NDNx
 #
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -83,9 +86,9 @@ MANIFEST: _manifester
 	rm MANIFEST.new
 	rm _manifester
 
-tar:	ccnx.tar
-ccnx.tar: MANIFEST
-	tar cf ccnx.tar -T MANIFEST
+tar:	ndnx.tar
+ndnx.tar: MANIFEST
+	tar cf ndnx.tar -T MANIFEST
 	mv MANIFEST 00MANIFEST
 
 distfile: tar
@@ -94,18 +97,18 @@ distfile: tar
 	grep '^[0-9]....' version
 	# check the Doxyfiles for good version information
 	# fail on the next step if the directory already exists
-	mkdir ccnx-$(VERSION)
-	( cd ccnx-$(VERSION) && tar xf ../ccnx.tar && $(MAKE) fixupversions VERSION=$(VERSION) && $(MAKE) MD5 SHA1 )
+	mkdir ndnx-$(VERSION)
+	( cd ndnx-$(VERSION) && tar xf ../ndnx.tar && $(MAKE) fixupversions VERSION=$(VERSION) && $(MAKE) MD5 SHA1 )
 	# Build the documentation
-	( cd ccnx-$(VERSION) && $(MAKE) dist-docs 2>&1) > ccnx-$(VERSION)-documentation.log
-	tar cf ccnx-$(VERSION).tar ccnx-$(VERSION)
-	gzip -9 ccnx-$(VERSION).tar
-	ls -l ccnx-$(VERSION).tar.gz
+	( cd ndnx-$(VERSION) && $(MAKE) dist-docs 2>&1) > ndnx-$(VERSION)-documentation.log
+	tar cf ndnx-$(VERSION).tar ndnx-$(VERSION)
+	gzip -9 ndnx-$(VERSION).tar
+	ls -l ndnx-$(VERSION).tar.gz
 
 fixupversions: _always
-	Fix1 () { sed -e '/^PROJECT_NUMBER/s/=.*$$/= $(VERSION)/' $$1 > DTemp && mv DTemp $$1; } && Fix1 csrc/Doxyfile && Fix1 csrc/Doxyfile.dist && Fix1 csrc/Doxyfile.latex && Fix1 javasrc/Doxyfile && Fix1 javasrc/Doxyfile.dist && Fix1 javasrc/Doxyfile.latex && Fix1 doc/manpages/Makefile && Fix1 android/Doxyfile && cp android/CCNx-Android-Services/strings.xml.tpl android/CCNx-Android-Services/res/values/strings.xml && sed -e "s/PROJECT_NUMBER/$(VERSION)/g" android/CCNx-Android-Services/strings.xml.tpl > android/CCNx-Android-Services/res/values/strings.xml && Fix1 android/Doxyfile.dist && Fix1 android/Doxyfile.latex
+	Fix1 () { sed -e '/^PROJECT_NUMBER/s/=.*$$/= $(VERSION)/' $$1 > DTemp && mv DTemp $$1; } && Fix1 csrc/Doxyfile && Fix1 csrc/Doxyfile.dist && Fix1 csrc/Doxyfile.latex && Fix1 javasrc/Doxyfile && Fix1 javasrc/Doxyfile.dist && Fix1 javasrc/Doxyfile.latex && Fix1 doc/manpages/Makefile && Fix1 android/Doxyfile && cp android/NDNx-Android-Services/strings.xml.tpl android/NDNx-Android-Services/res/values/strings.xml && sed -e "s/PROJECT_NUMBER/$(VERSION)/g" android/NDNx-Android-Services/strings.xml.tpl > android/NDNx-Android-Services/res/values/strings.xml && Fix1 android/Doxyfile.dist && Fix1 android/Doxyfile.latex
 
-IGNORELINKS = -e android/CCNx-Android-Services/jni/csrc -e android/CCNx-Android-Services/jni/openssl/openssl-armv5
+IGNORELINKS = -e android/NDNx-Android-Services/jni/csrc -e android/NDNx-Android-Services/jni/openssl/openssl-armv5
 MD5: _always
 	grep -v $(IGNORELINKS) MANIFEST | xargs openssl dgst > MD5
 
@@ -116,27 +119,27 @@ pkgbin: default
 	echo $(VERSION) > version
 	# make sure VERSION= has been provided
 	grep '^[0-9]....' version
-	mkdir -p ccnx-pkg-$(VERSION)
-	mkdir -p ccnx-pkg-$(VERSION)/lib
-	mkdir -p ccnx-pkg-$(VERSION)/include
-	mkdir -p ccnx-pkg-$(VERSION)/bin
-	mkdir -p ccnx-pkg-$(VERSION)/man/man1
-	mkdir -p ccnx-pkg-$(VERSION)/etc
-	mkdir -p ccnx-pkg-$(VERSION)/doc
+	mkdir -p ndnx-pkg-$(VERSION)
+	mkdir -p ndnx-pkg-$(VERSION)/lib
+	mkdir -p ndnx-pkg-$(VERSION)/include
+	mkdir -p ndnx-pkg-$(VERSION)/bin
+	mkdir -p ndnx-pkg-$(VERSION)/man/man1
+	mkdir -p ndnx-pkg-$(VERSION)/etc
+	mkdir -p ndnx-pkg-$(VERSION)/doc
 	$(MAKE) dist-docs
-	cp -r doc/ccode ccnx-pkg-$(VERSION)/doc
-	cp -r doc/javacode ccnx-pkg-$(VERSION)/doc
-	cp -r doc/manpages ccnx-pkg-$(VERSION)/doc
-	cp -r doc/technical ccnx-pkg-$(VERSION)/doc
-	cp -r doc/android ccnx-pkg-$(VERSION)/doc
-	cp doc/index.html ccnx-pkg-$(VERSION)/doc
-	cp LICENSE ccnx-pkg-$(VERSION)
-	cp NEWS ccnx-pkg-$(VERSION)
-	mv ccnx-pkg-$(VERSION)/doc/manpages/*.1 ccnx-pkg-$(VERSION)/man/man1
-	$(MAKE) install INSTALL_BASE= DESTDIR=`pwd`/ccnx-pkg-$(VERSION)
-	tar cf ccnx-pkg-$(VERSION).tar ccnx-pkg-$(VERSION)
-	gzip -9 ccnx-pkg-$(VERSION).tar
-	ls -l ccnx-pkg-$(VERSION).tar.gz
+	cp -r doc/ccode ndnx-pkg-$(VERSION)/doc
+	cp -r doc/javacode ndnx-pkg-$(VERSION)/doc
+	cp -r doc/manpages ndnx-pkg-$(VERSION)/doc
+	cp -r doc/technical ndnx-pkg-$(VERSION)/doc
+	cp -r doc/android ndnx-pkg-$(VERSION)/doc
+	cp doc/index.html ndnx-pkg-$(VERSION)/doc
+	cp LICENSE ndnx-pkg-$(VERSION)
+	cp NEWS ndnx-pkg-$(VERSION)
+	mv ndnx-pkg-$(VERSION)/doc/manpages/*.1 ndnx-pkg-$(VERSION)/man/man1
+	$(MAKE) install INSTALL_BASE= DESTDIR=`pwd`/ndnx-pkg-$(VERSION)
+	tar cf ndnx-pkg-$(VERSION).tar ndnx-pkg-$(VERSION)
+	gzip -9 ndnx-pkg-$(VERSION).tar
+	ls -l ndnx-pkg-$(VERSION).tar.gz
 
 _always:
 .PHONY: _always

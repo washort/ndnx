@@ -1,8 +1,11 @@
 /**
  * @file sync/SyncTreeWorker.c
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -86,8 +89,8 @@ SyncTreeWorkerPush(struct SyncTreeWorkerHead *head) {
     struct SyncNodeComposite *nc = ce->ncL;
     if (nc == NULL) nc = ce->ncR;
     if (nc == NULL) return NULL;
-    struct ccn_buf_decoder cbd;
-    struct ccn_buf_decoder *cb = SyncInitDecoderFromOffset(&cbd, nc,
+    struct ndn_buf_decoder cbd;
+    struct ndn_buf_decoder *cb = SyncInitDecoderFromOffset(&cbd, nc,
                                                            ref->start,
                                                            ref->stop);
     const unsigned char *xp = NULL;
@@ -164,7 +167,7 @@ SyncTreeWorkerFree(struct SyncTreeWorkerHead *head) {
 
 extern enum SyncCompareResult
 SyncTreeLookupName(struct SyncTreeWorkerHead *head,
-                   struct ccn_charbuf *name,
+                   struct ndn_charbuf *name,
                    int minLevel) {
     
     enum SyncCompareResult cr = SCR_inside;
@@ -234,16 +237,16 @@ SyncTreeGenerateNames(struct SyncTreeWorkerHead *head,
             struct SyncNodeElem *ep = &nc->refs[ent->pos];
             if (ep->kind & SyncElemKind_leaf) {
                 // a leaf, so the element name is inline
-                struct ccn_buf_decoder bd;
-                struct ccn_buf_decoder *d = SyncInitDecoderFromOffset(&bd,
+                struct ndn_buf_decoder bd;
+                struct ndn_buf_decoder *d = SyncInitDecoderFromOffset(&bd,
                                                                       nc,
                                                                       ep->start,
                                                                       ep->stop);
-                struct ccn_charbuf *cb = ccn_charbuf_create();
+                struct ndn_charbuf *cb = ndn_charbuf_create();
                 int res = SyncAppendElementInner(cb, d);
                 if (res < 0) {
                     // that did not work well
-                    ccn_charbuf_destroy(&cb);
+                    ndn_charbuf_destroy(&cb);
                     return SCR_error;
                 }
                 SyncNameAccumAppend(accum, cb, 0);

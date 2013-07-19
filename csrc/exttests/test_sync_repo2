@@ -1,7 +1,10 @@
 # exttests/test_sync_repo2
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,9 +15,9 @@
 # FOR A PARTICULAR PURPOSE.
 #
 
-AFTER : test_twohop_ccnd_teardown test_sync_read
+AFTER : test_twohop_ndnd_teardown test_sync_read
 
-# TOPO to assume (must be routable for ccnd)
+# TOPO to assume (must be routable for ndnd)
 TOPO=/Topo
 # slice hash for $TOPO /root/beer
 RH=/%C9R%A1%9EK%0D8%22%C8R%83%C8J%E5%15%07%B5%03%226%F3%CE%9Fz%19~T%9B%18%AAc%F3
@@ -23,17 +26,17 @@ NAMES=256
 BS=4096
 TARGET="treeNames $NAMES"
 
-# proc to create an empty repo bound to ccnd N
+# proc to create an empty repo bound to ndnd N
 
 StartEmptyRepo () {
-  env | grep CCNR
+  env | grep NDNR
   N=$1
-  CCNR_NAME="repo.$N"
-  export CCNR_DIRECTORY=${CCNR_TEST_REPOS:-.}/$CCNR_NAME.dir
-  rm -Rf $CCNR_DIRECTORY
-  mkdir $CCNR_DIRECTORY
-  echo in StartRepo $N, $CCNR_DIRECTORY
-  ccnr 2>ccnr.$N.err >ccnr.$N.log
+  NDNR_NAME="repo.$N"
+  export NDNR_DIRECTORY=${NDNR_TEST_REPOS:-.}/$NDNR_NAME.dir
+  rm -Rf $NDNR_DIRECTORY
+  mkdir $NDNR_DIRECTORY
+  echo in StartRepo $N, $NDNR_DIRECTORY
+  ndnr 2>ndnr.$N.err >ndnr.$N.log
 }
 
 # proc to wait for a non-empty sync tree in repo N
@@ -41,7 +44,7 @@ StartEmptyRepo () {
 WaitRepoLeaves () {
   N=$1
   while true; do
-    { WithCCND $N SyncTest -scope 1 -stats $TOPO $RH >stats$N.txt ; } || Fail "Can't get stats"
+    { WithNDND $N SyncTest -scope 1 -stats $TOPO $RH >stats$N.txt ; } || Fail "Can't get stats"
     { grep -w "$TARGET" stats$N.txt >/dev/null ; } && break
     printf "."
     sleep 1 || SkipTest
@@ -49,27 +52,27 @@ WaitRepoLeaves () {
   printf "\n"
 }
 
-# setup appropriate CCNR and SYNC env variables
+# setup appropriate NDNR and SYNC env variables
 
-export CCNR_DEBUG=INFO
-export CCNS_ENABLE=1
-export CCNS_DEBUG=INFO
-export CCNS_REPO_STORE=1
-export CCNS_STABLE_ENABLED=0
-export CCNS_FAUX_ERROR=0
+export NDNR_DEBUG=INFO
+export NDNS_ENABLE=1
+export NDNS_DEBUG=INFO
+export NDNS_REPO_STORE=1
+export NDNS_STABLE_ENABLED=0
+export NDNS_FAUX_ERROR=0
 
-# start 2 ccnd instances
+# start 2 ndnd instances
 
-rm -f ccnd1.out ccnd2.out
-WithCCND 1 ccnd 2>ccnd1.out &
-WithCCND 2 ccnd 2>ccnd2.out &
+rm -f ndnd1.out ndnd2.out
+WithNDND 1 ndnd 2>ndnd1.out &
+WithNDND 2 ndnd 2>ndnd2.out &
 
-until CheckForCCND 1 && CheckForCCND 2; do
+until CheckForNDND 1 && CheckForNDND 2; do
   echo Waiting ... >&2
   sleep 1
 done
 
-# point ccnd 1 and ccnd 2 at each other
+# point ndnd 1 and ndnd 2 at each other
 
 Linkup 1 2
 Linkup 2 1
@@ -79,24 +82,24 @@ dd bs=$BS count=$NAMES if=/dev/zero of=test.data 2>/dev/null
 
 echo -- Start and init repo 1
 
-WithCCND 1 StartEmptyRepo 1 &
-WithCCND 1 SyncTest -scope 1 -slice $TOPO /root/beer 
-WithCCND 1 SyncTest -scope 1 -bs $BS -put test.data ccnx:/root/beer/float
-WithCCND 1 ccnrm ccnx:/root/beer
+WithNDND 1 StartEmptyRepo 1 &
+WithNDND 1 SyncTest -scope 1 -slice $TOPO /root/beer 
+WithNDND 1 SyncTest -scope 1 -bs $BS -put test.data ndn:/root/beer/float
+WithNDND 1 ndnrm ndn:/root/beer
 WaitRepoLeaves 1
 
 echo -- Start and init repo 2
-WithCCND 2 StartEmptyRepo 2 &
-WithCCND 2 SyncTest -scope 1 -bs $BS -slice $TOPO /root/beer 
+WithNDND 2 StartEmptyRepo 2 &
+WithNDND 2 SyncTest -scope 1 -bs $BS -slice $TOPO /root/beer 
 echo -- Wait for sync and fetch data
 
 WaitRepoLeaves 2
 
-echo -- Kill repo 1, flush ccnd 2, then fetch data from repo 2
-WithCCND 1 ccndsmoketest kill
-WithCCND 2 ccnrm ccnx:/root/beer
-WithCCND 2 SyncTest -scope 1 -bs $BS -get ccnx:/root/beer/float check.data
-WithCCND 2 ccndsmoketest kill
+echo -- Kill repo 1, flush ndnd 2, then fetch data from repo 2
+WithNDND 1 ndndsmoketest kill
+WithNDND 2 ndnrm ndn:/root/beer
+WithNDND 2 SyncTest -scope 1 -bs $BS -get ndn:/root/beer/float check.data
+WithNDND 2 ndndsmoketest kill
 
 echo -- Checking output
 

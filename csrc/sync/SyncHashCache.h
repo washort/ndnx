@@ -1,9 +1,12 @@
 /**
  * @file sync/SyncHashCache.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  */
 /*
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011-2012 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -18,8 +21,8 @@
  * Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef CCN_SyncHashCache
-#define CCN_SyncHashCache
+#ifndef NDN_SyncHashCache
+#define NDN_SyncHashCache
 
 struct SyncRootStruct; // defined in SyncRoot
 
@@ -52,7 +55,7 @@ struct SyncHashCacheEntry {
     uintmax_t index;                    /**< assigned by order of creation */
     uint32_t busy;                      /**< the tree worker usage count */
     uint32_t small;                     /**< the small hash */
-    struct ccn_charbuf *hash;           /**< hash used to reach this entry */
+    struct ndn_charbuf *hash;           /**< hash used to reach this entry */
     struct SyncNodeComposite *ncL;      /**< the local node in memory */
     struct SyncNodeComposite *ncR;      /**< some remote node in memory */
     int64_t lastUsed;                   /**< time when entry last used in compare */

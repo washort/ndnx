@@ -1,6 +1,9 @@
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under

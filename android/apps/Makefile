@@ -1,3 +1,6 @@
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2010-2012 Palo Alto Research Center, Inc.  All Rights Reserved.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,7 +15,7 @@
 # Boston, MA 02110-1301, USA.
 #
 
-SUBDIRS = CCNx-Android-Chat CCNx-Android-StartupExamples
+SUBDIRS = NDNx-Android-Chat NDNx-Android-StartupExamples
 
 .PHONY: subdirs mkdirs install $(SUBDIRS)
 

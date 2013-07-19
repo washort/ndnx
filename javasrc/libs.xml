@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
 Copyright (C) 2008, 2009 Palo Alto Research Center, Inc.
 
-Part of the CCNx Java Library.
+Part of the NDNx Java Library.
 
 This work is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License version 2 as published by the
@@ -17,14 +20,14 @@ Boston, MA 02110-1301, USA. -->
 
 <!-- This is an ant project file, see http://ant.apache.org/ -->
 
-<!-- This file defines the libs required to compile and run CCN library
+<!-- This file defines the libs required to compile and run NDN library
      and apps written against it.  It is designed to be imported into
      another ant file to get these definitions for building classpaths -->
 
-<project name="ccn-libs" basedir=".">
+<project name="ndn-libs" basedir=".">
 
-	<dirname property="ccn-libs-basedir" file="${ant.file.ccn-libs}"/>
-	<property name="lib" location="${ccn-libs-basedir}/lib"/>
+	<dirname property="ndn-libs-basedir" file="${ant.file.ndn-libs}"/>
+	<property name="lib" location="${ndn-libs-basedir}/lib"/>
 	<property name="junit-jar" location="${lib}/junit-4.3.1.jar"/>
 	<!-- BouncyCastle for JDK1.5 is not distributed by may be supplied -->
     <condition property="bcprov-jar" value="${lib}/bcprov-jdk15-143.jar"
@@ -36,16 +39,16 @@ Boston, MA 02110-1301, USA. -->
 
 	<!-- CLASSPATH NOTE: This should be a minimal set of what is 
         required, so we have an authoritative list of dependencies 
-		ccn-classpath contains jar files required to compile -->
-	<path id="ccn-classpath">
+		ndn-classpath contains jar files required to compile -->
+	<path id="ndn-classpath">
 		<pathelement location="${bcprov-jar}"/>
 		<pathelement location="${xml-jar}"/>
 		<pathelement location="${junit-jar}"/>
 	</path>
 
-    <!-- ccn-classpath-run contains ADDITIONAL needed at runtime -->
-	<path id="ccn-classpath-run">
-		<path refid="ccn-classpath"/>
+    <!-- ndn-classpath-run contains ADDITIONAL needed at runtime -->
+	<path id="ndn-classpath-run">
+		<path refid="ndn-classpath"/>
     </path>
 
 </project>

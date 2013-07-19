@@ -1,5 +1,5 @@
 # HttpProxy.list
-# Lists the host names eligible for CCN usage.
+# Lists the host names eligible for NDN usage.
 # Each line starts with a host name (the leading character may be *)
 # The trailing switches are:
 # -noCookie   GET request must have no Cookie: field

@@ -1,9 +1,12 @@
 /**
  * @file lned.c
  * 
- * Part of the CCNx C Library.
+ * Part of the NDNx C Library.
  */
 /* 
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2012 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -31,7 +34,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include <ccn/lned.h>
+#include <ndn/lned.h>
 
 #define MAX_TERM_WIDTH 256
 #define CTL(x) ((x)-'@')

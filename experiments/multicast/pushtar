@@ -1,8 +1,11 @@
 #!/bin/sh
 # multicast/pushtar
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -15,6 +18,6 @@
 DISTHOST="${1:-sylvester}"
 cd ../..
 make tar
-rm -f ccnx.tar.gz
-gzip ccnx.tar
-scp ccnx.tar.gz $DISTHOST:.
+rm -f ndnx.tar.gz
+gzip ndnx.tar
+scp ndnx.tar.gz $DISTHOST:.

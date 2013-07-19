@@ -1,7 +1,7 @@
-CCNx Sync Schema
+NDNx Sync Schema
 ================
 
-== CCNx Sync XML schema
+== NDNx Sync XML schema
 
 This corresponds to the DTD link:sync.dtd.html[sync.dtd].
 

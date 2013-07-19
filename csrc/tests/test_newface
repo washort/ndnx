@@ -1,7 +1,10 @@
 # tests/test_newface
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -11,20 +14,20 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
 #
-AFTER : test_single_ccnd test_coders
-BEFORE : test_single_ccnd_teardown
+AFTER : test_single_ndnd test_coders
+BEFORE : test_single_ndnd_teardown
 
-rm newface*.ccnb
-ccndsmoketest || SkipTest no ccnd
+rm newface*.ndnb
+ndndsmoketest || SkipTest no ndnd
 
-# We need to learn the CCNDID of our ccnd.
-. test_ccndid
+# We need to learn the NDNDID of our ndnd.
+. test_ndndid
 
 # Create the body of a face creation request.
-ccn_xmltoccnb -w - <<EOF >newface.ccnb
+ndn_xmltondnb -w - <<EOF >newface.ndnb
 <FaceInstance>
   <Action>newface</Action>
-  <PublisherPublicKeyDigest ccnbencoding="hexBinary">$CCNDID</PublisherPublicKeyDigest>
+  <PublisherPublicKeyDigest ndnbencoding="hexBinary">$NDNDID</PublisherPublicKeyDigest>
   <IPProto>17</IPProto>
   <Host>10.211.55.8</Host>
   <Port>9695</Port>
@@ -32,11 +35,11 @@ ccn_xmltoccnb -w - <<EOF >newface.ccnb
 </FaceInstance>
 EOF
 
-cat newface.ccnb | ccnpoke -f -x 30 /_this_name_ignored_$$
+cat newface.ndnb | ndnpoke -f -x 30 /_this_name_ignored_$$
 
 # Pull it out to use in the face creation request.  Base-64 encode it for the benefit of the shell.
 
-NFBLOB="`ccnpeek /_this_name_ignored_$$ | openssl enc -base64`"
+NFBLOB="`ndnpeek /_this_name_ignored_$$ | openssl enc -base64`"
 
 echo NFBLOB is $NFBLOB >&2
 
@@ -45,20 +48,20 @@ echo NFBLOB is $NFBLOB >&2
 cat <<EOF >newface-request.xml
 <Interest>
   <Name>
-    <Component ccnbencoding="text">ccnx</Component>
-    <Component ccnbencoding="hexBinary">$CCNDID</Component>
-    <Component ccnbencoding="text">newface</Component>
-    <Component ccnbencoding="base64Binary">$NFBLOB</Component>
+    <Component ndnbencoding="text">ndnx</Component>
+    <Component ndnbencoding="hexBinary">$NDNDID</Component>
+    <Component ndnbencoding="text">newface</Component>
+    <Component ndnbencoding="base64Binary">$NFBLOB</Component>
   </Name>
   <Scope>1</Scope>
 </Interest>
 EOF
-ccn_xmltoccnb -w newface-request.xml || Fail botch constructing newface-request.ccnb
+ndn_xmltondnb -w newface-request.xml || Fail botch constructing newface-request.ndnb
 
 # Try out the face creation request
-ccndsmoketest -b send newface-request.ccnb recv > newface-response.ccnb
+ndndsmoketest -b send newface-request.ndnb recv > newface-response.ndnb
 
-ccn_ccnbtoxml newface-response.ccnb || Fail did not get newface response
+ndn_ndnbtoxml newface-response.ndnb || Fail did not get newface response
 
 # Testing for the request to time out would be more complicated.
 rm newface-request.xml

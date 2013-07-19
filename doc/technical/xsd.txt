@@ -1,11 +1,11 @@
-CCNx Main Schema
+NDNx Main Schema
 ===============
 
-== CCNx XML schema
+== NDNx XML schema
 
-This corresponds to the DTD link:dtd.html[ccnx.dtd].
+This corresponds to the DTD link:dtd.html[ndnx.dtd].
 
-.ccnx.xsd
+.ndnx.xsd
 ------------------------------------
-include::../../schema/ccnx.xsd[]
+include::../../schema/ndnx.xsd[]
 ------------------------------------

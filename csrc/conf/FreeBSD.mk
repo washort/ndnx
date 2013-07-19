@@ -1,7 +1,10 @@
 # conf/FreeBSD.mk
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2010 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,7 +15,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 SHEXT=so
-SHLIBNAME=libccn.$(SHEXT).1
+SHLIBNAME=libndn.$(SHEXT).1
 SHLIBDEPS=
 SHARED_LD_FLAGS= -shared -whole-archive -soname=$(SHLIBNAME) -lc
 PLATCFLAGS=-fPIC

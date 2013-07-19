@@ -5,8 +5,11 @@
  * Implements a library interface to the Sync protocol facilities implemented
  * by the Repository
  *
- * Part of the CCNx C Library.
+ * Part of the NDNx C Library.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2012-2013 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -26,14 +29,14 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/time.h>
-#include <ccn/ccn.h>
-#include <ccn/coding.h>
-#include <ccn/digest.h>
-#include <ccn/loglevels.h>
-#include <ccn/schedule.h>
-#include <ccn/sync.h>
-#include <ccn/uri.h>
-#include <ccn/ccn_private.h>
+#include <ndn/ndn.h>
+#include <ndn/coding.h>
+#include <ndn/digest.h>
+#include <ndn/loglevels.h>
+#include <ndn/schedule.h>
+#include <ndn/sync.h>
+#include <ndn/uri.h>
+#include <ndn/ndn_private.h>
 
 
 #include "sync_diff.h"
@@ -57,29 +60,29 @@
 #define NAMES_YIELD_INC 100        // number of names to inc between yield tests
 #define NAMES_YIELD_MICROS 20*1000 // number of micros to use as yield trigger
 
-struct ccns_slice {
+struct ndns_slice {
     unsigned version;
     unsigned nclauses;
-    struct ccn_charbuf *topo;
-    struct ccn_charbuf *prefix;
-    struct ccn_charbuf **clauses; // contents defined in documentation, need utils
+    struct ndn_charbuf *topo;
+    struct ndn_charbuf *prefix;
+    struct ndn_charbuf **clauses; // contents defined in documentation, need utils
 };
 
-#define CCNS_FLAGS_SC 1      // start at current root hash.
+#define NDNS_FLAGS_SC 1      // start at current root hash.
 
-struct ccns_handle {
+struct ndns_handle {
     struct sync_plumbing *sync_plumbing;
     struct SyncBaseStruct *base;
     struct SyncRootStruct *root;
-    struct ccn_scheduled_event *ev;
-    struct ccns_name_closure *nc;
+    struct ndn_scheduled_event *ev;
+    struct ndns_name_closure *nc;
     struct SyncHashCacheEntry *last_ce;
     struct SyncHashCacheEntry *next_ce;
     struct SyncNameAccum *namesToAdd;
     struct SyncHashInfoList *hashSeen;
-    struct ccn_closure *registered; // registered action for RA interests
+    struct ndn_closure *registered; // registered action for RA interests
     int debug;
-    struct ccn *ccn;
+    struct ndn *ndn;
     struct sync_diff_fetch_data *fetch_data;
     struct sync_diff_data *diff_data;
     struct sync_update_data *update_data;
@@ -89,37 +92,37 @@ struct ccns_handle {
 };
 
 /*
- * Utility routines to allocate/deallocate ccns_slice structures
+ * Utility routines to allocate/deallocate ndns_slice structures
  */
-struct ccns_slice *
-ccns_slice_create() {
-    struct ccns_slice *s = calloc(1, sizeof(*s));
+struct ndns_slice *
+ndns_slice_create() {
+    struct ndns_slice *s = calloc(1, sizeof(*s));
     if (s == NULL)
         return(NULL);
     s->version = SLICE_VERSION;
-    s->topo = ccn_charbuf_create_n(8); // name encoding requires minimum 2
-    s->prefix = ccn_charbuf_create_n(8);
+    s->topo = ndn_charbuf_create_n(8); // name encoding requires minimum 2
+    s->prefix = ndn_charbuf_create_n(8);
     if (s->topo == NULL || s->prefix == NULL) {
-        ccn_charbuf_destroy(&s->topo);
-        ccn_charbuf_destroy(&s->prefix);
+        ndn_charbuf_destroy(&s->topo);
+        ndn_charbuf_destroy(&s->prefix);
         free(s);
         s = NULL;
     } else {
-        ccn_name_init(s->topo);
-        ccn_name_init(s->prefix);
+        ndn_name_init(s->topo);
+        ndn_name_init(s->prefix);
     }
     return(s);
 }
 void
-ccns_slice_destroy(struct ccns_slice **sp) {
-    struct ccns_slice *s = *sp;
+ndns_slice_destroy(struct ndns_slice **sp) {
+    struct ndns_slice *s = *sp;
     if (s != NULL) {
-        ccn_charbuf_destroy(&(s->topo));
-        ccn_charbuf_destroy(&(s->prefix));
+        ndn_charbuf_destroy(&(s->topo));
+        ndn_charbuf_destroy(&(s->prefix));
         if (s->clauses != NULL) {
             while(s->nclauses > 0) {
                 s->nclauses--;
-                ccn_charbuf_destroy(&(s->clauses[s->nclauses]));
+                ndn_charbuf_destroy(&(s->clauses[s->nclauses]));
             }
             free(s->clauses);
         }
@@ -129,13 +132,13 @@ ccns_slice_destroy(struct ccns_slice **sp) {
 }
 
 /*
- * Utility routine to add a clause to a ccns_slice structure
+ * Utility routine to add a clause to a ndns_slice structure
  */
 int
-ccns_slice_add_clause(struct ccns_slice *s, struct ccn_charbuf *c) {
-    struct ccn_charbuf **clauses = NULL;
-    struct ccn_charbuf *clause;
-    clause = ccn_charbuf_create_n(c->length);
+ndns_slice_add_clause(struct ndns_slice *s, struct ndn_charbuf *c) {
+    struct ndn_charbuf **clauses = NULL;
+    struct ndn_charbuf *clause;
+    clause = ndn_charbuf_create_n(c->length);
     if (clause == NULL)
         return(-1);
     if (s->clauses == NULL) {
@@ -148,12 +151,12 @@ ccns_slice_add_clause(struct ccns_slice *s, struct ccn_charbuf *c) {
             goto Cleanup;
         s->clauses = clauses;
     }
-    ccn_charbuf_append_charbuf(clause, c);
+    ndn_charbuf_append_charbuf(clause, c);
     s->clauses[s->nclauses++] = clause;
     return (0);
 
 Cleanup:
-    ccn_charbuf_destroy(&clause);
+    ndn_charbuf_destroy(&clause);
     return (-1);
 }
 
@@ -162,17 +165,17 @@ Cleanup:
  * passed in charbufs
  */
 int
-ccns_slice_set_topo_prefix(struct ccns_slice *s,
-                           struct ccn_charbuf *t,
-                           struct ccn_charbuf *p) {
+ndns_slice_set_topo_prefix(struct ndns_slice *s,
+                           struct ndn_charbuf *t,
+                           struct ndn_charbuf *p) {
     int res = 0;
     if (t != NULL) {
-        ccn_charbuf_reset(s->topo);
-        res |= ccn_charbuf_append_charbuf(s->topo, t);
+        ndn_charbuf_reset(s->topo);
+        res |= ndn_charbuf_append_charbuf(s->topo, t);
     }
     if (p != NULL) {
-        ccn_charbuf_reset(s->prefix);
-        res |= ccn_charbuf_append_charbuf(s->prefix, p);
+        ndn_charbuf_reset(s->prefix);
+        res |= ndn_charbuf_append_charbuf(s->prefix, p);
     }
     return(res);
 }
@@ -182,21 +185,21 @@ ccns_slice_set_topo_prefix(struct ccns_slice *s,
  * slice to a charbuf
  */
 static int
-append_slice(struct ccn_charbuf *c, struct ccns_slice *s) {
+append_slice(struct ndn_charbuf *c, struct ndns_slice *s) {
     int res = 0;
     int i;
 
-    res |= ccnb_element_begin(c, CCN_DTAG_SyncConfigSlice);
-    res |= ccnb_tagged_putf(c, CCN_DTAG_SyncVersion, "%u", SLICE_VERSION);
-    res |= ccn_charbuf_append_charbuf(c, s->topo);
-    res |= ccn_charbuf_append_charbuf(c, s->prefix);
-    res |= ccnb_element_begin(c, CCN_DTAG_SyncConfigSliceList);
+    res |= ndnb_element_begin(c, NDN_DTAG_SyncConfigSlice);
+    res |= ndnb_tagged_putf(c, NDN_DTAG_SyncVersion, "%u", SLICE_VERSION);
+    res |= ndn_charbuf_append_charbuf(c, s->topo);
+    res |= ndn_charbuf_append_charbuf(c, s->prefix);
+    res |= ndnb_element_begin(c, NDN_DTAG_SyncConfigSliceList);
     for (i = 0; i < s->nclauses ; i++) {
-        res |= ccnb_tagged_putf(c, CCN_DTAG_SyncConfigSliceOp, "%u", 0);
-        res |= ccn_charbuf_append_charbuf(c, s->clauses[i]);
+        res |= ndnb_tagged_putf(c, NDN_DTAG_SyncConfigSliceOp, "%u", 0);
+        res |= ndn_charbuf_append_charbuf(c, s->clauses[i]);
     }
-    res |= ccnb_element_end(c);
-    res |= ccnb_element_end(c);
+    res |= ndnb_element_end(c);
+    res |= ndnb_element_end(c);
     return (res);
 }
 /*
@@ -204,123 +207,123 @@ append_slice(struct ccn_charbuf *c, struct ccns_slice *s) {
  * structure.
  */
 static int
-slice_parse(struct ccns_slice *s, const unsigned char *p, size_t size) {
+slice_parse(struct ndns_slice *s, const unsigned char *p, size_t size) {
     int res = 0;
-    struct ccn_buf_decoder decoder;
-    struct ccn_buf_decoder *d = ccn_buf_decoder_start(&decoder, p, size);
+    struct ndn_buf_decoder decoder;
+    struct ndn_buf_decoder *d = ndn_buf_decoder_start(&decoder, p, size);
     uintmax_t version;
     int op;
     int start;
-    struct ccn_charbuf *clause = NULL;
+    struct ndn_charbuf *clause = NULL;
 
-    if (!ccn_buf_match_dtag(d, CCN_DTAG_SyncConfigSlice))
+    if (!ndn_buf_match_dtag(d, NDN_DTAG_SyncConfigSlice))
         return (-1);
-    ccn_buf_advance(d);
-    if (!ccn_buf_match_dtag(d, CCN_DTAG_SyncVersion))
+    ndn_buf_advance(d);
+    if (!ndn_buf_match_dtag(d, NDN_DTAG_SyncVersion))
         return (-1);
-    ccn_buf_advance(d);
-    ccn_parse_uintmax(d, &version);
-    ccn_buf_check_close(d);
+    ndn_buf_advance(d);
+    ndn_parse_uintmax(d, &version);
+    ndn_buf_check_close(d);
     if (version != SLICE_VERSION)
         return (-1);
     start = d->decoder.token_index;
-    if (ccn_parse_Name(d, NULL) < 0)
+    if (ndn_parse_Name(d, NULL) < 0)
         return(-1);
-    ccn_charbuf_reset(s->topo);
-    res = ccn_charbuf_append(s->topo, p + start, d->decoder.token_index - start);
+    ndn_charbuf_reset(s->topo);
+    res = ndn_charbuf_append(s->topo, p + start, d->decoder.token_index - start);
     if (res < 0)
         return(-1);
     start = d->decoder.token_index;
-    if (ccn_parse_Name(d, NULL) < 0)
+    if (ndn_parse_Name(d, NULL) < 0)
         return(-1);
-    ccn_charbuf_reset(s->prefix);
-    res = ccn_charbuf_append(s->prefix, p + start, d->decoder.token_index - start);
+    ndn_charbuf_reset(s->prefix);
+    res = ndn_charbuf_append(s->prefix, p + start, d->decoder.token_index - start);
     if (res < 0)
         return(-1);
-    if (!ccn_buf_match_dtag(d, CCN_DTAG_SyncConfigSliceList))
+    if (!ndn_buf_match_dtag(d, NDN_DTAG_SyncConfigSliceList))
         return(-1);
-    ccn_buf_advance(d);
-    clause = ccn_charbuf_create();
+    ndn_buf_advance(d);
+    clause = ndn_charbuf_create();
     if (clause == NULL)
         return(-1);
-    while (ccn_buf_match_dtag(d, CCN_DTAG_SyncConfigSliceOp)) {
-        ccn_buf_advance(d);
-        op = ccn_parse_nonNegativeInteger(d); // op is a small integer
-        ccn_buf_check_close(d);
+    while (ndn_buf_match_dtag(d, NDN_DTAG_SyncConfigSliceOp)) {
+        ndn_buf_advance(d);
+        op = ndn_parse_nonNegativeInteger(d); // op is a small integer
+        ndn_buf_check_close(d);
         if (op != 0)
             break;
-        ccn_charbuf_reset(clause);
+        ndn_charbuf_reset(clause);
         start = d->decoder.token_index;
-        if (ccn_parse_Name(d, NULL) < 0)
+        if (ndn_parse_Name(d, NULL) < 0)
             break;
-        res = ccn_charbuf_append(clause, p + start, d->decoder.token_index - start);
-        ccns_slice_add_clause(s, clause);
+        res = ndn_charbuf_append(clause, p + start, d->decoder.token_index - start);
+        ndns_slice_add_clause(s, clause);
     }
-    ccn_charbuf_destroy(&clause);
-    ccn_buf_check_close(d); /* </SyncConfigSliceList> */
-    ccn_buf_check_close(d); /* </SyncConfigSlice> */
-    if (d->decoder.index != size || !CCN_FINAL_DSTATE(d->decoder.state))
+    ndn_charbuf_destroy(&clause);
+    ndn_buf_check_close(d); /* </SyncConfigSliceList> */
+    ndn_buf_check_close(d); /* </SyncConfigSlice> */
+    if (d->decoder.index != size || !NDN_FINAL_DSTATE(d->decoder.state))
         return(-1);
     return(0);
 }
 /**
  * Construct the name of a Sync configuration slice based on the parameters.
- * @param nm is the ccn_charbuf which will be set to the ccnb encoded Name
+ * @param nm is the ndn_charbuf which will be set to the ndnb encoded Name
  * @param s is the definition of the slice for which the name is required.
- * @returns a ccn_charbuf with the ccnb encoded Name of the slice.
+ * @returns a ndn_charbuf with the ndnb encoded Name of the slice.
  */
 
 int
-ccns_slice_name(struct ccn_charbuf *nm, struct ccns_slice *s)
+ndns_slice_name(struct ndn_charbuf *nm, struct ndns_slice *s)
 {
-    struct ccn_charbuf *c;
-    struct ccn_digest *digest = NULL;
-    struct ccn_charbuf *hash = NULL;
+    struct ndn_charbuf *c;
+    struct ndn_digest *digest = NULL;
+    struct ndn_charbuf *hash = NULL;
     int res = 0;
 
-    c = ccn_charbuf_create();
+    c = ndn_charbuf_create();
     if (c == NULL)
         return (-1);
     res = append_slice(c, s);
     if (res < 0)
         goto Cleanup;
 
-    digest = ccn_digest_create(CCN_DIGEST_SHA256);
-    hash = ccn_charbuf_create_n(ccn_digest_size(digest));
+    digest = ndn_digest_create(NDN_DIGEST_SHA256);
+    hash = ndn_charbuf_create_n(ndn_digest_size(digest));
     if (hash == NULL)
         goto Cleanup;
-    ccn_digest_init(digest);
-    res |= ccn_digest_update(digest, c->buf, c->length);
-    res |= ccn_digest_final(digest, hash->buf, hash->limit);
+    ndn_digest_init(digest);
+    res |= ndn_digest_update(digest, c->buf, c->length);
+    res |= ndn_digest_final(digest, hash->buf, hash->limit);
     if (res < 0)
         goto Cleanup;
     hash->length = hash->limit;
-    if (ccn_name_from_uri(nm, "ccnx:/%C1.M.S.localhost/%C1.S.cs") < 0)
+    if (ndn_name_from_uri(nm, "ndn:/%C1.M.S.localhost/%C1.S.cs") < 0)
         res = -1;
-    res |= ccn_name_append(nm, hash->buf, hash->length);
+    res |= ndn_name_append(nm, hash->buf, hash->length);
 
 Cleanup:
-    ccn_charbuf_destroy(&c);
-    ccn_digest_destroy(&digest);
-    ccn_charbuf_destroy(&hash);
+    ndn_charbuf_destroy(&c);
+    ndn_digest_destroy(&digest);
+    ndn_charbuf_destroy(&hash);
     return (res);
 }
 
 /**
  * Read a slice (from a repository) given the name.
- * @param h is the ccn_handle on which to read.
+ * @param h is the ndn_handle on which to read.
  * @param name is the charbuf containing the name of the sync slice to be read.
- * @param slice is a pointer to a ccns_slice object which will be filled in
+ * @param slice is a pointer to a ndns_slice object which will be filled in
  *  on successful return.
  * @returns 0 on success, -1 otherwise.
  */
 int
-ccns_read_slice(struct ccn *h, struct ccn_charbuf *name,
-                struct ccns_slice *slice) {
-    struct ccn_parsed_ContentObject pco_space = { 0 };
-    struct ccn_parsed_ContentObject *pco = &pco_space;
-    struct ccn_charbuf *nc = ccn_charbuf_create_n(name->length);
-    struct ccn_charbuf *cob = ccn_charbuf_create();
+ndns_read_slice(struct ndn *h, struct ndn_charbuf *name,
+                struct ndns_slice *slice) {
+    struct ndn_parsed_ContentObject pco_space = { 0 };
+    struct ndn_parsed_ContentObject *pco = &pco_space;
+    struct ndn_charbuf *nc = ndn_charbuf_create_n(name->length);
+    struct ndn_charbuf *cob = ndn_charbuf_create();
     const unsigned char *content;
     size_t content_length;
     int res = -1;
@@ -328,97 +331,97 @@ ccns_read_slice(struct ccn *h, struct ccn_charbuf *name,
     if (nc == NULL || cob == NULL)
         goto Cleanup;
 
-    ccn_charbuf_append_charbuf(nc, name);
-    res = ccn_resolve_version(h, nc,  CCN_V_HIGHEST, 100); // XXX: timeout
+    ndn_charbuf_append_charbuf(nc, name);
+    res = ndn_resolve_version(h, nc,  NDN_V_HIGHEST, 100); // XXX: timeout
     if (res < 0)
         goto Cleanup;
     if (res == 0) {
         // TODO: check if the last component is a segment number, chop it off, try again.
     }
-    res = ccn_get(h, nc, NULL, 100, cob, pco, NULL, 0);
+    res = ndn_get(h, nc, NULL, 100, cob, pco, NULL, 0);
     if (res < 0)
         goto Cleanup;
-    if (pco->type != CCN_CONTENT_DATA) {
+    if (pco->type != NDN_CONTENT_DATA) {
         res = -1;
         goto Cleanup;
     }
-    res = ccn_content_get_value(cob->buf, cob->length, pco,
+    res = ndn_content_get_value(cob->buf, cob->length, pco,
                                 &content, &content_length);
     if (res < 0)
         goto Cleanup;
     res = slice_parse(slice, content, content_length);
 
 Cleanup:
-    ccn_charbuf_destroy(&nc);
-    ccn_charbuf_destroy(&cob);
+    ndn_charbuf_destroy(&nc);
+    ndn_charbuf_destroy(&cob);
     return (res);
 }
 
-struct ccn_charbuf *
+struct ndn_charbuf *
 make_scope1_template(void) {
-    struct ccn_charbuf *templ = NULL;
-    templ = ccn_charbuf_create_n(16);
-    ccnb_element_begin(templ, CCN_DTAG_Interest);
-    ccnb_element_begin(templ, CCN_DTAG_Name);
-    ccnb_element_end(templ); /* </Name> */
-    ccnb_tagged_putf(templ, CCN_DTAG_Scope, "%u", 1);
-    ccnb_element_end(templ); /* </Interest> */
+    struct ndn_charbuf *templ = NULL;
+    templ = ndn_charbuf_create_n(16);
+    ndnb_element_begin(templ, NDN_DTAG_Interest);
+    ndnb_element_begin(templ, NDN_DTAG_Name);
+    ndnb_element_end(templ); /* </Name> */
+    ndnb_tagged_putf(templ, NDN_DTAG_Scope, "%u", 1);
+    ndnb_element_end(templ); /* </Interest> */
     return(templ);
 }
 
-static enum ccn_upcall_res
-write_interest_handler (struct ccn_closure *selfp,
-                        enum ccn_upcall_kind kind,
-                        struct ccn_upcall_info *info) {
-    struct ccn_charbuf *cob = selfp->data;
-    struct ccn *h = info->h;
+static enum ndn_upcall_res
+write_interest_handler (struct ndn_closure *selfp,
+                        enum ndn_upcall_kind kind,
+                        struct ndn_upcall_info *info) {
+    struct ndn_charbuf *cob = selfp->data;
+    struct ndn *h = info->h;
 
-    if (kind != CCN_UPCALL_INTEREST)
-        return(CCN_UPCALL_RESULT_OK);
-    if (ccn_content_matches_interest(cob->buf, cob->length, 1, NULL,
-                                     info->interest_ccnb,
-                                     info->pi->offset[CCN_PI_E],
+    if (kind != NDN_UPCALL_INTEREST)
+        return(NDN_UPCALL_RESULT_OK);
+    if (ndn_content_matches_interest(cob->buf, cob->length, 1, NULL,
+                                     info->interest_ndnb,
+                                     info->pi->offset[NDN_PI_E],
                                      info->pi)) {
-        ccn_put(info->h, cob->buf, cob->length);
+        ndn_put(info->h, cob->buf, cob->length);
         selfp->intdata = 1;
-        ccn_set_run_timeout(h, 0);
-        return(CCN_UPCALL_RESULT_INTEREST_CONSUMED);
+        ndn_set_run_timeout(h, 0);
+        return(NDN_UPCALL_RESULT_INTEREST_CONSUMED);
     }
-    return(CCN_UPCALL_RESULT_OK);
+    return(NDN_UPCALL_RESULT_OK);
 }
 
 static int
-write_slice(struct ccn *h,
-            struct ccns_slice *slice,
-            struct ccn_charbuf *name) {
-    struct ccn_charbuf *content = NULL;
+write_slice(struct ndn *h,
+            struct ndns_slice *slice,
+            struct ndn_charbuf *name) {
+    struct ndn_charbuf *content = NULL;
     unsigned char *cbuf = NULL;
     size_t clength = 0;
-    struct ccn_charbuf *sw = NULL;
-    struct ccn_charbuf *templ = NULL;
-    struct ccn_charbuf *cob = NULL;
-    struct ccn_signing_params sparm = CCN_SIGNING_PARAMS_INIT;
-    struct ccn_closure *wc = NULL;
+    struct ndn_charbuf *sw = NULL;
+    struct ndn_charbuf *templ = NULL;
+    struct ndn_charbuf *cob = NULL;
+    struct ndn_signing_params sparm = NDN_SIGNING_PARAMS_INIT;
+    struct ndn_closure *wc = NULL;
     int res;
 
-    sw = ccn_charbuf_create_n(32 + name->length);
+    sw = ndn_charbuf_create_n(32 + name->length);
     if (sw == NULL) {
         res = -1;
         goto Cleanup;
     }
-    ccn_charbuf_append_charbuf(sw, name);
-    ccn_name_chop(sw, NULL, -1); // remove segment number
-    ccn_name_from_uri(sw, "%C1.R.sw");
-    ccn_name_append_nonce(sw);
+    ndn_charbuf_append_charbuf(sw, name);
+    ndn_name_chop(sw, NULL, -1); // remove segment number
+    ndn_name_from_uri(sw, "%C1.R.sw");
+    ndn_name_append_nonce(sw);
 
     // create and sign the content object
-    cob = ccn_charbuf_create();
+    cob = ndn_charbuf_create();
     if (cob == NULL) {
         res = -1;
         goto Cleanup;
     }
     if (slice != NULL) {
-        content = ccn_charbuf_create();
+        content = ndn_charbuf_create();
         if (content == NULL) {
             res = -1;
             goto Cleanup;
@@ -429,11 +432,11 @@ write_slice(struct ccn *h,
         cbuf = content->buf;
         clength = content->length;
     } else {
-        sparm.type = CCN_CONTENT_GONE;
+        sparm.type = NDN_CONTENT_GONE;
     }
 
-    sparm.sp_flags = CCN_SP_FINAL_BLOCK;
-    res = ccn_sign_content(h, cob, name, &sparm, cbuf, clength);
+    sparm.sp_flags = NDN_SP_FINAL_BLOCK;
+    res = ndn_sign_content(h, cob, name, &sparm, cbuf, clength);
     if (res < 0)
         goto Cleanup;
     // establish handler for interest in the slice content object
@@ -444,7 +447,7 @@ write_slice(struct ccn *h,
     }
     wc->p = &write_interest_handler;
     wc->data = cob;
-    res = ccn_set_interest_filter(h, name, wc);
+    res = ndn_set_interest_filter(h, name, wc);
     if (res < 0)
         goto Cleanup;
     templ = make_scope1_template();
@@ -452,82 +455,82 @@ write_slice(struct ccn *h,
         res = -1;
         goto Cleanup;
     }
-    res = ccn_get(h, sw, templ, 1000, NULL, NULL, NULL, 0);
+    res = ndn_get(h, sw, templ, 1000, NULL, NULL, NULL, 0);
     if (res < 0)
         goto Cleanup;
-    ccn_run(h, 1000); // give the repository a chance to fetch the data
+    ndn_run(h, 1000); // give the repository a chance to fetch the data
     if (wc->intdata != 1) {
         res = -1;
         goto Cleanup;
     }
     res = 0;
 Cleanup:
-    ccn_set_interest_filter(h, name, NULL);
+    ndn_set_interest_filter(h, name, NULL);
     if (wc != NULL)
         free(wc);
-    ccn_charbuf_destroy(&cob);
-    ccn_charbuf_destroy(&content);
-    ccn_charbuf_destroy(&sw);
-    ccn_charbuf_destroy(&templ);
+    ndn_charbuf_destroy(&cob);
+    ndn_charbuf_destroy(&content);
+    ndn_charbuf_destroy(&sw);
+    ndn_charbuf_destroy(&templ);
     return (res);
 }
 
 /**
- * Write a ccns_slice object to a repository.
- * @param h is the ccn_handle on which to write.
- * @param slice is a pointer to a ccns_slice object to be written.
+ * Write a ndns_slice object to a repository.
+ * @param h is the ndn_handle on which to write.
+ * @param slice is a pointer to a ndns_slice object to be written.
  * @param name if non-NULL, is a pointer to a charbuf which will be filled
  *  in with the name of the slice that was written.
  * @returns 0 on success, -1 otherwise.
  */
 int
-ccns_write_slice(struct ccn *h,
-                 struct ccns_slice *slice,
-                 struct ccn_charbuf *name) {
-    struct ccn_charbuf *n = NULL;
+ndns_write_slice(struct ndn *h,
+                 struct ndns_slice *slice,
+                 struct ndn_charbuf *name) {
+    struct ndn_charbuf *n = NULL;
     int res;
     // calculate versioned and segmented name for the slice
-    n = ccn_charbuf_create();
+    n = ndn_charbuf_create();
     if (n == NULL)
         return(-1);
-    res = ccns_slice_name(n, slice);
+    res = ndns_slice_name(n, slice);
     if (res < 0)
         goto Cleanup;
-    res |= ccn_create_version(h, n, CCN_V_NOW, 0, 0);
+    res |= ndn_create_version(h, n, NDN_V_NOW, 0, 0);
     if (name != NULL) {
-        ccn_charbuf_reset(name);
-        res |= ccn_charbuf_append_charbuf(name, n);
+        ndn_charbuf_reset(name);
+        res |= ndn_charbuf_append_charbuf(name, n);
     }
-    res |= ccn_name_append_numeric(n, CCN_MARKER_SEQNUM, 0);
+    res |= ndn_name_append_numeric(n, NDN_MARKER_SEQNUM, 0);
     if (res < 0)
         goto Cleanup;
     res = write_slice(h, slice, n);
 
 Cleanup:
-    ccn_charbuf_destroy(&n);
+    ndn_charbuf_destroy(&n);
     return (res);
 }
 /**
- * Delete a ccns_slice object from a repository.
- * @param h is the ccn_handle on which to write.
+ * Delete a ndns_slice object from a repository.
+ * @param h is the ndn_handle on which to write.
  * @param name is a pointer to a charbuf naming the slice to be deleted.
  * @returns 0 on success, -1 otherwise.
  */
 int
-ccns_delete_slice(struct ccn *h, struct ccn_charbuf *name) {
-    struct ccn_charbuf *n = NULL;
+ndns_delete_slice(struct ndn *h, struct ndn_charbuf *name) {
+    struct ndn_charbuf *n = NULL;
     int res = 0;
 
     // calculate versioned and segmented name for the slice
-    n = ccn_charbuf_create_n(32 + name->length);
+    n = ndn_charbuf_create_n(32 + name->length);
     if (n == NULL)
         return(-1);
-    res |= ccn_charbuf_append_charbuf(n, name);
-    res |= ccn_create_version(h, n, CCN_V_NOW | CCN_V_REPLACE, 0, 0);
-    res |= ccn_name_append_numeric(n, CCN_MARKER_SEQNUM, 0);
+    res |= ndn_charbuf_append_charbuf(n, name);
+    res |= ndn_create_version(h, n, NDN_V_NOW | NDN_V_REPLACE, 0, 0);
+    res |= ndn_name_append_numeric(n, NDN_MARKER_SEQNUM, 0);
     if (res >= 0)
         res = write_slice(h, NULL, n);
-    ccn_charbuf_destroy(&n);
+    ndn_charbuf_destroy(&n);
     return (res);
 }
 
@@ -535,7 +538,7 @@ ccns_delete_slice(struct ccn *h, struct ccn_charbuf *name) {
  * local time source for event schedule
  */
 static void
-gettime(const struct ccn_gettime *self, struct ccn_timeval *result) {
+gettime(const struct ndn_gettime *self, struct ndn_timeval *result) {
     struct timeval now = {0};
     gettimeofday(&now, 0);
     result->s = now.tv_sec;
@@ -588,24 +591,24 @@ my_r_sync_msg(struct sync_plumbing *sd, const char *fmt, ...) {
 // extractNode parses and creates a sync tree node from an upcall info
 // returns NULL if there was any kind of error
 static struct SyncNodeComposite *
-extractNode(struct SyncRootStruct *root, struct ccn_upcall_info *info) {
+extractNode(struct SyncRootStruct *root, struct ndn_upcall_info *info) {
     // first, find the content
     char *here = "sync_track.extractNode";
     const unsigned char *cp = NULL;
     size_t cs = 0;
-    size_t ccnb_size = info->pco->offset[CCN_PCO_E];
-    const unsigned char *ccnb = info->content_ccnb;
-    int res = ccn_content_get_value(ccnb, ccnb_size, info->pco,
+    size_t ndnb_size = info->pco->offset[NDN_PCO_E];
+    const unsigned char *ndnb = info->content_ndnb;
+    int res = ndn_content_get_value(ndnb, ndnb_size, info->pco,
                                     &cp, &cs);
     if (res < 0 || cs < DEFAULT_HASH_BYTES) {
-        SyncNoteFailed(root, here, "ccn_content_get_value", __LINE__);
+        SyncNoteFailed(root, here, "ndn_content_get_value", __LINE__);
         return NULL;
     }
     
     // second, parse the object
     struct SyncNodeComposite *nc = SyncAllocComposite(root->base);
-    struct ccn_buf_decoder ds;
-    struct ccn_buf_decoder *d = ccn_buf_decoder_start(&ds, cp, cs);
+    struct ndn_buf_decoder ds;
+    struct ndn_buf_decoder *d = ndn_buf_decoder_start(&ds, cp, cs);
     res |= SyncParseComposite(nc, d);
     if (res < 0) {
         // failed, so back out of the allocations
@@ -617,7 +620,7 @@ extractNode(struct SyncRootStruct *root, struct ccn_upcall_info *info) {
 }
 
 /* UNUSED */ struct sync_diff_fetch_data *
-check_fetch_data(struct ccns_handle *ch, struct sync_diff_fetch_data *fd) {
+check_fetch_data(struct ndns_handle *ch, struct sync_diff_fetch_data *fd) {
     struct sync_diff_fetch_data *each = ch->fetch_data;
     while (each != NULL) {
         struct sync_diff_fetch_data *next = each->next;
@@ -628,7 +631,7 @@ check_fetch_data(struct ccns_handle *ch, struct sync_diff_fetch_data *fd) {
 }
 
 static struct sync_diff_fetch_data *
-find_fetch_data(struct ccns_handle *ch, struct SyncHashCacheEntry *ce) {
+find_fetch_data(struct ndns_handle *ch, struct SyncHashCacheEntry *ce) {
     struct sync_diff_fetch_data *each = ch->fetch_data;
     while (each != NULL) {
         struct sync_diff_fetch_data *next = each->next;
@@ -639,7 +642,7 @@ find_fetch_data(struct ccns_handle *ch, struct SyncHashCacheEntry *ce) {
 }
 
 static int
-delink_fetch_data(struct ccns_handle *ch, struct sync_diff_fetch_data *fd) {
+delink_fetch_data(struct ndns_handle *ch, struct sync_diff_fetch_data *fd) {
     if (fd != NULL) {
         struct sync_diff_fetch_data *each = ch->fetch_data;
         struct sync_diff_fetch_data *lag = NULL;
@@ -658,9 +661,9 @@ delink_fetch_data(struct ccns_handle *ch, struct sync_diff_fetch_data *fd) {
 }
 
 static void
-free_fetch_data(struct ccns_handle *ch, struct sync_diff_fetch_data *fd) {
+free_fetch_data(struct ndns_handle *ch, struct sync_diff_fetch_data *fd) {
     if (delink_fetch_data(ch, fd)) {
-        struct ccn_closure *action = fd->action;
+        struct ndn_closure *action = fd->action;
         if (action != NULL && action->data == fd)
             // break the link here
             action->data = NULL;
@@ -672,14 +675,14 @@ free_fetch_data(struct ccns_handle *ch, struct sync_diff_fetch_data *fd) {
 
 static void
 setCurrentHash(struct SyncRootStruct *root, struct SyncHashCacheEntry *ce) {
-    struct ccn_charbuf *hash = root->currentHash;
+    struct ndn_charbuf *hash = root->currentHash;
     hash->length = 0;
     if (ce != NULL)
-        ccn_charbuf_append_charbuf(hash, ce->hash);
+        ndn_charbuf_append_charbuf(hash, ce->hash);
 }
 
 static struct SyncHashCacheEntry *
-chooseNextHash(struct ccns_handle *ch) {
+chooseNextHash(struct ndns_handle *ch) {
     struct SyncHashCacheEntry *nce = ch->next_ce;
     if (nce != NULL && (nce->state & SyncHashState_covered) == 0
         && find_fetch_data(ch, nce) == NULL)
@@ -701,15 +704,15 @@ chooseNextHash(struct ccns_handle *ch) {
 // we reuse the sync_diff_data, but reset the comparison hashes
 // if we can't start one, we wait and try again
 static int
-each_round(struct ccn_schedule *sched,
+each_round(struct ndn_schedule *sched,
            void *clienth,
-           struct ccn_scheduled_event *ev,
+           struct ndn_scheduled_event *ev,
            int flags) {
     if (ev == NULL)
         // not valid
         return -1;
-    struct ccns_handle *ch = ev->evdata;
-    if (flags & CCN_SCHEDULE_CANCEL || ch == NULL) {
+    struct ndns_handle *ch = ev->evdata;
+    if (flags & NDN_SCHEDULE_CANCEL || ch == NULL) {
         return -1;
     }
     if (ch->needUpdate) {
@@ -765,13 +768,13 @@ each_round(struct ccn_schedule *sched,
 // start_round schedules a new comparison round,
 // cancelling any previously scheduled round
 static void
-start_round(struct ccns_handle *ch, int micros) {
-    struct ccn_scheduled_event *ev = ch->ev;
+start_round(struct ndns_handle *ch, int micros) {
+    struct ndn_scheduled_event *ev = ch->ev;
     if (ev != NULL && ev->action != NULL && ev->evdata == ch)
         // get rid of the existing event
-        ccn_schedule_cancel(ch->sync_plumbing->sched, ev);
+        ndn_schedule_cancel(ch->sync_plumbing->sched, ev);
     // start a new event
-    ch->ev = ccn_schedule_event(ch->sync_plumbing->sched,
+    ch->ev = ndn_schedule_event(ch->sync_plumbing->sched,
                                 micros,
                                 each_round,
                                 ch,
@@ -780,37 +783,37 @@ start_round(struct ccns_handle *ch, int micros) {
 }
 
 // my_response is used to handle a reply
-static enum ccn_upcall_res
-my_response(struct ccn_closure *selfp,
-            enum ccn_upcall_kind kind,
-            struct ccn_upcall_info *info) {
+static enum ndn_upcall_res
+my_response(struct ndn_closure *selfp,
+            enum ndn_upcall_kind kind,
+            struct ndn_upcall_info *info) {
     static char *here = "sync_track.my_response";
-    enum ccn_upcall_res ret = CCN_UPCALL_RESULT_ERR;
+    enum ndn_upcall_res ret = NDN_UPCALL_RESULT_ERR;
     switch (kind) {
-        case CCN_UPCALL_FINAL:
+        case NDN_UPCALL_FINAL:
             free(selfp);
-            ret = CCN_UPCALL_RESULT_OK;
+            ret = NDN_UPCALL_RESULT_OK;
             break;
-        case CCN_UPCALL_CONTENT_UNVERIFIED:
-            ret = CCN_UPCALL_RESULT_VERIFY;
+        case NDN_UPCALL_CONTENT_UNVERIFIED:
+            ret = NDN_UPCALL_RESULT_VERIFY;
             break;
-        case CCN_UPCALL_CONTENT_KEYMISSING:
-            ret = CCN_UPCALL_RESULT_FETCHKEY;
+        case NDN_UPCALL_CONTENT_KEYMISSING:
+            ret = NDN_UPCALL_RESULT_FETCHKEY;
             break;
-        case CCN_UPCALL_INTEREST_TIMED_OUT: {
+        case NDN_UPCALL_INTEREST_TIMED_OUT: {
             struct sync_diff_fetch_data *fd = selfp->data;
             //enum local_flags flags = selfp->intdata;
             if (fd == NULL) break;
             struct sync_diff_data *diff_data = fd->diff_data;
             if (diff_data == NULL) break;
-            struct ccns_handle *ch = diff_data->client_data;
+            struct ndns_handle *ch = diff_data->client_data;
             free_fetch_data(ch, fd);
             start_round(ch, 10);
-            ret = CCN_UPCALL_RESULT_OK;
+            ret = NDN_UPCALL_RESULT_OK;
             break;
         }
-        case CCN_UPCALL_CONTENT_RAW:
-        case CCN_UPCALL_CONTENT: {
+        case NDN_UPCALL_CONTENT_RAW:
+        case NDN_UPCALL_CONTENT: {
             struct sync_diff_fetch_data *fd = selfp->data;
             enum local_flags flags = selfp->intdata;
             if (fd == NULL) break;
@@ -818,9 +821,9 @@ my_response(struct ccn_closure *selfp,
             if (diff_data == NULL) break;
             struct SyncRootStruct *root = diff_data->root;
             if (root == NULL) break;
-            struct ccns_handle *ch = diff_data->client_data;
+            struct ndns_handle *ch = diff_data->client_data;
             struct SyncNodeComposite *nc = extractNode(root, info);
-            if (ch->debug >= CCNL_FINE) {
+            if (ch->debug >= NDNL_FINE) {
                 char fs[1024];
                 int pos = 0;
                 switch (flags) {
@@ -839,18 +842,18 @@ my_response(struct ccn_closure *selfp,
                 }
                 if (nc != NULL)
                     pos += snprintf(fs+pos, sizeof(fs)-pos, ", nc OK");
-                struct ccn_charbuf *nm = SyncNameForIndexbuf(info->content_ccnb,
+                struct ndn_charbuf *nm = SyncNameForIndexbuf(info->content_ndnb,
                                                              info->content_comps);
-                struct ccn_charbuf *uri = SyncUriForName(nm);
-                pos += snprintf(fs+pos, sizeof(fs)-pos, ", %s", ccn_charbuf_as_string(uri));
+                struct ndn_charbuf *uri = SyncUriForName(nm);
+                pos += snprintf(fs+pos, sizeof(fs)-pos, ", %s", ndn_charbuf_as_string(uri));
                 SyncNoteSimple(diff_data->root, here, fs);
-                ccn_charbuf_destroy(&nm);
-                ccn_charbuf_destroy(&uri);
+                ndn_charbuf_destroy(&nm);
+                ndn_charbuf_destroy(&uri);
             }
             if (nc != NULL) {
                 // the node exists, so store it
                 // TBD: check the hash?
-                struct ccns_handle *ch = diff_data->client_data;
+                struct ndns_handle *ch = diff_data->client_data;
                 struct SyncHashCacheEntry *ce = SyncHashEnter(root->ch,
                                                               nc->hash->buf, nc->hash->length,
                                                               SyncHashState_remote);
@@ -876,7 +879,7 @@ my_response(struct ccn_closure *selfp,
                     // from sync_diff
                     sync_diff_note_node(diff_data, ce);
                 }
-                ret = CCN_UPCALL_RESULT_OK;
+                ret = NDN_UPCALL_RESULT_OK;
             }
             free_fetch_data(ch, fd);
             break;
@@ -888,26 +891,26 @@ my_response(struct ccn_closure *selfp,
     return ret;
 }
 
-static enum ccn_upcall_res
-advise_interest_arrived(struct ccn_closure *selfp,
-                        enum ccn_upcall_kind kind,
-                        struct ccn_upcall_info *info) {
+static enum ndn_upcall_res
+advise_interest_arrived(struct ndn_closure *selfp,
+                        enum ndn_upcall_kind kind,
+                        struct ndn_upcall_info *info) {
     // the reason to have a listener is to be able to listen for changes
     // in the collection without relying on the replies to our root advise
     // interests, which may not receive timely replies (althoug they eventually
     // get replies)
     static char *here = "sync_track.advise_interest_arrived";
-    enum ccn_upcall_res ret = CCN_UPCALL_RESULT_ERR;
+    enum ndn_upcall_res ret = NDN_UPCALL_RESULT_ERR;
     switch (kind) {
-        case CCN_UPCALL_FINAL:
+        case NDN_UPCALL_FINAL:
             free(selfp);
-            ret = CCN_UPCALL_RESULT_OK;
+            ret = NDN_UPCALL_RESULT_OK;
             break;
-        case CCN_UPCALL_INTEREST: {
-            struct ccns_handle *ch = selfp->data;
+        case NDN_UPCALL_INTEREST: {
+            struct ndns_handle *ch = selfp->data;
             if (ch == NULL) {
                 // this got cancelled
-                ret = CCN_UPCALL_RESULT_OK;
+                ret = NDN_UPCALL_RESULT_OK;
                 break;
             }
             struct sync_diff_data *diff_data = ch->diff_data;
@@ -918,15 +921,15 @@ advise_interest_arrived(struct ccn_closure *selfp,
             // topo + marker + sliceHash
             const unsigned char *hp = NULL;
             size_t hs = 0;
-            if (ch->debug >= CCNL_FINE) {
-                struct ccn_charbuf *name = SyncNameForIndexbuf(info->interest_ccnb,
+            if (ch->debug >= NDNL_FINE) {
+                struct ndn_charbuf *name = SyncNameForIndexbuf(info->interest_ndnb,
                                                                info->interest_comps);
                 SyncNoteUri(root, here, "entered", name);
-                ccn_charbuf_destroy(&name);
+                ndn_charbuf_destroy(&name);
             }
-            int cres = ccn_name_comp_get(info->interest_ccnb, info->interest_comps, skipToHash, &hp, &hs);
+            int cres = ndn_name_comp_get(info->interest_ndnb, info->interest_comps, skipToHash, &hp, &hs);
             if (cres < 0) {
-                if (ch->debug >= CCNL_INFO)
+                if (ch->debug >= NDNL_INFO)
                     SyncNoteSimple(diff_data->root, here, "wrong number of interest name components");
                 break;
             }
@@ -934,16 +937,16 @@ advise_interest_arrived(struct ccn_closure *selfp,
                                                           SyncHashState_remote);
             if (ce == NULL || ce->state & SyncHashState_covered) {
                 // should not be added
-                if (ch->debug >= CCNL_FINE)
+                if (ch->debug >= NDNL_FINE)
                     SyncNoteSimple(diff_data->root, here, "skipped");
             } else {
                 // remember the remote hash, maybe start something
-                if (ch->debug >= CCNL_FINE)
+                if (ch->debug >= NDNL_FINE)
                     SyncNoteSimple(diff_data->root, here, "noting");
                 ch->hashSeen = SyncNoteHash(ch->hashSeen, ce);
                 start_interest(diff_data);
             }
-            ret = CCN_UPCALL_RESULT_OK;
+            ret = NDN_UPCALL_RESULT_OK;
             break;
         }
         default:
@@ -958,31 +961,31 @@ start_interest(struct sync_diff_data *diff_data) {
     static char *here = "sync_track.start_interest";
     struct SyncRootStruct *root = diff_data->root;
     struct SyncBaseStruct *base = root->base;
-    struct ccns_handle *ch = diff_data->client_data;
+    struct ndns_handle *ch = diff_data->client_data;
     struct SyncHashCacheEntry *ce = ch->next_ce;
-    struct ccn_charbuf *prefix = SyncCopyName(diff_data->root->topoPrefix);
+    struct ndn_charbuf *prefix = SyncCopyName(diff_data->root->topoPrefix);
     int res = 0;
-    struct ccn *ccn = base->sd->ccn;
-    if (ccn == NULL) {
-        ccn_charbuf_destroy(&prefix);
-        return SyncNoteFailed(root, here, "bad ccn handle", __LINE__);
+    struct ndn *ndn = base->sd->ndn;
+    if (ndn == NULL) {
+        ndn_charbuf_destroy(&prefix);
+        return SyncNoteFailed(root, here, "bad ndn handle", __LINE__);
     }
-    res |= ccn_name_append_str(prefix, "\xC1.S.ra");
-    res |= ccn_name_append(prefix, root->sliceHash->buf, root->sliceHash->length);
+    res |= ndn_name_append_str(prefix, "\xC1.S.ra");
+    res |= ndn_name_append(prefix, root->sliceHash->buf, root->sliceHash->length);
     if (ce != NULL) {
         // append the best component seen
-        res |= ccn_name_append(prefix, ce->hash->buf, ce->hash->length);
+        res |= ndn_name_append(prefix, ce->hash->buf, ce->hash->length);
     } else {
         // append an empty component
-        res |= ccn_name_append(prefix, "", 0);
+        res |= ndn_name_append(prefix, "", 0);
     }
     struct SyncNameAccum *excl = SyncExclusionsFromHashList(root, NULL, ch->hashSeen);
-    struct ccn_charbuf *template = SyncGenInterest(NULL,
+    struct ndn_charbuf *template = SyncGenInterest(NULL,
                                                    base->priv->syncScope,
                                                    base->priv->fetchLifetime,
                                                    -1, -1, excl);
     SyncFreeNameAccumAndNames(excl);
-    struct ccn_closure *action = calloc(1, sizeof(*action));
+    struct ndn_closure *action = calloc(1, sizeof(*action));
     struct sync_diff_fetch_data *fetch_data = calloc(1, sizeof(*fetch_data));
     fetch_data->diff_data = diff_data;
     fetch_data->action = action;
@@ -993,14 +996,14 @@ start_interest(struct sync_diff_data *diff_data) {
     action->p = &my_response;
     fetch_data->next = ch->fetch_data;
     ch->fetch_data = fetch_data;
-    res |= ccn_express_interest(ccn, prefix, action, template);
-    ccn_charbuf_destroy(&template);
-    if (ch->debug >= CCNL_FINE) {
+    res |= ndn_express_interest(ndn, prefix, action, template);
+    ndn_charbuf_destroy(&template);
+    if (ch->debug >= NDNL_FINE) {
         SyncNoteUri(diff_data->root, here, "start_interest", prefix);
     }
-    ccn_charbuf_destroy(&prefix);
+    ndn_charbuf_destroy(&prefix);
     if (res < 0) {
-        SyncNoteFailed(root, here, "ccn_express_interest failed", __LINE__);
+        SyncNoteFailed(root, here, "ndn_express_interest failed", __LINE__);
         // return the resources, must free fd first!
         free_fetch_data(ch, fetch_data);
         free(action);
@@ -1014,44 +1017,44 @@ my_get(struct sync_diff_get_closure *gc,
        struct sync_diff_fetch_data *fd) {
     char *here = "sync_track.my_get";
     struct sync_diff_data *diff_data = gc->diff_data;
-    struct ccns_handle *ch = diff_data->client_data;
+    struct ndns_handle *ch = diff_data->client_data;
     struct SyncRootStruct *root = diff_data->root;
     struct SyncBaseStruct *base = root->base;
     struct SyncHashCacheEntry *ce = fd->hash_cache_entry;
     int res = 0;
-    struct ccn *ccn = base->sd->ccn;
-    if (ccn == NULL)
-        return SyncNoteFailed(root, here, "bad ccn handle", __LINE__);
+    struct ndn *ndn = base->sd->ndn;
+    if (ndn == NULL)
+        return SyncNoteFailed(root, here, "bad ndn handle", __LINE__);
     if (ce == NULL)
         return SyncNoteFailed(root, here, "bad cache entry", __LINE__);
     // first, check for existing fetch of same hash
-    struct ccn_charbuf *hash = ce->hash;
-    struct ccn_charbuf *name = SyncCopyName(diff_data->root->topoPrefix);
-    ccn_name_append_str(name, "\xC1.S.nf");
-    res |= ccn_name_append(name, root->sliceHash->buf, root->sliceHash->length);
+    struct ndn_charbuf *hash = ce->hash;
+    struct ndn_charbuf *name = SyncCopyName(diff_data->root->topoPrefix);
+    ndn_name_append_str(name, "\xC1.S.nf");
+    res |= ndn_name_append(name, root->sliceHash->buf, root->sliceHash->length);
     if (hash == NULL || hash->length == 0)
-        res |= ccn_name_append(name, "", 0);
+        res |= ndn_name_append(name, "", 0);
     else
-        res |= ccn_name_append(name, ce->hash->buf, ce->hash->length);
-    if (ch->debug >= CCNL_FINE) {
+        res |= ndn_name_append(name, ce->hash->buf, ce->hash->length);
+    if (ch->debug >= NDNL_FINE) {
         SyncNoteUri(diff_data->root, here, "starting", name);
     }
     // note, this fd belongs to sync_diff, not us
-    struct ccn_closure *action = calloc(1, sizeof(*action));
+    struct ndn_closure *action = calloc(1, sizeof(*action));
     action->data = fd;
     action->p = &my_response;
     fd->action = action;
     
-    struct ccn_charbuf *template = SyncGenInterest(NULL,
+    struct ndn_charbuf *template = SyncGenInterest(NULL,
                                                    root->priv->syncScope,
                                                    base->priv->fetchLifetime,
                                                    -1, 1, NULL);
     
-    res = ccn_express_interest(ccn, name, action, template);
-    ccn_charbuf_destroy(&name);
-    ccn_charbuf_destroy(&template);
+    res = ndn_express_interest(ndn, name, action, template);
+    ndn_charbuf_destroy(&name);
+    ndn_charbuf_destroy(&template);
     if (res < 0) {
-        SyncNoteFailed(root, here, "ccn_express_interest failed", __LINE__);
+        SyncNoteFailed(root, here, "ndn_express_interest failed", __LINE__);
         free(action);
         return -1;
     }
@@ -1061,17 +1064,17 @@ my_get(struct sync_diff_get_closure *gc,
 // my_add is called when sync_diff discovers a new name
 // right now all we do is log it
 static int
-my_add(struct sync_diff_add_closure *ac, struct ccn_charbuf *name) {
+my_add(struct sync_diff_add_closure *ac, struct ndn_charbuf *name) {
     char *here = "sync_track.my_add";
     struct sync_diff_data *diff_data = ac->diff_data;
-    struct ccns_handle *ch = diff_data->client_data;
+    struct ndns_handle *ch = diff_data->client_data;
     if (name == NULL) {
         // end of comparison, so fire off another round
         struct SyncRootStruct *root = diff_data->root;
-        // struct ccn_charbuf *hash = ch->next_ce->hash;
+        // struct ndn_charbuf *hash = ch->next_ce->hash;
         struct SyncHashCacheEntry *ce = ch->next_ce;
         int delay = 1000000;
-        if (ch->debug >= CCNL_INFO) {
+        if (ch->debug >= NDNL_INFO) {
             char temp[1024];
             int pos = 0;
             ch->add_accum += diff_data->namesAdded;
@@ -1107,13 +1110,13 @@ my_add(struct sync_diff_add_closure *ac, struct ccn_charbuf *name) {
             ch->namesToAdd = SyncAllocNameAccum(4);
         }
         SyncNameAccumAppend(ch->namesToAdd, SyncCopyName(name), 0);
-        if (ch->debug >= CCNL_INFO)
+        if (ch->debug >= NDNL_INFO)
             SyncNoteUri(diff_data->root, here, "adding", name);
         if (ch->nc != NULL) {
             // callback per name
-            struct ccn_charbuf *lhash = ((ch->last_ce != NULL)
+            struct ndn_charbuf *lhash = ((ch->last_ce != NULL)
                                          ? ch->last_ce->hash : NULL);
-            struct ccn_charbuf *rhash = ((ch->next_ce != NULL)
+            struct ndn_charbuf *rhash = ((ch->next_ce != NULL)
                                          ? ch->next_ce->hash : NULL);
             int res = ch->nc->callback(ch->nc, lhash, rhash, name);
             if (res < 0) {
@@ -1128,7 +1131,7 @@ my_add(struct sync_diff_add_closure *ac, struct ccn_charbuf *name) {
 
 static int
 note_update_done(struct sync_done_closure *dc) {
-    struct ccns_handle *ch = dc->data;
+    struct ndns_handle *ch = dc->data;
     struct sync_update_data *ud = dc->update_data;
     if (ch != NULL && ch->update_data == ud && ud != NULL && ud->done_closure == dc) {
         // passes sanity check
@@ -1137,10 +1140,10 @@ note_update_done(struct sync_done_closure *dc) {
             // we have a new hash that is better
             setCurrentHash(ud->root, ud->ceStop);
             ud->ceStart = ud->ceStop;
-            if (ch->debug >= CCNL_FINE)
+            if (ch->debug >= NDNL_FINE)
                 SyncNoteSimple(ud->root, here, "new hash set");
         } else {
-            if (ch->debug >= CCNL_FINE)
+            if (ch->debug >= NDNL_FINE)
                 SyncNoteSimple(ud->root, here, "no new hash");
         }
         ch->needUpdate = 0;
@@ -1155,13 +1158,13 @@ static struct sync_plumbing_client_methods client_methods = {
     my_r_sync_msg, NULL, NULL, NULL, NULL, NULL
 };
 
-struct ccns_handle *
-ccns_open(struct ccn *h,
-          struct ccns_slice *slice,
-          struct ccns_name_closure *nc,
-          struct ccn_charbuf *rhash,
-          struct ccn_charbuf *pname) {
-    struct ccns_handle *ch = calloc(1, sizeof(*ch));
+struct ndns_handle *
+ndns_open(struct ndn *h,
+          struct ndns_slice *slice,
+          struct ndns_name_closure *nc,
+          struct ndn_charbuf *rhash,
+          struct ndn_charbuf *pname) {
+    struct ndns_handle *ch = calloc(1, sizeof(*ch));
     struct SyncBaseStruct *base = NULL;
     struct SyncRootStruct *root = NULL;
     struct sync_plumbing *sync_plumbing = NULL;
@@ -1170,23 +1173,23 @@ ccns_open(struct ccn *h,
     
     sync_plumbing = calloc(1, sizeof(*sync_plumbing));
     sync_plumbing->client_methods = &client_methods;
-    sync_plumbing->ccn = h;
-    sync_plumbing->sched = ccn_get_schedule(h);
+    sync_plumbing->ndn = h;
+    sync_plumbing->sched = ndn_get_schedule(h);
     if (sync_plumbing->sched == NULL) {
-        struct ccn_schedule *schedule;
-        struct ccn_gettime *timer = calloc(1, sizeof(*timer));
+        struct ndn_schedule *schedule;
+        struct ndn_gettime *timer = calloc(1, sizeof(*timer));
         timer->descr[0]='S';
         timer->micros_per_base = 1000000;
         timer->gettime = &gettime;
         timer->data = h;
-        schedule = ccn_schedule_create(h, timer);
-        ccn_set_schedule(h, schedule);
+        schedule = ndn_schedule_create(h, timer);
+        ndn_set_schedule(h, schedule);
         sync_plumbing->sched = schedule;
     }
     ch->sync_plumbing = sync_plumbing;
     ch->nc = nc;
-    nc->ccns = ch;
-    ch->ccn = h;
+    nc->ndns = ch;
+    ch->ndn = h;
     
     // gen the closure for diff data
     struct sync_diff_data *diff_data = calloc(1, sizeof(*diff_data));
@@ -1226,7 +1229,7 @@ ccns_open(struct ccn *h,
     
     // make the debug levels agree
     int debug = base->debug; // TBD: how to let client set this?
-    if (debug < CCNL_WARNING) debug = CCNL_WARNING;
+    if (debug < NDNL_WARNING) debug = NDNL_WARNING;
     base->debug = debug;
     ch->debug = debug;
     root = SyncAddRoot(base, base->priv->syncScope,
@@ -1236,18 +1239,18 @@ ccns_open(struct ccn *h,
     update_data->root = root;
     
     // register the root advise interest listener
-    struct ccn_charbuf *prefix = SyncCopyName(diff_data->root->topoPrefix);
-    ccn_name_append_str(prefix, "\xC1.S.ra");
-    ccn_name_append(prefix, root->sliceHash->buf, root->sliceHash->length);
-    struct ccn_closure *action = NEW_STRUCT(1, ccn_closure);
+    struct ndn_charbuf *prefix = SyncCopyName(diff_data->root->topoPrefix);
+    ndn_name_append_str(prefix, "\xC1.S.ra");
+    ndn_name_append(prefix, root->sliceHash->buf, root->sliceHash->length);
+    struct ndn_closure *action = NEW_STRUCT(1, ndn_closure);
     action->data = ch;
     action->p = &advise_interest_arrived;
     ch->registered = action;
-    int res = ccn_set_interest_filter(h, prefix, action);
-    ccn_charbuf_destroy(&prefix);
+    int res = ndn_set_interest_filter(h, prefix, action);
+    ndn_charbuf_destroy(&prefix);
     if (res < 0) {
-        noteErr2("ccns_open", "registration failed");
-        ccns_close(&ch, rhash, pname);
+        noteErr2("ndns_open", "registration failed");
+        ndns_close(&ch, rhash, pname);
         ch = NULL;
     } else {
         // start the very first round
@@ -1257,33 +1260,33 @@ ccns_open(struct ccn *h,
 }
 
 void
-ccns_close(struct ccns_handle **sh,
-           struct ccn_charbuf *rhash,
-           struct ccn_charbuf *pname) {
-    // Use this to shut down a ccns_handle and return the resources
+ndns_close(struct ndns_handle **sh,
+           struct ndn_charbuf *rhash,
+           struct ndn_charbuf *pname) {
+    // Use this to shut down a ndns_handle and return the resources
     // This should work any legal state!
     // TBD: fill in pname argument
     if (sh != NULL) {
-        struct ccns_handle *ch = *sh;
+        struct ndns_handle *ch = *sh;
         *sh = NULL;
         if (ch != NULL) {
             struct SyncRootStruct *root = ch->root;
             
-            struct ccn_closure *registered = ch->registered;
+            struct ndn_closure *registered = ch->registered;
             if (registered != NULL) {
                 // break the link, remove this particular registration
                 registered->data = NULL;
-                ccn_set_interest_filter_with_flags(ch->sync_plumbing->ccn,
+                ndn_set_interest_filter_with_flags(ch->sync_plumbing->ndn,
                                                    root->topoPrefix,
                                                    registered,
                                                    0);
             }
             // cancel my looping event
-            struct ccn_scheduled_event *ev = ch->ev;
+            struct ndn_scheduled_event *ev = ch->ev;
             if (ev != NULL) {
                 ch->ev = NULL;
                 ev->evdata = NULL;
-                ccn_schedule_cancel(ch->sync_plumbing->sched, ev);
+                ndn_schedule_cancel(ch->sync_plumbing->sched, ev);
             }
             // stop any differencing
             struct sync_diff_data *diff_data = ch->diff_data;
@@ -1315,7 +1318,7 @@ ccns_close(struct ccns_handle **sh,
                 // save the current root hash
                 rhash->length = 0;
                 if (root->currentHash != NULL)
-                    ccn_charbuf_append_charbuf(rhash, root->currentHash);
+                    ndn_charbuf_append_charbuf(rhash, root->currentHash);
             }
             SyncFreeNameAccumAndNames(ch->namesToAdd);
             // get rid of the root

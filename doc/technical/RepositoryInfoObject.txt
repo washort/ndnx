@@ -1,7 +1,7 @@
-CCNx RepositoryInfo Object
+NDNx RepositoryInfo Object
 ===========================
 
-The +RepositoryInfo+ object is returned by the Repository to acknowledge receipt of a write request and to optionally return response data. See link:RepoProtocol.html[CCNx Repository Protocols] for more information.
+The +RepositoryInfo+ object is returned by the Repository to acknowledge receipt of a write request and to optionally return response data. See link:RepoProtocol.html[NDNx Repository Protocols] for more information.
 
 RepositoryInfo
 ---------------

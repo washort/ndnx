@@ -1,7 +1,7 @@
 /**
  * @file sync/UpdateSketch.c
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1
@@ -16,7 +16,7 @@
  */
 
 void
-UpdateAddName(struct SyncUpdateData *ud, struct ccn_charbuf *name) {
+UpdateAddName(struct SyncUpdateData *ud, struct ndn_charbuf *name) {
     // add the name (use copy), build the node as soon as the rules apply
 }
 
@@ -37,10 +37,10 @@ CacheEntryFetch(struct SyncUpdateData *ud, struct SyncHashCacheEntry *ce) {
     return NULL;
 }
 
-struct ccn_charbuf *
+struct ndn_charbuf *
 BestName(struct SyncUpdateData *ud) {
     // returns the best current name from the updates
-    struct ccn_charbuf *best = ud->lagName;
+    struct ndn_charbuf *best = ud->lagName;
     if (best == NULL) {
         if (ud->ixBase->len > 0) {
             struct SyncNameAccum *src = (struct SyncNameAccum *) ixBase->client;
@@ -58,12 +58,12 @@ AdvanceName(struct SyncUpdateData *ud) {
     // skips duplicates
     struct SyncNameAccum *src = (struct SyncNameAccum *) ixBase->client;
     for (;;) {
-        struct ccn_charbuf *best = BestName(ud);
+        struct ndn_charbuf *best = BestName(ud);
         IndexSorter_Rem(ud->ixBase);
         ud->lagName = NULL;
         if (ud->ixBase->len <= 0) break;
         int j = IndexSorter_Best(ud->ixBase);
-        struct ccn_charbuf *next = src->ents[j].name;
+        struct ndn_charbuf *next = src->ents[j].name;
         if (next == NULL) break;
         ud->lagName = next;
         if (SyncCmpNames(best, next) != 0) return 1;
@@ -97,7 +97,7 @@ BuildTree(struct SyncUpdateData *ud,
                 return 0;
             return -__LINE__;
         }
-        struct ccn_charbuf *name = BestName(ud);
+        struct ndn_charbuf *name = BestName(ud);
         enum SyncCompareResult scr = SyncNodeCompareMinMax(nc, name);
         switch (scr) {
             case SCR_before:

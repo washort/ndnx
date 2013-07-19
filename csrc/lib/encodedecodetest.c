@@ -1,9 +1,12 @@
 /**
  * @file encodedecodetest.c
- * Unit tests for CCNx C library.
+ * Unit tests for NDNx C library.
  *
- * A CCNx program.
+ * A NDNx program.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2009-2013 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -26,13 +29,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <ccn/ccn.h>
-#include <ccn/bloom.h>
-#include <ccn/uri.h>
-#include <ccn/digest.h>
-#include <ccn/keystore.h>
-#include <ccn/signing.h>
-#include <ccn/random.h>
+#include <ndn/ndn.h>
+#include <ndn/bloom.h>
+#include <ndn/uri.h>
+#include <ndn/digest.h>
+#include <ndn/keystore.h>
+#include <ndn/signing.h>
+#include <ndn/random.h>
 
 struct path {
     int count;
@@ -65,37 +68,37 @@ void path_destroy(struct path **path) {
 }
 
 int
-encode_message(struct ccn_charbuf *message, struct path * name_path,
-               char *data, size_t len, struct ccn_charbuf *signed_info,
+encode_message(struct ndn_charbuf *message, struct path * name_path,
+               char *data, size_t len, struct ndn_charbuf *signed_info,
                const void *pkey, const char *digest_algorithm) {
-    struct ccn_charbuf *path = ccn_charbuf_create();
+    struct ndn_charbuf *path = ndn_charbuf_create();
     int i;
     int res;
 
-    if (path == NULL || ccn_name_init(path) == -1) {
+    if (path == NULL || ndn_name_init(path) == -1) {
         fprintf(stderr, "Failed to allocate or initialize content path\n");
         return -1;
     }
 
     for (i = 0; i < name_path->count; i++) {
-        ccn_name_append_str(path, name_path->comps[i]);
+        ndn_name_append_str(path, name_path->comps[i]);
     }
 
-    res = ccn_encode_ContentObject(message, path, signed_info, data, len, digest_algorithm, pkey);
+    res = ndn_encode_ContentObject(message, path, signed_info, data, len, digest_algorithm, pkey);
 
     if (res != 0) {
         fprintf(stderr, "Failed to encode ContentObject\n");
     }
 
-    ccn_charbuf_destroy(&path);
+    ndn_charbuf_destroy(&path);
     return(res);
 }
 
 int
-decode_message(struct ccn_charbuf *message, struct path * name_path, char *data, size_t len,
+decode_message(struct ndn_charbuf *message, struct path * name_path, char *data, size_t len,
                const void *verkey) {
-    struct ccn_parsed_ContentObject content;
-    struct ccn_indexbuf *comps = ccn_indexbuf_create();
+    struct ndn_parsed_ContentObject content;
+    struct ndn_indexbuf *comps = ndn_indexbuf_create();
     const unsigned char * content_value;
     size_t content_length;
 
@@ -104,7 +107,7 @@ decode_message(struct ccn_charbuf *message, struct path * name_path, char *data,
 
     memset(&content, 0x33, sizeof(content));
 
-    if (ccn_parse_ContentObject(message->buf, message->length, &content, comps) != 0) {
+    if (ndn_parse_ContentObject(message->buf, message->length, &content, comps) != 0) {
         printf("Decode failed to parse object\n");
         res = -1;
     }
@@ -115,12 +118,12 @@ decode_message(struct ccn_charbuf *message, struct path * name_path, char *data,
         res = -1;
     }
     for (i=0; i<name_path->count; i++) {
-        if (ccn_name_comp_strcmp(message->buf, comps, i, name_path->comps[i]) != 0) {
+        if (ndn_name_comp_strcmp(message->buf, comps, i, name_path->comps[i]) != 0) {
             printf("Decode mismatch on path component %d\n", i);
             res = -1;
         }
     }
-    if (ccn_content_get_value(message->buf, message->length, &content,
+    if (ndn_content_get_value(message->buf, message->length, &content,
         &content_value, &content_length) != 0) {
         printf("Cannot retrieve content value\n");
         res = -1;
@@ -133,12 +136,12 @@ decode_message(struct ccn_charbuf *message, struct path * name_path, char *data,
         res = -1;
     }
 
-    if (ccn_verify_signature(message->buf, message->length, &content, verkey) != 1) {
+    if (ndn_verify_signature(message->buf, message->length, &content, verkey) != 1) {
         printf("Signature did not verify\n");
         res = -1;
     }
 
-    ccn_indexbuf_destroy(&comps);
+    ndn_indexbuf_destroy(&comps);
     return res;
 
 }
@@ -162,34 +165,34 @@ static char all_chars_percent_encoded[256 * 3 + 1]; /* Computed */
 static char all_chars_mixed_encoded[256 * 2 + 2]; /* Computed */
 
 static void init_all_chars_percent_encoded(void) {
-    struct ccn_charbuf *c;
+    struct ndn_charbuf *c;
     int i;
-    c = ccn_charbuf_create();
+    c = ndn_charbuf_create();
     for (i = 0; i < 256; i+=2) {
-        ccn_charbuf_putf(c, "%%%02x%%%02X", i, i+1);
+        ndn_charbuf_putf(c, "%%%02x%%%02X", i, i+1);
     }
     if (c->length >= sizeof(all_chars_percent_encoded))
         c->length = sizeof(all_chars_percent_encoded) - 1;
     memcpy(all_chars_percent_encoded, c->buf, c->length);
-    ccn_charbuf_destroy(&c);
+    ndn_charbuf_destroy(&c);
 }
 
 static void init_all_chars_mixed_encoded(void) {
-    struct ccn_charbuf *c;
+    struct ndn_charbuf *c;
     int i;
-    c = ccn_charbuf_create();
-    ccn_charbuf_append(c, "=", 1);
+    c = ndn_charbuf_create();
+    ndn_charbuf_append(c, "=", 1);
     for (i = 0; i < 256; i+=2) {
-        ccn_charbuf_putf(c, "%02x%02X", i, i+1);
+        ndn_charbuf_putf(c, "%02x%02X", i, i+1);
     }
     if (c->length >= sizeof(all_chars_mixed_encoded))
         c->length = sizeof(all_chars_mixed_encoded) - 1;
     memcpy(all_chars_mixed_encoded, c->buf, c->length);
-    ccn_charbuf_destroy(&c);
+    ndn_charbuf_destroy(&c);
 }
 
 static const char *all_chars_percent_encoded_canon =
- "ccnx:/"
+ "ndn:/"
  "%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F"
  "%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F"
  "%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F"
@@ -208,9 +211,9 @@ static const char *all_chars_percent_encoded_canon =
 int
 main(int argc, char *argv[])
 {
-    struct ccn_charbuf *buffer = ccn_charbuf_create();
-    struct ccn_charbuf *signed_info = ccn_charbuf_create();
-    struct ccn_skeleton_decoder dd = {0};
+    struct ndn_charbuf *buffer = ndn_charbuf_create();
+    struct ndn_charbuf *signed_info = ndn_charbuf_create();
+    struct ndn_skeleton_decoder dd = {0};
     ssize_t res;
     char *outname = NULL;
     int fd;
@@ -225,7 +228,7 @@ main(int argc, char *argv[])
                        "/zero/length/content",
                        NULL};
     struct path * cur_path = NULL;
-    struct ccn_keystore *keystore = ccn_keystore_create();
+    struct ndn_keystore *keystore = ndn_keystore_create();
     char *keystore_name = NULL;
     char *keystore_password = NULL;
 
@@ -254,16 +257,16 @@ main(int argc, char *argv[])
     if (keystore_password == NULL)
         keystore_password = "Th1s1sn0t8g00dp8ssw0rd.";
 
-    res = ccn_keystore_init(keystore, keystore_name, keystore_password);
+    res = ndn_keystore_init(keystore, keystore_name, keystore_password);
     if (res != 0) {
         printf ("Initializing keystore in %s\n", keystore_name);
-        res = ccn_keystore_file_init(keystore_name, keystore_password,
-                                     "ccnxuser", 0, 3650);
+        res = ndn_keystore_file_init(keystore_name, keystore_password,
+                                     "ndnxuser", 0, 3650);
         if (res != 0) {
             fprintf (stderr, "Cannot create keystore [%s]", keystore_name);
             return res;
         }
-        res = ccn_keystore_init(keystore, keystore_name, keystore_password);
+        res = ndn_keystore_init(keystore, keystore_name, keystore_password);
         if (res != 0) {
             printf("Failed to initialize keystore\n");
             exit(1);
@@ -271,11 +274,11 @@ main(int argc, char *argv[])
     }
 
     printf("Creating signed_info\n");
-    res = ccn_signed_info_create(signed_info,
-                                 /*pubkeyid*/ccn_keystore_public_key_digest(keystore),
-                                 /*publisher_key_id_size*/ccn_keystore_public_key_digest_length(keystore),
+    res = ndn_signed_info_create(signed_info,
+                                 /*pubkeyid*/ndn_keystore_public_key_digest(keystore),
+                                 /*publisher_key_id_size*/ndn_keystore_public_key_digest_length(keystore),
                                  /*datetime*/NULL,
-                                 /*type*/CCN_CONTENT_GONE,
+                                 /*type*/NDN_CONTENT_GONE,
                                  /*freshness*/ 42,
                                  /*finalblockid*/NULL,
                                  /*keylocator*/NULL);
@@ -283,7 +286,7 @@ main(int argc, char *argv[])
         printf("Failed to create signed_info!\n");
     }
 
-    res = ccn_skeleton_decode(&dd, signed_info->buf, signed_info->length);
+    res = ndn_skeleton_decode(&dd, signed_info->buf, signed_info->length);
     if (!(res == signed_info->length && dd.state == 0)) {
         printf("Failed to decode signed_info!  Result %d State %d\n", (int)res, dd.state);
         result = 1;
@@ -294,12 +297,12 @@ main(int argc, char *argv[])
     printf("Encoding sample message data length %d\n", (int)strlen(contents[0]));
     cur_path = path_create(paths[0]);
     if (encode_message(buffer, cur_path, contents[0], strlen(contents[0]), signed_info,
-                       ccn_keystore_private_key(keystore), ccn_keystore_digest_algorithm(keystore))) {
+                       ndn_keystore_private_key(keystore), ndn_keystore_digest_algorithm(keystore))) {
         printf("Failed to encode message!\n");
     } else {
         printf("Encoded sample message length is %d\n", (int)buffer->length);
 
-        res = ccn_skeleton_decode(&dd, buffer->buf, buffer->length);
+        res = ndn_skeleton_decode(&dd, buffer->buf, buffer->length);
         if (!(res == buffer->length && dd.state == 0)) {
             printf("Failed to decode!  Result %d State %d\n", (int)res, dd.state);
             result = 1;
@@ -311,18 +314,18 @@ main(int argc, char *argv[])
             res = write(fd, buffer->buf, buffer->length);
             close(fd);
         }
-        if (decode_message(buffer, cur_path, contents[0], strlen(contents[0]), ccn_keystore_public_key(keystore)) != 0) {
+        if (decode_message(buffer, cur_path, contents[0], strlen(contents[0]), ndn_keystore_public_key(keystore)) != 0) {
             result = 1;
         }
         printf("Expect signature verification failure: ");
         if (buffer->length >= 20)
             buffer->buf[buffer->length - 20] += 1;
-        if (decode_message(buffer, cur_path, contents[0], strlen(contents[0]), ccn_keystore_public_key(keystore)) == 0) {
+        if (decode_message(buffer, cur_path, contents[0], strlen(contents[0]), ndn_keystore_public_key(keystore)) == 0) {
             result = 1;
         }
     }
     path_destroy(&cur_path);
-    ccn_charbuf_destroy(&buffer);
+    ndn_charbuf_destroy(&buffer);
     printf("Done with sample message\n");
 
     /* Now exercise as unit tests */
@@ -330,17 +333,17 @@ main(int argc, char *argv[])
     for (i = 0; paths[i] != NULL && contents[i] != NULL; i++) {
         printf("Unit test case %d\n", i);
         cur_path = path_create(paths[i]);
-        buffer = ccn_charbuf_create();
+        buffer = ndn_charbuf_create();
         if (encode_message(buffer, cur_path, contents[i], strlen(contents[i]), signed_info,
-                       ccn_keystore_private_key(keystore), ccn_keystore_digest_algorithm(keystore))) {
+                       ndn_keystore_private_key(keystore), ndn_keystore_digest_algorithm(keystore))) {
             printf("Failed encode\n");
             result = 1;
-        } else if (decode_message(buffer, cur_path, contents[i], strlen(contents[i]), ccn_keystore_public_key(keystore))) {
+        } else if (decode_message(buffer, cur_path, contents[i], strlen(contents[i]), ndn_keystore_public_key(keystore))) {
             printf("Failed decode\n");
             result = 1;
         }
         path_destroy(&cur_path);
-        ccn_charbuf_destroy(&buffer);
+        ndn_charbuf_destroy(&buffer);
     }
 
     /* Test the uri encode / decode routines */
@@ -348,56 +351,56 @@ main(int argc, char *argv[])
     init_all_chars_percent_encoded();
     init_all_chars_mixed_encoded();
     const char *uri_tests[] = {
-        "_+4", "ccnx:/this/is/a/test",       "",     "ccnx:/this/is/a/test",
-        ".+4", "../test2?x=2",              "?x=2", "ccnx:/this/is/a/test2",
+        "_+4", "ndn:/this/is/a/test",       "",     "ndn:/this/is/a/test",
+        ".+4", "../test2?x=2",              "?x=2", "ndn:/this/is/a/test2",
         "_-X", "../should/error",           "",     "",
-        "_+2", "/missing/scheme",           "",     "ccnx:/missing/scheme",
-        ".+0", "../../../../../././#/",     "#/",   "ccnx:/",
+        "_+2", "/missing/scheme",           "",     "ndn:/missing/scheme",
+        ".+0", "../../../../../././#/",     "#/",   "ndn:/",
         ".+1", all_chars_percent_encoded,   "",     all_chars_percent_encoded_canon,
         "_+1", all_chars_percent_encoded_canon, "", all_chars_percent_encoded_canon,
-        ".+4", "ccnx:/.../.%2e./...././.....///?...", "?...", "ccnx:/.../.../..../.....",
+        ".+4", "ndn:/.../.%2e./...././.....///?...", "?...", "ndn:/.../.../..../.....",
         "_-X", "/%3G?bad-pecent-encode",    "",     "",
         "_-X", "/%3?bad-percent-encode",    "",     "",
         "_-X", "/%#bad-percent-encode",    "",     "",
-        "_+3", "ccnx://joe@example.com:42/ignore/host/part of uri", "", "ccnx:/ignore/host/part%20of%20uri",
+        "_+3", "ndn://joe@example.com:42/ignore/host/part of uri", "", "ndn:/ignore/host/part%20of%20uri",
         NULL, NULL, NULL, NULL
     };
     const char **u;
-    struct ccn_charbuf *uri_out = ccn_charbuf_create();
-    buffer = ccn_charbuf_create();
+    struct ndn_charbuf *uri_out = ndn_charbuf_create();
+    buffer = ndn_charbuf_create();
     for (u = uri_tests; *u != NULL; u += 4, i++) {
         printf("Unit test case %d\n", i);
         if (u[0][0] != '.')
             buffer->length = 0;
-        res = ccn_name_from_uri(buffer, u[1]);
+        res = ndn_name_from_uri(buffer, u[1]);
         if (!expected_res(res, u[0][1])) {
-            printf("Failed: ccn_name_from_uri wrong res %d\n", (int)res);
+            printf("Failed: ndn_name_from_uri wrong res %d\n", (int)res);
             result = 1;
         }
         if (res >= 0) {
             if (res > strlen(u[1])) {
-                printf("Failed: ccn_name_from_uri long res %d\n", (int)res);
+                printf("Failed: ndn_name_from_uri long res %d\n", (int)res);
                 result = 1;
             }
             else if (0 != strcmp(u[1] + res, u[2])) {
-                printf("Failed: ccn_name_from_uri expecting leftover '%s', got '%s'\n", u[2], u[1] + res);
+                printf("Failed: ndn_name_from_uri expecting leftover '%s', got '%s'\n", u[2], u[1] + res);
                 result = 1;
             }
             uri_out->length = 0;
-            res = ccn_uri_append(uri_out, buffer->buf, buffer->length,
-                                 CCN_URI_PERCENTESCAPE | CCN_URI_INCLUDESCHEME);
+            res = ndn_uri_append(uri_out, buffer->buf, buffer->length,
+                                 NDN_URI_PERCENTESCAPE | NDN_URI_INCLUDESCHEME);
             if (!expected_res(res, u[0][2])) {
-                printf("Failed: ccn_uri_append wrong res %d\n", (int)res);
+                printf("Failed: ndn_uri_append wrong res %d\n", (int)res);
                 result = 1;
             }
             if (res >= 0) {
                 if (uri_out->length != strlen(u[3])) {
-                    printf("Failed: ccn_uri_append produced wrong number of characters\n");
+                    printf("Failed: ndn_uri_append produced wrong number of characters\n");
                     result = 1;
                 }
-                ccn_charbuf_reserve(uri_out, 1)[0] = 0;
+                ndn_charbuf_reserve(uri_out, 1)[0] = 0;
                 if (0 != strcmp((const char *)uri_out->buf, u[3])) {
-                    printf("Failed: ccn_uri_append produced wrong output\n");
+                    printf("Failed: ndn_uri_append produced wrong output\n");
                     printf("Expected: %s\n", u[3]);
                     printf("  Actual: %s\n", (const char *)uri_out->buf);
                     result = 1;
@@ -405,111 +408,111 @@ main(int argc, char *argv[])
             }
         }
     }
-    ccn_charbuf_destroy(&buffer);
-    ccn_charbuf_destroy(&uri_out);
+    ndn_charbuf_destroy(&buffer);
+    ndn_charbuf_destroy(&uri_out);
     printf("Name marker tests\n");
     do {
-        const char *expected_uri = "ccnx:/example.com/.../%01/%FE/%01%02%03%04%05%06%07%08/%FD%10%10%10%10%1F%FF/%00%81";
-        const char *expected_chopped_uri = "ccnx:/example.com/.../%01/%FE";
-        const char *expected_bumped_uri = "ccnx:/example.com/.../%01/%FF";
-        const char *expected_bumped2_uri = "ccnx:/example.com/.../%01/%00%00";
+        const char *expected_uri = "ndn:/example.com/.../%01/%FE/%01%02%03%04%05%06%07%08/%FD%10%10%10%10%1F%FF/%00%81";
+        const char *expected_chopped_uri = "ndn:/example.com/.../%01/%FE";
+        const char *expected_bumped_uri = "ndn:/example.com/.../%01/%FF";
+        const char *expected_bumped2_uri = "ndn:/example.com/.../%01/%00%00";
 
         printf("Unit test case %d\n", i++);
-        buffer = ccn_charbuf_create();
-        uri_out = ccn_charbuf_create();
-        res = ccn_name_init(buffer);
-        res |= ccn_name_append_str(buffer, "example.com");
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_NONE, 0);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_NONE, 1);
-        res |= ccn_name_append_numeric(buffer, 0xFE, 0);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_NONE, 0x0102030405060708ULL);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_VERSION, 0x101010101FFFULL);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_SEQNUM, 129);
-        res |= ccn_uri_append(uri_out, buffer->buf, buffer->length,
-                              CCN_URI_PERCENTESCAPE | CCN_URI_INCLUDESCHEME);
+        buffer = ndn_charbuf_create();
+        uri_out = ndn_charbuf_create();
+        res = ndn_name_init(buffer);
+        res |= ndn_name_append_str(buffer, "example.com");
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_NONE, 0);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_NONE, 1);
+        res |= ndn_name_append_numeric(buffer, 0xFE, 0);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_NONE, 0x0102030405060708ULL);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_VERSION, 0x101010101FFFULL);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_SEQNUM, 129);
+        res |= ndn_uri_append(uri_out, buffer->buf, buffer->length,
+                              NDN_URI_PERCENTESCAPE | NDN_URI_INCLUDESCHEME);
         if (res < 0) {
             printf("Failed: name marker tests had negative res\n");
             result = 1;
         }
-        if (0 != strcmp(ccn_charbuf_as_string(uri_out), expected_uri)) {
+        if (0 != strcmp(ndn_charbuf_as_string(uri_out), expected_uri)) {
             printf("Failed: name marker tests produced wrong output\n");
             printf("Expected: %s\n", expected_uri);
             printf("  Actual: %s\n", (const char *)uri_out->buf);
             result = 1;
         }
-        res = ccn_name_chop(buffer, NULL, 100);
+        res = ndn_name_chop(buffer, NULL, 100);
         if (res != -1) {
-            printf("Failed: ccn_name_chop did not produce error \n");
+            printf("Failed: ndn_name_chop did not produce error \n");
             result = 1;
         }
-        res = ccn_name_chop(buffer, NULL, 4);
+        res = ndn_name_chop(buffer, NULL, 4);
         if (res != 4) {
-            printf("Failed: ccn_name_chop got wrong length\n");
+            printf("Failed: ndn_name_chop got wrong length\n");
             result = 1;
         }
         uri_out->length = 0;
-        ccn_uri_append(uri_out, buffer->buf, buffer->length, CCN_URI_INCLUDESCHEME);
-        if (0 != strcmp(ccn_charbuf_as_string(uri_out), expected_chopped_uri)) {
-            printf("Failed: ccn_name_chop botch\n");
+        ndn_uri_append(uri_out, buffer->buf, buffer->length, NDN_URI_INCLUDESCHEME);
+        if (0 != strcmp(ndn_charbuf_as_string(uri_out), expected_chopped_uri)) {
+            printf("Failed: ndn_name_chop botch\n");
             printf("Expected: %s\n", expected_chopped_uri);
             printf("  Actual: %s\n", (const char *)uri_out->buf);
             result = 1;
         }
-        res = ccn_name_next_sibling(buffer);
+        res = ndn_name_next_sibling(buffer);
         if (res != 4) {
-            printf("Failed: ccn_name_next_sibling got wrong length\n");
+            printf("Failed: ndn_name_next_sibling got wrong length\n");
             result = 1;
         }
         uri_out->length = 0;
-        ccn_uri_append(uri_out, buffer->buf, buffer->length, CCN_URI_INCLUDESCHEME);
-        if (0 != strcmp(ccn_charbuf_as_string(uri_out), expected_bumped_uri)) {
-            printf("Failed: ccn_name_next_sibling botch\n");
+        ndn_uri_append(uri_out, buffer->buf, buffer->length, NDN_URI_INCLUDESCHEME);
+        if (0 != strcmp(ndn_charbuf_as_string(uri_out), expected_bumped_uri)) {
+            printf("Failed: ndn_name_next_sibling botch\n");
             printf("Expected: %s\n", expected_bumped_uri);
             printf("  Actual: %s\n", (const char *)uri_out->buf);
             result = 1;
         }
-        ccn_name_next_sibling(buffer);
+        ndn_name_next_sibling(buffer);
         uri_out->length = 0;
-        ccn_uri_append(uri_out, buffer->buf, buffer->length, 
-                       CCN_URI_PERCENTESCAPE | CCN_URI_INCLUDESCHEME);
-        if (0 != strcmp(ccn_charbuf_as_string(uri_out), expected_bumped2_uri)) {
-            printf("Failed: ccn_name_next_sibling botch\n");
+        ndn_uri_append(uri_out, buffer->buf, buffer->length, 
+                       NDN_URI_PERCENTESCAPE | NDN_URI_INCLUDESCHEME);
+        if (0 != strcmp(ndn_charbuf_as_string(uri_out), expected_bumped2_uri)) {
+            printf("Failed: ndn_name_next_sibling botch\n");
             printf("Expected: %s\n", expected_bumped2_uri);
             printf("  Actual: %s\n", (const char *)uri_out->buf);
             result = 1;
         }
-        ccn_charbuf_destroy(&buffer);
-        ccn_charbuf_destroy(&uri_out);
+        ndn_charbuf_destroy(&buffer);
+        ndn_charbuf_destroy(&uri_out);
     } while (0);
 
     do {
-        const char *expected_uri_mixed = "ccnx:/example.com/.../%01/%FE/=0102030405060708/=FD101010101FFF/=0081";
+        const char *expected_uri_mixed = "ndn:/example.com/.../%01/%FE/=0102030405060708/=FD101010101FFF/=0081";
         
         printf("Unit test case %d\n", i++);
-        buffer = ccn_charbuf_create();
-        uri_out = ccn_charbuf_create();
-        res = ccn_name_init(buffer);
-        res |= ccn_name_append_str(buffer, "example.com");
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_NONE, 0);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_NONE, 1);
-        res |= ccn_name_append_numeric(buffer, 0xFE, 0);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_NONE, 0x0102030405060708ULL);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_VERSION, 0x101010101FFFULL);
-        res |= ccn_name_append_numeric(buffer, CCN_MARKER_SEQNUM, 129);
-        res |= ccn_uri_append(uri_out, buffer->buf, buffer->length,
-                              CCN_URI_MIXEDESCAPE | CCN_URI_INCLUDESCHEME);
+        buffer = ndn_charbuf_create();
+        uri_out = ndn_charbuf_create();
+        res = ndn_name_init(buffer);
+        res |= ndn_name_append_str(buffer, "example.com");
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_NONE, 0);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_NONE, 1);
+        res |= ndn_name_append_numeric(buffer, 0xFE, 0);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_NONE, 0x0102030405060708ULL);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_VERSION, 0x101010101FFFULL);
+        res |= ndn_name_append_numeric(buffer, NDN_MARKER_SEQNUM, 129);
+        res |= ndn_uri_append(uri_out, buffer->buf, buffer->length,
+                              NDN_URI_MIXEDESCAPE | NDN_URI_INCLUDESCHEME);
         if (res < 0) {
             printf("Failed: name marker tests had negative res\n");
             result = 1;
         }
-        if (0 != strcmp(ccn_charbuf_as_string(uri_out), expected_uri_mixed)) {
+        if (0 != strcmp(ndn_charbuf_as_string(uri_out), expected_uri_mixed)) {
             printf("Failed: name marker tests produced wrong output\n");
             printf("Expected: %s\n", expected_uri_mixed);
             printf("  Actual: %s\n", (const char *)uri_out->buf);
             result = 1;
         }
-        ccn_charbuf_destroy(&buffer);
-        ccn_charbuf_destroy(&uri_out);
+        ndn_charbuf_destroy(&buffer);
+        ndn_charbuf_destroy(&uri_out);
     } while (0);
 
     printf("Timestamp tests\n");
@@ -518,36 +521,36 @@ main(int argc, char *argv[])
         int nsec;
         int r;
         int f;
-        struct ccn_charbuf *a[2];
+        struct ndn_charbuf *a[2];
         int t0 = 1363899678;
         
         printf("Unit test case %d\n", i++);
         /* Run many increasing inputs and make sure the output is in order. */
-        a[0] = ccn_charbuf_create();
-        a[1] = ccn_charbuf_create();
-        ccnb_append_timestamp_blob(a[1], CCN_MARKER_NONE, t0 - 1, 0);
+        a[0] = ndn_charbuf_create();
+        a[1] = ndn_charbuf_create();
+        ndnb_append_timestamp_blob(a[1], NDN_MARKER_NONE, t0 - 1, 0);
         for (f = 0, nsec = 0, sec = t0; sec < t0 + 20; nsec += 122099) {
             while (nsec >= 1000000000) {
                 sec++;
                 nsec -= 1000000000;
             }
-            ccn_charbuf_reset(a[f]);
-            r = ccnb_append_timestamp_blob(a[f], CCN_MARKER_NONE, sec, nsec);
+            ndn_charbuf_reset(a[f]);
+            r = ndnb_append_timestamp_blob(a[f], NDN_MARKER_NONE, sec, nsec);
             if (r != 0 || a[f]->length != 7 || memcmp(a[1-f]->buf, a[f]->buf, 6) > 0) {
-                printf("Failed ccnb_append_timestamp_blob(...,%jd,%d)\n", sec, nsec);
+                printf("Failed ndnb_append_timestamp_blob(...,%jd,%d)\n", sec, nsec);
                 result = 1;
             }
             f = 1 - f;
         }
-        ccn_charbuf_destroy(&a[0]);
-        ccn_charbuf_destroy(&a[1]);
+        ndn_charbuf_destroy(&a[0]);
+        ndn_charbuf_destroy(&a[1]);
     } while (0);
     printf("Message digest tests\n");
     do {
         printf("Unit test case %d\n", i++);
-        struct ccn_digest *dg = ccn_digest_create(CCN_DIGEST_SHA256);
+        struct ndn_digest *dg = ndn_digest_create(NDN_DIGEST_SHA256);
         if (dg == NULL) {
-            printf("Failed: ccn_digest_create returned NULL\n");
+            printf("Failed: ndn_digest_create returned NULL\n");
             result = 1;
             break;
         }
@@ -557,18 +560,18 @@ main(int argc, char *argv[])
         };
         unsigned char actual_digest[sizeof(expected_digest)] = {0};
         const char *data = "Content-centric";
-        if (ccn_digest_size(dg) != sizeof(expected_digest)) {
+        if (ndn_digest_size(dg) != sizeof(expected_digest)) {
             printf("Failed: wrong digest size\n");
             result = 1;
             break;
         }
         printf("Unit test case %d\n", i++);
-        ccn_digest_init(dg);
-        res = ccn_digest_update(dg, data, strlen(data));
+        ndn_digest_init(dg);
+        res = ndn_digest_update(dg, data, strlen(data));
         if (res != 0)
             printf("Warning: check res %d\n", (int)res);
         printf("Unit test case %d\n", i++);
-        res = ccn_digest_final(dg, actual_digest, sizeof(expected_digest));
+        res = ndn_digest_final(dg, actual_digest, sizeof(expected_digest));
         if (res != 0)
             printf("Warning: check res %d\n", (int)res);
         if (0 != memcmp(actual_digest, expected_digest, sizeof(expected_digest))) {
@@ -582,10 +585,10 @@ main(int argc, char *argv[])
         unsigned char r1[42];
         unsigned char r2[42];
         printf("Unit test case %d\n", i++);
-        ccn_add_entropy(&i, sizeof(i), 0); /* Not much entropy, really. */
-        ccn_random_bytes(r1, sizeof(r1));
+        ndn_add_entropy(&i, sizeof(i), 0); /* Not much entropy, really. */
+        ndn_random_bytes(r1, sizeof(r1));
         memcpy(r2, r1, sizeof(r2));
-        ccn_random_bytes(r2, sizeof(r2));
+        ndn_random_bytes(r2, sizeof(r2));
         if (0 == memcmp(r1, r2, sizeof(r2))) {
             printf("Failed: badly broken PRNG\n");
             result = 1;
@@ -601,16 +604,16 @@ main(int argc, char *argv[])
             "nine", "ten", "eleven", "twelve",
             "thirteen"
         };
-        struct ccn_bloom *b1 = NULL;
-        struct ccn_bloom *b2 = NULL;
+        struct ndn_bloom *b1 = NULL;
+        struct ndn_bloom *b2 = NULL;
         int j, k, t1, t2;
         unsigned short us;
 
         printf("Unit test case %d\n", i++);
-        b1 = ccn_bloom_create(13, seed1);
+        b1 = ndn_bloom_create(13, seed1);
 
         for (j = 0; j < 13; j++)
-            if (ccn_bloom_match(b1, a[j], strlen(a[j]))) break;
+            if (ndn_bloom_match(b1, a[j], strlen(a[j]))) break;
         if (j < 13) {
             printf("Failed: \"%s\" matched empty Bloom filter\n", a[j]);
             result = 1;
@@ -618,9 +621,9 @@ main(int argc, char *argv[])
         }
         printf("Unit test case %d\n", i++);
         for (j = 0; j < 13; j++)
-            ccn_bloom_insert(b1, a[j], strlen(a[j]));
+            ndn_bloom_insert(b1, a[j], strlen(a[j]));
         for (j = 0; j < 13; j++)
-            if (!ccn_bloom_match(b1, a[j], strlen(a[j]))) break;
+            if (!ndn_bloom_match(b1, a[j], strlen(a[j]))) break;
         if (j < 13) {
             printf("Failed: \"%s\" not found when it should have been\n", a[j]);
             result = 1;
@@ -628,7 +631,7 @@ main(int argc, char *argv[])
         }
         printf("Unit test case %d\n", i++);
         for (j = 0, k = 0; j < 13; j++)
-            if (ccn_bloom_match(b1, a[j]+1, strlen(a[j]+1)))
+            if (ndn_bloom_match(b1, a[j]+1, strlen(a[j]+1)))
                 k++;
         if (k > 0) {
             printf("Mmm, found %d false positives\n", k);
@@ -640,83 +643,83 @@ main(int argc, char *argv[])
         unsigned char seed2[5] = "aqfb\0";
         for (; seed2[3] <= 'f'; seed2[3]++) {
             printf("Unit test case %d (%4s)    ", i++, seed2);
-            b2 = ccn_bloom_create(13, seed2);
+            b2 = ndn_bloom_create(13, seed2);
             for (j = 0; j < 13; j++)
-                ccn_bloom_insert(b2, a[j], strlen(a[j]));
+                ndn_bloom_insert(b2, a[j], strlen(a[j]));
             for (j = 0, k = 0, us = ~0; us > 0; us--) {
-                t1 = ccn_bloom_match(b1, &us, sizeof(us));
-                t2 = ccn_bloom_match(b2, &us, sizeof(us));
+                t1 = ndn_bloom_match(b1, &us, sizeof(us));
+                t2 = ndn_bloom_match(b2, &us, sizeof(us));
                 j += (t1 | t2);
                 k += (t1 & t2);
             }
-            printf("either=%d both=%d wiresize=%d\n", j, k, ccn_bloom_wiresize(b1));
+            printf("either=%d both=%d wiresize=%d\n", j, k, ndn_bloom_wiresize(b1));
             if (k > 12) {
                 printf("Failed: Bloom seeding may not be effective\n");
                 result = 1;
             }
-            ccn_bloom_destroy(&b2);
+            ndn_bloom_destroy(&b2);
         }
-        ccn_bloom_destroy(&b1);
+        ndn_bloom_destroy(&b1);
     } while (0);
-    printf("ccn_sign_content() tests\n");
+    printf("ndn_sign_content() tests\n");
     do {
-        struct ccn *h = ccn_create();
-        struct ccn_charbuf *co = ccn_charbuf_create();
-        struct ccn_signing_params sparm = CCN_SIGNING_PARAMS_INIT;
-        struct ccn_parsed_ContentObject pco = {0};
-        struct ccn_charbuf *name = ccn_charbuf_create();
+        struct ndn *h = ndn_create();
+        struct ndn_charbuf *co = ndn_charbuf_create();
+        struct ndn_signing_params sparm = NDN_SIGNING_PARAMS_INIT;
+        struct ndn_parsed_ContentObject pco = {0};
+        struct ndn_charbuf *name = ndn_charbuf_create();
 
         printf("Unit test case %d\n", i++);
-        ccn_name_from_uri(name, "ccnx:/test/data/%00%42");
-        res = ccn_sign_content(h, co, name, NULL, "DATA", 4);
+        ndn_name_from_uri(name, "ndn:/test/data/%00%42");
+        res = ndn_sign_content(h, co, name, NULL, "DATA", 4);
         if (res != 0) {
             printf("Failed: res == %d\n", (int)res);
             result = 1;
         }
-        sparm.template_ccnb = ccn_charbuf_create();
-        res = ccn_parse_ContentObject(co->buf, co->length, &pco, NULL);
+        sparm.template_ndnb = ndn_charbuf_create();
+        res = ndn_parse_ContentObject(co->buf, co->length, &pco, NULL);
         if (res != 0) {
-            printf("Failed: ccn_parse_ContentObject res == %d\n", (int)res);
+            printf("Failed: ndn_parse_ContentObject res == %d\n", (int)res);
             result = 1;
             break;
         }
-        ccn_charbuf_append(sparm.template_ccnb,
-            co->buf + pco.offset[CCN_PCO_B_SignedInfo],
-            pco.offset[CCN_PCO_E_SignedInfo] - pco.offset[CCN_PCO_B_SignedInfo]);
-        sparm.sp_flags = CCN_SP_TEMPL_TIMESTAMP;
+        ndn_charbuf_append(sparm.template_ndnb,
+            co->buf + pco.offset[NDN_PCO_B_SignedInfo],
+            pco.offset[NDN_PCO_E_SignedInfo] - pco.offset[NDN_PCO_B_SignedInfo]);
+        sparm.sp_flags = NDN_SP_TEMPL_TIMESTAMP;
         printf("Unit test case %d\n", i++);
-        res = ccn_sign_content(h, co, name, &sparm, "DATA", 4);
+        res = ndn_sign_content(h, co, name, &sparm, "DATA", 4);
         if (res != 0) {
             printf("Failed: res == %d\n", (int)res);
             result = 1;
         }
         printf("Unit test case %d\n", i++);
         sparm.sp_flags = -1;
-        res = ccn_sign_content(h, co, name, &sparm, "DATA", 4);
+        res = ndn_sign_content(h, co, name, &sparm, "DATA", 4);
         if (res != -1) {
             printf("Failed: res == %d\n", (int)res);
             result = 1;
         }
-        ccn_charbuf_destroy(&name);
-        ccn_charbuf_destroy(&sparm.template_ccnb);
-        ccn_charbuf_destroy(&co);
-        ccn_destroy(&h);
+        ndn_charbuf_destroy(&name);
+        ndn_charbuf_destroy(&sparm.template_ndnb);
+        ndn_charbuf_destroy(&co);
+        ndn_destroy(&h);
     } while (0);
     printf("link tests\n");
     do {
-        struct ccn_charbuf *l = ccn_charbuf_create();
-        struct ccn_charbuf *name = ccn_charbuf_create();
-        struct ccn_parsed_Link pl = {0};
-        struct ccn_buf_decoder decoder;
-        struct ccn_buf_decoder *d;
-        struct ccn_indexbuf *comps = ccn_indexbuf_create();
+        struct ndn_charbuf *l = ndn_charbuf_create();
+        struct ndn_charbuf *name = ndn_charbuf_create();
+        struct ndn_parsed_Link pl = {0};
+        struct ndn_buf_decoder decoder;
+        struct ndn_buf_decoder *d;
+        struct ndn_indexbuf *comps = ndn_indexbuf_create();
         printf("Unit test case %d\n", i++);
-        ccn_name_from_uri(name, "ccnx:/test/link/name");
-        ccnb_append_Link(l, name, "label", NULL);
-        d = ccn_buf_decoder_start(&decoder, l->buf, l->length);
-        res = ccn_parse_Link(d, &pl, comps);
+        ndn_name_from_uri(name, "ndn:/test/link/name");
+        ndnb_append_Link(l, name, "label", NULL);
+        d = ndn_buf_decoder_start(&decoder, l->buf, l->length);
+        res = ndn_parse_Link(d, &pl, comps);
         if (res != 3 /* components in name */) {
-            printf("Failed: ccn_parse_Link res == %d\n", (int)res);
+            printf("Failed: ndn_parse_Link res == %d\n", (int)res);
             result = 1;
         }
     } while (0);

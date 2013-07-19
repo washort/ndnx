@@ -1,7 +1,10 @@
 # apps/Makefile
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2011-2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -17,7 +20,7 @@
 # in conjunction with the machinery of the csrc subtree.
 # Otherwise it just does a recursive make.
 
-SUBDIRS = HttpProxy ccnChat ccnFileProxy `cat local.subdirs 2>/dev/null || :`
+SUBDIRS = HttpProxy ndnChat ndnFileProxy `cat local.subdirs 2>/dev/null || :`
 MAKEF =  -f ../conf.mk -f dir.mk -f ../subr.mk $(PASSTHRU)
 PASSTHRU = DINST_INC=$(DINST_INC) DINST_LIB=$(DINST_LIB) DINST_BIN=$(DINST_BIN)
 CSRCDIR = ../csrc
@@ -26,7 +29,7 @@ CFLAGS = $(COPT)
 include $(CSRCDIR)/conf.mk
 
 default all clean depend test check shared install uninstall: conf.mk subr.mk generic.mk _always
-	test -d include/ccn || (test -d $(CSRCDIR)/include/ccn && ln -s $(CSRCDIR)/include)
+	test -d include/ndn || (test -d $(CSRCDIR)/include/ndn && ln -s $(CSRCDIR)/include)
 	for i in $(SUBDIRS); do           \
 	    if [ -f "$$i/dir.mk" ]; then  \
 	        (cd "$$i" && pwd && $(MAKE) $(MAKEF) "COPT=$(CFLAGS)" CFLAGS='$$(REAL_CFLAGS)' SRCDIR=../$(SRCDIR)/$$i $@) || exit 1;	\

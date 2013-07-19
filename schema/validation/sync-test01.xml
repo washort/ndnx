@@ -2,11 +2,11 @@
 <SyncConfigSlice>
   <SyncVersion>20110614</SyncVersion>
   <Name>
-    <Component ccnbencoding="base64Binary">VG9wbw==</Component>
+    <Component ndnbencoding="base64Binary">VG9wbw==</Component>
   </Name>
   <Name>
-    <Component ccnbencoding="base64Binary">cm9vdA==</Component>
-    <Component ccnbencoding="base64Binary">YmVlcg==</Component>
+    <Component ndnbencoding="base64Binary">cm9vdA==</Component>
+    <Component ndnbencoding="base64Binary">YmVlcg==</Component>
   </Name>
   <SyncConfigSliceList/>
 </SyncConfigSlice>

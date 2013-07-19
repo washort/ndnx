@@ -1,8 +1,11 @@
 /**
  * @file sync/SyncTreeWorker.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -17,8 +20,8 @@
  * Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef CCN_SyncTreeWorker
-#define CCN_SyncTreeWorker
+#ifndef NDN_SyncTreeWorker
+#define NDN_SyncTreeWorker
 
 #include "SyncHashCache.h"
 
@@ -122,7 +125,7 @@ SyncTreeWorkerFree(struct SyncTreeWorkerHead *head);
  */
 enum SyncCompareResult
 SyncTreeLookupName(struct SyncTreeWorkerHead *head,
-                   struct ccn_charbuf *name,
+                   struct ndn_charbuf *name,
                    int minLevel);
 
 /**

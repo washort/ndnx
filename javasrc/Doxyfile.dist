@@ -1,7 +1,10 @@
 # Doxyfile 1.5.6
 #
-# Part of the CCNx Java Library.
+# Part of the NDNx Java Library.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2008-2013 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -108,7 +111,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = src/main/org/ccnx/ccn/
+INPUT                  = src/main/org/ndnx/ndn/
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.java
 RECURSIVE              = YES

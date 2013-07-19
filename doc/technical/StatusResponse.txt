@@ -1,4 +1,4 @@
-CCNx StatusResponse
+NDNx StatusResponse
 ===================
 
 
@@ -36,5 +36,5 @@ This table is informational, summarizing status codes that are currently is use.
 |   453  | Could not setup multicast
 |   501  | Syntax error in address
 |   504  | Parameter error
-|   531  | Missing or incorrect ccndid
+|   531  | Missing or incorrect ndndid
 |==================================================================

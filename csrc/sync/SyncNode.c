@@ -1,9 +1,12 @@
 /**
  * @file sync/SyncNode.c
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  */
 /*
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011-2012 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -39,8 +42,8 @@ SyncCheckCompErr(struct SyncNodeComposite *nc) {
     return nc->err < 0;
 }
 
-extern struct ccn_buf_decoder *
-SyncInitDecoderFromOffset(struct ccn_buf_decoder *d,
+extern struct ndn_buf_decoder *
+SyncInitDecoderFromOffset(struct ndn_buf_decoder *d,
                           struct SyncNodeComposite *nc,
                           ssize_t start, ssize_t stop) {
     d = SyncInitDecoderFromCharbufRange(d, nc->cb, start, stop);
@@ -50,8 +53,8 @@ SyncInitDecoderFromOffset(struct ccn_buf_decoder *d,
 /**
  * Makes a decoder from an element.
  */
-extern struct ccn_buf_decoder *
-SyncInitDecoderFromElem(struct ccn_buf_decoder *d,
+extern struct ndn_buf_decoder *
+SyncInitDecoderFromElem(struct ndn_buf_decoder *d,
                         struct SyncNodeComposite *nc,
                         struct SyncNodeElem *ep) {
     d = SyncInitDecoderFromCharbufRange(d, nc->cb, ep->start, ep->stop);
@@ -82,7 +85,7 @@ SyncNodeDecRC(struct SyncNodeComposite *nc) {
 ////////////////////////////////////////
 
 extern enum SyncCompareResult
-SyncNodeCompareMinMax(struct SyncNodeComposite *nc, struct ccn_charbuf *name) {
+SyncNodeCompareMinMax(struct SyncNodeComposite *nc, struct ndn_charbuf *name) {
     ssize_t cmp = 0;
     
     cmp = SyncCmpNames(name, nc->minName);
@@ -99,11 +102,11 @@ SyncNodeCompareMinMax(struct SyncNodeComposite *nc, struct ccn_charbuf *name) {
 extern enum SyncCompareResult
 SyncNodeCompareLeaf(struct SyncNodeComposite *nc,
                     struct SyncNodeElem *ep,
-                    struct ccn_charbuf *name) {
-    struct ccn_buf_decoder cmpDec;
-    struct ccn_buf_decoder *cmpD = NULL;
-    struct ccn_buf_decoder nameDec;
-    struct ccn_buf_decoder *nameD = NULL;
+                    struct ndn_charbuf *name) {
+    struct ndn_buf_decoder cmpDec;
+    struct ndn_buf_decoder *cmpD = NULL;
+    struct ndn_buf_decoder nameDec;
+    struct ndn_buf_decoder *nameD = NULL;
     if (ep->kind & SyncElemKind_leaf) {
         // a leaf, as it should be
         cmpD = SyncInitDecoderFromOffset(&cmpDec, nc, ep->start, ep->stop);
@@ -126,23 +129,23 @@ SyncNodeCompareLeaf(struct SyncNodeComposite *nc,
 // except that it retains any allocated storage
 extern void
 SyncResetComposite(struct SyncNodeComposite *nc) {
-    struct ccn_charbuf *cb = nc->cb;
-    if (nc->minName != NULL) ccn_charbuf_destroy(&nc->minName);
+    struct ndn_charbuf *cb = nc->cb;
+    if (nc->minName != NULL) ndn_charbuf_destroy(&nc->minName);
     nc->minName = NULL;
-    if (nc->maxName != NULL) ccn_charbuf_destroy(&nc->maxName);
+    if (nc->maxName != NULL) ndn_charbuf_destroy(&nc->maxName);
     nc->maxName = NULL;
-    if (nc->content != NULL) ccn_charbuf_destroy(&nc->content);
+    if (nc->content != NULL) ndn_charbuf_destroy(&nc->content);
     nc->content = NULL;
-    if (nc->hash != NULL) ccn_charbuf_destroy(&nc->hash);
+    if (nc->hash != NULL) ndn_charbuf_destroy(&nc->hash);
     nc->hash = NULL;
     if (cb == NULL) {
-        cb = ccn_charbuf_create();
+        cb = ndn_charbuf_create();
         nc->cb = cb;
     }
     cb->length = 0;
-    ccnb_element_begin(cb, CCN_DTAG_SyncNode);
-    SyncAppendTaggedNumber(cb, CCN_DTAG_SyncVersion, SYNC_VERSION);
-    ccnb_element_begin(cb, CCN_DTAG_SyncNodeElements);
+    ndnb_element_begin(cb, NDN_DTAG_SyncNode);
+    SyncAppendTaggedNumber(cb, NDN_DTAG_SyncVersion, SYNC_VERSION);
+    ndnb_element_begin(cb, NDN_DTAG_SyncNodeElements);
     nc->longHash.pos = MAX_HASH_BYTES;
     nc->rc = 0;
     nc->refLen = 0;
@@ -192,31 +195,31 @@ SyncExtendComposite(struct SyncNodeComposite *nc,
 
 extern void
 SyncNodeMaintainMinMax(struct SyncNodeComposite *nc,
-                       const struct ccn_charbuf *name) {
-    struct ccn_charbuf *x = nc->minName;
+                       const struct ndn_charbuf *name) {
+    struct ndn_charbuf *x = nc->minName;
     if (x == NULL) {
-        x = ccn_charbuf_create();
-        ccn_charbuf_append_charbuf(x, name);
+        x = ndn_charbuf_create();
+        ndn_charbuf_append_charbuf(x, name);
     } else if (SyncCmpNames(name, x) < 0) {
-        ccn_charbuf_reset(x);
-        ccn_charbuf_append_charbuf(x, name);
+        ndn_charbuf_reset(x);
+        ndn_charbuf_append_charbuf(x, name);
     }
     nc->minName = x;
     x = nc->maxName;
     if (x == NULL) {
-        x = ccn_charbuf_create();
-        ccn_charbuf_append_charbuf(x, name);
+        x = ndn_charbuf_create();
+        ndn_charbuf_append_charbuf(x, name);
     } else if (SyncCmpNames(name, x) > 0) {
-        ccn_charbuf_reset(x);
-        ccn_charbuf_append_charbuf(x, name);
+        ndn_charbuf_reset(x);
+        ndn_charbuf_append_charbuf(x, name);
     }
     nc->maxName = x;
 }
 
 extern void
 SyncNodeAddName(struct SyncNodeComposite *nc,
-                const struct ccn_charbuf *name) {
-    struct ccn_charbuf *cb = nc->cb;
+                const struct ndn_charbuf *name) {
+    struct ndn_charbuf *cb = nc->cb;
     ssize_t start = cb->length;
     SyncAppendElement(cb, name);
     ssize_t stop = cb->length;
@@ -229,12 +232,12 @@ SyncNodeAddName(struct SyncNodeComposite *nc,
 extern void
 SyncNodeAddNode(struct SyncNodeComposite *nc,
                 struct SyncNodeComposite *node) {
-    struct ccn_charbuf *cb = nc->cb;
+    struct ndn_charbuf *cb = nc->cb;
     ssize_t start = cb->length;
     SyncNodeAppendLongHash(cb, node);
     ssize_t stop = cb->length;
-    struct ccn_buf_decoder xds;
-    struct ccn_buf_decoder *xd = SyncInitDecoderFromCharbufRange(&xds, cb, start, stop);
+    struct ndn_buf_decoder xds;
+    struct ndn_buf_decoder *xd = SyncInitDecoderFromCharbufRange(&xds, cb, start, stop);
     SyncAccumHashInner(&nc->longHash, xd);
     SyncExtendComposite(nc, SyncElemKind_node, start, stop);
     unsigned nDepth = node->treeDepth+1;
@@ -246,11 +249,11 @@ SyncNodeAddNode(struct SyncNodeComposite *nc,
 }
 
 extern int
-SyncNodeAppendLongHash(struct ccn_charbuf *cb, struct SyncNodeComposite *nc) {
+SyncNodeAppendLongHash(struct ndn_charbuf *cb, struct SyncNodeComposite *nc) {
     int pos = nc->longHash.pos;
     int len = MAX_HASH_BYTES-pos;
     int res = -1;
-    if (len > 0) res = ccnb_append_tagged_blob(cb, CCN_DTAG_SyncContentHash,
+    if (len > 0) res = ndnb_append_tagged_blob(cb, NDN_DTAG_SyncContentHash,
                                                nc->longHash.bytes+pos,
                                                len);
     return res;
@@ -262,10 +265,10 @@ extern void
 SyncEndComposite(struct SyncNodeComposite *nc) {
     if (!SyncCheckCompErr(nc) && nc->hash == NULL) {
         int res = 0;
-        struct ccn_charbuf *cb = nc->cb;
+        struct ndn_charbuf *cb = nc->cb;
         
         // terminate the references
-        res |= ccnb_element_end(cb);
+        res |= ndnb_element_end(cb);
         
         // output the hash
         struct SyncLongHashStruct *hp = &nc->longHash;
@@ -277,11 +280,11 @@ SyncEndComposite(struct SyncNodeComposite *nc) {
         SyncAppendElement(cb, nc->minName);
         SyncAppendElement(cb, nc->maxName);
         
-        res |= SyncAppendTaggedNumber(cb, CCN_DTAG_SyncNodeKind, nc->kind);
-        res |= SyncAppendTaggedNumber(cb, CCN_DTAG_SyncLeafCount, nc->leafCount);
-        res |= SyncAppendTaggedNumber(cb, CCN_DTAG_SyncTreeDepth, nc->treeDepth);
-        res |= SyncAppendTaggedNumber(cb, CCN_DTAG_SyncByteCount, nc->byteCount);
-        res |= ccnb_element_end(cb);
+        res |= SyncAppendTaggedNumber(cb, NDN_DTAG_SyncNodeKind, nc->kind);
+        res |= SyncAppendTaggedNumber(cb, NDN_DTAG_SyncLeafCount, nc->leafCount);
+        res |= SyncAppendTaggedNumber(cb, NDN_DTAG_SyncTreeDepth, nc->treeDepth);
+        res |= SyncAppendTaggedNumber(cb, NDN_DTAG_SyncByteCount, nc->byteCount);
+        res |= ndnb_element_end(cb);
         if (res != 0) SyncSetCompErr(nc, -__LINE__);
     }
 }
@@ -292,7 +295,7 @@ SyncFreeComposite(struct SyncNodeComposite *nc) {
     if (nc == NULL) return;
     SyncResetComposite(nc);
     if (nc->cb != NULL)
-        ccn_charbuf_destroy(&nc->cb);
+        ndn_charbuf_destroy(&nc->cb);
     if (nc->refs != NULL) {
         free(nc->refs);
         nc->refs = NULL;
@@ -307,36 +310,36 @@ SyncWriteComposite(struct SyncNodeComposite *nc, FILE *f) {
 }
 
 extern int
-SyncParseComposite(struct SyncNodeComposite *nc, struct ccn_buf_decoder *d) {
+SyncParseComposite(struct SyncNodeComposite *nc, struct ndn_buf_decoder *d) {
     ssize_t startOff = d->decoder.token_index;
     unsigned char *base = ((unsigned char *) d->buf)+startOff;
     SyncResetComposite(nc);
-    while (ccn_buf_match_dtag(d, CCN_DTAG_SyncNode)) {
+    while (ndn_buf_match_dtag(d, NDN_DTAG_SyncNode)) {
         // the while loop is only present to let us break out early on error
-        ccn_buf_advance(d);
+        ndn_buf_advance(d);
         // first, get the version stamp
-        uintmax_t vers = SyncParseUnsigned(d, CCN_DTAG_SyncVersion);
+        uintmax_t vers = SyncParseUnsigned(d, NDN_DTAG_SyncVersion);
         if (SyncCheckDecodeErr(d) || vers != SYNC_VERSION) {
             SyncSetCompErr(nc, -__LINE__);
             break;
         }
         
-        if (SyncCheckCompErr(nc) == 0 && ccn_buf_match_dtag(d, CCN_DTAG_SyncNodeElements)) {
+        if (SyncCheckCompErr(nc) == 0 && ndn_buf_match_dtag(d, NDN_DTAG_SyncNodeElements)) {
             // we have a refs section
-            ccn_buf_advance(d);
+            ndn_buf_advance(d);
             
             for(;;) {
                 SyncElemKind kind = SyncElemKind_node;
                 ssize_t start = 0;
-                if (ccn_buf_match_dtag(d, CCN_DTAG_Name)) {
+                if (ndn_buf_match_dtag(d, NDN_DTAG_Name)) {
                     // a name, so it's a leaf
                     start = SyncParseName(d);
                     kind = SyncElemKind_leaf;
-                } else if (ccn_buf_match_dtag(d, CCN_DTAG_SyncContentHash)) {
+                } else if (ndn_buf_match_dtag(d, NDN_DTAG_SyncContentHash)) {
                     // a hash, so it's a composite
                     start = SyncParseHash(d);
                 } else  {
-                    ccn_buf_check_close(d);
+                    ndn_buf_check_close(d);
                     break;
                 }
                 if (SyncCheckDecodeErr(d))  {
@@ -350,13 +353,13 @@ SyncParseComposite(struct SyncNodeComposite *nc, struct ccn_buf_decoder *d) {
         }
         if (SyncCheckCompErr(nc)) break;
         
-        if (ccn_buf_match_dtag(d, CCN_DTAG_SyncContentHash)) {
+        if (ndn_buf_match_dtag(d, NDN_DTAG_SyncContentHash)) {
             const unsigned char * xp = NULL;
             size_t xs = 0;
-            ccn_buf_advance(d);
-            if (ccn_buf_match_blob(d, &xp, &xs)) {
-                ccn_buf_advance(d);
-                ccn_buf_check_close(d);
+            ndn_buf_advance(d);
+            if (ndn_buf_match_blob(d, &xp, &xs)) {
+                ndn_buf_advance(d);
+                ndn_buf_check_close(d);
             } else {
                 nc->longHash.pos = 0;
                 SyncSetCompErr(nc, -__LINE__);
@@ -390,27 +393,27 @@ SyncParseComposite(struct SyncNodeComposite *nc, struct ccn_buf_decoder *d) {
             break;
         }
         
-        nc->kind = (SyncNodeKind) SyncParseUnsigned(d, CCN_DTAG_SyncNodeKind);
+        nc->kind = (SyncNodeKind) SyncParseUnsigned(d, NDN_DTAG_SyncNodeKind);
         if (SyncCheckDecodeErr(d)) {
             SyncSetCompErr(nc, -__LINE__);
             break;
         }
-        nc->leafCount = SyncParseUnsigned(d, CCN_DTAG_SyncLeafCount);
+        nc->leafCount = SyncParseUnsigned(d, NDN_DTAG_SyncLeafCount);
         if (SyncCheckDecodeErr(d)) {
             SyncSetCompErr(nc, -__LINE__);
             break;
         }
-        nc->treeDepth = SyncParseUnsigned(d, CCN_DTAG_SyncTreeDepth);
+        nc->treeDepth = SyncParseUnsigned(d, NDN_DTAG_SyncTreeDepth);
         if (SyncCheckDecodeErr(d)) {
             SyncSetCompErr(nc, -__LINE__);
             break;
         }
-        nc->byteCount = SyncParseUnsigned(d, CCN_DTAG_SyncByteCount);
+        nc->byteCount = SyncParseUnsigned(d, NDN_DTAG_SyncByteCount);
         if (SyncCheckDecodeErr(d)) {
             SyncSetCompErr(nc, -__LINE__);
             break;
         }
-        ccn_buf_check_close(d);
+        ndn_buf_check_close(d);
         if (SyncCheckDecodeErr(d)) {
             SyncSetCompErr(nc, -__LINE__);
         }
@@ -425,9 +428,9 @@ SyncParseComposite(struct SyncNodeComposite *nc, struct ccn_buf_decoder *d) {
             // should NOT happen!
             SyncSetCompErr(nc, -__LINE__);
         } else {
-            struct ccn_charbuf *cb = nc->cb;
+            struct ndn_charbuf *cb = nc->cb;
             cb->length = 0;
-            ccn_charbuf_reserve(cb, len);
+            ndn_charbuf_reserve(cb, len);
             unsigned char *dst = cb->buf;
             memcpy(dst, base, len);
             cb->length = len;
@@ -439,8 +442,8 @@ SyncParseComposite(struct SyncNodeComposite *nc, struct ccn_buf_decoder *d) {
 extern struct SyncNodeComposite *
 SyncNodeFromBytes(struct SyncRootStruct *root, const unsigned char *cp, size_t cs) {
     struct SyncNodeComposite *nc = SyncAllocComposite(root->base);
-    struct ccn_buf_decoder ds;
-    struct ccn_buf_decoder *d = ccn_buf_decoder_start(&ds, cp, cs);
+    struct ndn_buf_decoder ds;
+    struct ndn_buf_decoder *d = ndn_buf_decoder_start(&ds, cp, cs);
     int res = SyncParseComposite(nc, d);
     if (res < 0) {
         // failed, so back out of the allocations
@@ -453,10 +456,10 @@ SyncNodeFromBytes(struct SyncRootStruct *root, const unsigned char *cp, size_t c
 extern struct SyncNodeComposite *
 SyncNodeFromParsedObject(struct SyncRootStruct *root,
                          const unsigned char *msg,
-                         struct ccn_parsed_ContentObject *pco) {
+                         struct ndn_parsed_ContentObject *pco) {
     const unsigned char *cp = NULL;
     size_t cs = 0;
-    int res = ccn_content_get_value(msg, pco->offset[CCN_PCO_E], pco,
+    int res = ndn_content_get_value(msg, pco->offset[NDN_PCO_E], pco,
                                     &cp, &cs);
     if (res >= 0 && cs > DEFAULT_HASH_BYTES) {
         // may be a node
@@ -467,8 +470,8 @@ SyncNodeFromParsedObject(struct SyncRootStruct *root,
 
 extern struct SyncNodeComposite *
 SyncNodeFromInfo(struct SyncRootStruct *root,
-                 struct ccn_upcall_info *info) {
-    return SyncNodeFromParsedObject(root, info->content_ccnb, info->pco);
+                 struct ndn_upcall_info *info) {
+    return SyncNodeFromParsedObject(root, info->content_ndnb, info->pco);
 }
 
 

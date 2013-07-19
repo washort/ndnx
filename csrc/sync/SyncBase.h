@@ -1,8 +1,11 @@
 /**
  * @file sync/SyncBase.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -18,18 +21,18 @@
  */
 
 
-#ifndef CCN_SyncBase
-#define CCN_SyncBase
+#ifndef NDN_SyncBase
+#define NDN_SyncBase
 
 #include <sys/types.h>
-#include <ccn/loglevels.h>
+#include <ndn/loglevels.h>
 #include <stdint.h>
 
 #include "sync_plumbing.h"
 
 // Incomplete types for opaque structures.
-struct ccn_schedule;
-struct ccn;
+struct ndn_schedule;
+struct ndn;
 struct SyncPrivate;
 
 // A SyncBase is the common data for a Sync Agent.  Each Sync Agent supports a

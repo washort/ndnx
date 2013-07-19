@@ -1,7 +1,10 @@
 # javasrc/Makefile
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2013 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -19,7 +22,7 @@ default:
 
 include ../csrc/conf.mk   # if missing, top-level ./configure is needed
 
-JAR = ccn.jar
+JAR = ndn.jar
 LIBS = $(JAR) lib/bcprov-jdk16-143.jar lib/kxml2-2.3.0.jar $(EXTRA_LIBS)
 EXTRA_LIBS = `find lib/bcprov-jdk15-143.jar -print 2>/dev/null`
 WARN_NO_INSTALL = echo Nothing installed from javasrc/
@@ -48,7 +51,7 @@ uninstall:
 
 # Use ant to actually do the work for these targets
 jar test: _always
-	$(ANT) -k -DTEST_PORT=$${CCN_LOCAL_PORT_BASE:-63000} $@
+	$(ANT) -k -DTEST_PORT=$${NDN_LOCAL_PORT_BASE:-63000} $@
 
 clean: _always 
 	$(ANT) -k clean
@@ -58,7 +61,7 @@ clean: _always
 test: test-alone
 test-alone: _always
 	netstat -a -n | grep -v TIME_WAIT > test-alone
-	grep '^..p.*[.]'$${CCN_LOCAL_PORT_BASE:-63000} test-alone || rm test-alone
+	grep '^..p.*[.]'$${NDN_LOCAL_PORT_BASE:-63000} test-alone || rm test-alone
 	test \! -f test-alone        # Fail here if conflicting tests are running
 
 documentation: _always

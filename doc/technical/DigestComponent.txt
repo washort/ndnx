@@ -1,7 +1,7 @@
 Implicit Digest Component
 =========================
 
-The *implicit digest component* consists the SHA-256 digest of the entire ccnb-encoded link:ContentObject.html[ContentObject].
+The *implicit digest component* consists the SHA-256 digest of the entire ndnb-encoded link:ContentObject.html[ContentObject].
 
 The reasoning behind this is that we want to be able to do both of the following:
 

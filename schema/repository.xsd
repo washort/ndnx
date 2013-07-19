@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE xs:schema PUBLIC "-//W3C//DTD XMLSCHEMA 200102//EN" "XMLSchema.dtd">
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-<!-- DKS: leave this out, following ccn.xsd; as things don't work right
+<!-- DKS: leave this out, following ndn.xsd; as things don't work right
      if you put it in. We should fix this. -->
 <!--
-        targetNamespace="http://www.ccnx.org/content/schema/20090915"
-        xmlns="http://www.ccnx.org/content/schema/20090915" 
+        targetNamespace="http://www.ndnx.org/content/schema/20090915"
+        xmlns="http://www.ndnx.org/content/schema/20090915" 
         elementFormDefault="unqualified"
         attributeFormDefault="unqualified">
 -->
 
-<xs:include schemaLocation="ccnx.xsd"/>
+<xs:include schemaLocation="ndnx.xsd"/>
 
   <xs:annotation>
     <xs:documentation xml:lang="en">
@@ -26,7 +26,7 @@
 <xs:complexType name="RepositoryInfoDataType">
   <xs:simpleContent>
     <xs:extension base="RepositoryInfoDataTypeType">
-      <xs:attribute name="ccnbencoding" type="xs:string" fixed="base64Binary"/>
+      <xs:attribute name="ndnbencoding" type="xs:string" fixed="base64Binary"/>
     </xs:extension>
   </xs:simpleContent>
 </xs:complexType>

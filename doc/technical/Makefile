@@ -1,7 +1,10 @@
 # doc/technical/Makefile
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -14,7 +17,7 @@
 
 # The order here determines the order in the generated index.
 DERIVED_HTML =				\
-	CCNxProtocol.html		\
+	NDNxProtocol.html		\
 	Name.html			\
 	URI.html			\
 	ContentObject.html		\
@@ -43,15 +46,15 @@ DERIVED_HTML =				\
 	sync.dtd.html			\
 	sync.xsd.html			\
 	DTAG.html			\
-	CCNDStatus.html			\
+	NDNDStatus.html			\
 
 DERIVED_INDEX = ../index.html index.html index.txt
 DEBRIS = .tagname.csv
 SRC_HTML = # any checked-in html files should go here
 INDEXED_HTML = $(DERIVED_HTML) $(SRC_HTML)
 SCHEMA = ../../schema
-XSDSRC = $(SCHEMA)/ccnx.xsd $(SCHEMA)/repository.xsd $(SCHEMA)/security.xsd
-DTDSRC = $(SCHEMA)/ccnx.dtd $(SCHEMA)/repository.dtd $(SCHEMA)/security.dtd
+XSDSRC = $(SCHEMA)/ndnx.xsd $(SCHEMA)/repository.xsd $(SCHEMA)/security.xsd
+DTDSRC = $(SCHEMA)/ndnx.dtd $(SCHEMA)/repository.dtd $(SCHEMA)/security.dtd
 all default:
 	: To build the documentation: $(MAKE) documentation
 
@@ -131,8 +134,8 @@ Name.html: Name.txt
 BinaryEncoding.html: BinaryEncoding.txt
 	asciidoc BinaryEncoding.txt
 
-CCNxProtocol.html: CCNxProtocol.txt
-	asciidoc CCNxProtocol.txt
+NDNxProtocol.html: NDNxProtocol.txt
+	asciidoc NDNxProtocol.txt
 
 NameEnumerationProtocol.html: NameEnumerationProtocol.txt
 	asciidoc NameEnumerationProtocol.txt
@@ -155,8 +158,8 @@ CreateCollectionProtocol.html: CreateCollectionProtocol.txt
 LinkMessages.html: LinkMessages.txt
 	asciidoc LinkMessages.txt
 
-CCNDStatus.html: CCNDStatus.txt
-	asciidoc CCNDStatus.txt
+NDNDStatus.html: NDNDStatus.txt
+	asciidoc NDNDStatus.txt
 
 ../index.html: ../index.txt ../../README ../../LICENSE
 	asciidoc --unsafe ../index.txt

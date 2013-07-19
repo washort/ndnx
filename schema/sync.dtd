@@ -1,12 +1,12 @@
-<!-- DTD for CCNx Sync Protocol -->
+<!-- DTD for NDNx Sync Protocol -->
 <!ENTITY % URI "CDATA">        <!-- a Uniform Resource Identifier -->
 <!ENTITY % commonattrs
-       "xmlns %URI; #FIXED 'http://www.ccnx.org/content/schema/20090915'">
+       "xmlns %URI; #FIXED 'http://www.ndnx.org/content/schema/20090915'">
 
-<!-- Items from ccnx.dtd -->
+<!-- Items from ndnx.dtd -->
 <!ELEMENT Name              (Component*)>
 <!ELEMENT Component         (#PCDATA)>	<!-- base64Binary -->
-<!ATTLIST Component         ccnbencoding CDATA #FIXED 'base64Binary'>
+<!ATTLIST Component         ndnbencoding CDATA #FIXED 'base64Binary'>
 <!-- End of copied items -->
 
 <!ELEMENT SyncVersion        (#PCDATA)>      <!-- 20110614 -->
@@ -15,7 +15,7 @@
 <!ELEMENT SyncByteCount      (#PCDATA)>      <!-- nonNegativeInteger -->
 
 <!ELEMENT SyncContentHash    (#PCDATA)>
-<!ATTLIST SyncContentHash    ccnbencoding CDATA #FIXED 'base64Binary'>
+<!ATTLIST SyncContentHash    ndnbencoding CDATA #FIXED 'base64Binary'>
 
 <!ELEMENT SyncNodeKind       (#PCDATA)>      <!-- nonNegativeInteger -->
 

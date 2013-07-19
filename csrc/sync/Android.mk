@@ -1,3 +1,6 @@
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -15,8 +18,8 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE		:= libccnsync
-LOCAL_MODULE_FILENAME := libccnsync
+LOCAL_MODULE		:= libndnsync
+LOCAL_MODULE_FILENAME := libndnsync
 LOCAL_C_INCLUDES	:= $(LOCAL_PATH)
 LOCAL_C_INCLUDES	+= $(LOCAL_PATH)/../include 
 LOCAL_C_INCLUDES	+= $(LOCAL_PATH)/..
@@ -29,7 +32,7 @@ SYNCSRC := $(SYNCOBJ:.o=.c)
 
 LOCAL_SRC_FILES := $(SYNCSRC)
 LOCAL_CFLAGS := -g
-LOCAL_STATIC_LIBRARIES := libcrypto libccnx
+LOCAL_STATIC_LIBRARIES := libcrypto libndnx
 LOCAL_SHARED_LIBRARIES :=
 
 include $(BUILD_SHARED_LIBRARY)

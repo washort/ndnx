@@ -1,9 +1,12 @@
 /**
  * @file hashtbtest.c
- * Try out some hash table calls (ccn/hashtb).
+ * Try out some hash table calls (ndn/hashtb).
  *
- * A CCNx program.
+ * A NDNx program.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2008, 2009 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -21,7 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <ccn/hashtb.h>
+#include <ndn/hashtb.h>
 
 static void
 Dump(struct hashtb *h)

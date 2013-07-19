@@ -3,6 +3,9 @@
  * 
  * A simple test program to benchmark signing performance.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2009 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -20,9 +23,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <ccn/ccn.h>
-#include <ccn/charbuf.h>
-#include <ccn/keystore.h>
+#include <ndn/ndn.h>
+#include <ndn/charbuf.h>
+#include <ndn/keystore.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -34,34 +37,34 @@ int
 main(int argc, char **argv)
 {
 
-  struct ccn_keystore *keystore = NULL;
+  struct ndn_keystore *keystore = NULL;
   int res = 0;
-  struct ccn_charbuf *signed_info = ccn_charbuf_create();
+  struct ndn_charbuf *signed_info = ndn_charbuf_create();
   int i;
   int sec, usec;
   char msgbuf[PAYLOAD_SIZE];
   struct timeval start, end;
-  struct ccn_charbuf *message = ccn_charbuf_create();
-  struct ccn_charbuf *path = ccn_charbuf_create();
-  struct ccn_charbuf *seq = ccn_charbuf_create();
+  struct ndn_charbuf *message = ndn_charbuf_create();
+  struct ndn_charbuf *path = ndn_charbuf_create();
+  struct ndn_charbuf *seq = ndn_charbuf_create();
 
-  struct ccn_charbuf *temp = ccn_charbuf_create();
-  keystore = ccn_keystore_create();
-  ccn_charbuf_putf(temp, "%s/.ccnx/.ccnx_keystore", getenv("HOME"));
-  res = ccn_keystore_init(keystore,
-			  ccn_charbuf_as_string(temp),
+  struct ndn_charbuf *temp = ndn_charbuf_create();
+  keystore = ndn_keystore_create();
+  ndn_charbuf_putf(temp, "%s/.ndnx/.ndnx_keystore", getenv("HOME"));
+  res = ndn_keystore_init(keystore,
+			  ndn_charbuf_as_string(temp),
 			  "Th1s1sn0t8g00dp8ssw0rd.");
   if (res != 0) {
-    printf("Failed to initialize keystore %s\n", ccn_charbuf_as_string(temp));
+    printf("Failed to initialize keystore %s\n", ndn_charbuf_as_string(temp));
     exit(1);
   }
-  ccn_charbuf_destroy(&temp);
+  ndn_charbuf_destroy(&temp);
   
-  res = ccn_signed_info_create(signed_info,
-			       /* pubkeyid */ ccn_keystore_public_key_digest(keystore),
-			       /* publisher_key_id_size */ ccn_keystore_public_key_digest_length(keystore),
+  res = ndn_signed_info_create(signed_info,
+			       /* pubkeyid */ ndn_keystore_public_key_digest(keystore),
+			       /* publisher_key_id_size */ ndn_keystore_public_key_digest_length(keystore),
 			       /* datetime */ NULL,
-			       /* type */ CCN_CONTENT_DATA,
+			       /* type */ NDN_CONTENT_DATA,
 			       /* freshness */ FRESHNESS,
                                /*finalblockid*/ NULL,
 			       /* keylocator */ NULL);
@@ -80,28 +83,28 @@ main(int argc, char **argv)
       printf(".");
       fflush(stdout);
     }
-    ccn_name_init(path);
-    ccn_name_append_str(path, "rtp");
-    ccn_name_append_str(path, "protocol");
-    ccn_name_append_str(path, "13.2.117.34");
-    ccn_name_append_str(path, "domain");
-    ccn_name_append_str(path, "smetters");
-    ccn_name_append_str(path, "principal");
-    ccn_name_append_str(path, "2021915340");
-    ccn_name_append_str(path, "id");
-    ccn_charbuf_putf(seq, "%u", i);
-    ccn_name_append(path, seq->buf, seq->length);
-    ccn_name_append_str(path, "seq");
+    ndn_name_init(path);
+    ndn_name_append_str(path, "rtp");
+    ndn_name_append_str(path, "protocol");
+    ndn_name_append_str(path, "13.2.117.34");
+    ndn_name_append_str(path, "domain");
+    ndn_name_append_str(path, "smetters");
+    ndn_name_append_str(path, "principal");
+    ndn_name_append_str(path, "2021915340");
+    ndn_name_append_str(path, "id");
+    ndn_charbuf_putf(seq, "%u", i);
+    ndn_name_append(path, seq->buf, seq->length);
+    ndn_name_append_str(path, "seq");
   
-    res = ccn_encode_ContentObject(/* out */ message,
+    res = ndn_encode_ContentObject(/* out */ message,
 				   path, signed_info, 
 				   msgbuf, PAYLOAD_SIZE,
-				   ccn_keystore_digest_algorithm(keystore), 
-				   ccn_keystore_private_key(keystore));
+				   ndn_keystore_digest_algorithm(keystore), 
+				   ndn_keystore_private_key(keystore));
 
-    ccn_charbuf_reset(message);
-    ccn_charbuf_reset(path);
-    ccn_charbuf_reset(seq);
+    ndn_charbuf_reset(message);
+    ndn_charbuf_reset(path);
+    ndn_charbuf_reset(seq);
   }
   gettimeofday(&end, NULL);
   sec = end.tv_sec - start.tv_sec;

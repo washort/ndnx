@@ -3,11 +3,11 @@
 <suite name="JUnits1" verbose="10">
     <test name="JU1" junit="true">
         <classes>
-            <class name="org.ccnx.ccn.protocol.CCNTimeTest" />
+            <class name="org.ndnx.ndn.protocol.NDNTimeTest" />
         </classes>
     <!-- 
         <packages>
-            <package name="org.ccnx.ccn.*" />
+            <package name="org.ndnx.ndn.*" />
         </packages>
     -->
     </test>

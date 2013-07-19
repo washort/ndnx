@@ -2,8 +2,11 @@
 #
 # Tests marshalling and unmarshalling of misc element types
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -15,8 +18,8 @@
 #
 
 for i in 14 15 18; do
-  test -f ../../schema/validation/ccn-test$i.xml || SkipTest missing source
-  ccn_xmltoccnb -w - <../../schema/validation/ccn-test$i.xml > test_coders_$i.ccnb
-  basicparsetest < test_coders_$i.ccnb || Fail test_coders_$i.ccnb
+  test -f ../../schema/validation/ndn-test$i.xml || SkipTest missing source
+  ndn_xmltondnb -w - <../../schema/validation/ndn-test$i.xml > test_coders_$i.ndnb
+  basicparsetest < test_coders_$i.ndnb || Fail test_coders_$i.ndnb
 done
-rm test_coders_*.ccnb
+rm test_coders_*.ndnb

@@ -22,18 +22,18 @@ Usage:
         -p publish key in repo (recommended)
         -i specify the real-world identity of the key owner
 
-      If necessary to specify a specific private key (.ccnx_keystore) file that should be used for signing 
-      purposes, plese configure CCNX_DIR or HOME environmental variables.
-      If CCNX_DIR is set, the script will use the key from $CCNX_DIR/.ccnx_keystore.
-      Otherwise, the script will attempt user the key from $HOME/.ccnx/.ccnx_keystore
+      If necessary to specify a specific private key (.ndnx_keystore) file that should be used for signing 
+      purposes, plese configure NDNX_DIR or HOME environmental variables.
+      If NDNX_DIR is set, the script will use the key from $NDNX_DIR/.ndnx_keystore.
+      Otherwise, the script will attempt user the key from $HOME/.ndnx/.ndnx_keystore
 
-      Keystore password can be defined through CCNX_KEYSTORE_PASSWORD environment variable,
-      if not explicitly defined, the default CCNx keystore password will be used
+      Keystore password can be defined through NDNX_KEYSTORE_PASSWORD environment variable,
+      if not explicitly defined, the default NDNx keystore password will be used
 
       The script performs the following operations:
           - reads public key <key_file>,
           - creates content object with name <prefix-of-published-key>/%C1.M.K<sha256(key-bits)>/<version>/<segment>
-          - signs it with key <path-to-signing-key-direcotry>/.ccnx_keystore
+          - signs it with key <path-to-signing-key-direcotry>/.ndnx_keystore
           - puts KeyLocator: <prefix-of-signing-key>/%C1.M.K<sha256(signing-key-bits)>
           - publishes content object to local repo
           - writes a pub_cert file for the key owner that contains the key and info objects
@@ -76,21 +76,21 @@ if [ "x$IDENTITY" == "x" ]; then
     exit 1
 fi
 
-if [ "x$CCNX_DIR" != "x" ]; then
-    KEYSTORE="$CCNX_DIR/.ccnx_keystore"
-    export CCNX_DIR
+if [ "x$NDNX_DIR" != "x" ]; then
+    KEYSTORE="$NDNX_DIR/.ndnx_keystore"
+    export NDNX_DIR
 else
-    KEYSTORE="$HOME/.ccnx/.ccnx_keystore"
+    KEYSTORE="$HOME/.ndnx/.ndnx_keystore"
     export HOME
 fi
 
 if [ ! -f "$KEYSTORE" ]; then
     error "[$KEYSTORE] file not found or insufficient permissions to read the file"
-    error "Please check permissions or configure CCNX_DIR or HOME variables"
+    error "Please check permissions or configure NDNX_DIR or HOME variables"
     exit 1
 fi
 
-export KEY_PASSWORD=${CCNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
+export KEY_PASSWORD=${NDNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
 
 SIGNKEYURI=`ndn-pubkey-name`
 META=`ndn-pubkey-name | $SED -e 's|^\(.*\)\(/%C1\.M\.K.*\)$|\1/info\2|g'`
@@ -102,8 +102,8 @@ if [ "x$SIGNKEYURI" == "x" -o "x$META" == "x" -o "$META" == "$SIGNKEYURI" -o "x$
     exit 1
 fi
 
-AFFILIATION=`ccnpeek -cv $META 2>/dev/null | $SED -e 's|.*<Name>\(.*\)</Name>.*|\1|g'`
-VALID_TO=`ccnpeek -cv $META 2>/dev/null | $SED -e 's|.*<Valid_to>\(.*\)</Valid_to>.*|\1|g'`
+AFFILIATION=`ndnpeek -cv $META 2>/dev/null | $SED -e 's|.*<Name>\(.*\)</Name>.*|\1|g'`
+VALID_TO=`ndnpeek -cv $META 2>/dev/null | $SED -e 's|.*<Valid_to>\(.*\)</Valid_to>.*|\1|g'`
 
 if [ "x$AFFILIATION" == "x" -o "x$VALID_TO" == "x" ]; then
     error "Public key meta information for key [$SIGNKEYURI] is not found"
@@ -118,18 +118,18 @@ pubkey_binhash=`echo $pubkey_base64 | $BASE64 --decode | $OPENSSL dgst -sha256 -
 
 info_base64=`echo "<Meta><Name>$IDENTITY</Name><Affiliation>$AFFILIATION</Affiliation><Valid_to>$VALID_TO</Valid_to></Meta>" | $BASE64 | tr -d '\n\r\f'`
 
-export KEY_PASSWORD=${CCNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
+export KEY_PASSWORD=${NDNX_KEYSTORE_PASSWORD:-"Th1s1sn0t8g00dp8ssw0rd."}
 
 function sign_and_publish {
    URL=$1
    BASE64_CONTENT=$2
 
-   echo $BASE64_CONTENT | $BASE64 --decode | CCNX_DIR=$SIGNKEY ccnpoke -f -x 2000 -t KEY -l -k "$SIGNKEYURI" "$URL/%00"
+   echo $BASE64_CONTENT | $BASE64 --decode | NDNX_DIR=$SIGNKEY ndnpoke -f -x 2000 -t KEY -l -k "$SIGNKEYURI" "$URL/%00"
 
    if [ $REPO_WRITE -eq 1 ]; then
        # Request interest from repo
        repo_command="$URL/%C1.R.sw/`openssl rand 20 2>/dev/null | $XXD -p`"
-       ccnpeek -w 2 -s 1 "$repo_command" > /dev/null
+       ndnpeek -w 2 -s 1 "$repo_command" > /dev/null
        RET=$?
        if [ ! $RET -eq 0 ]; then
            error "repo is not responding (not running) or wrong repo command [$repo_command]"
@@ -148,9 +148,9 @@ INFO_URL="$PREFIX/info/%C1.M.K%00$pubkey_binhash/%FD%01$VERSION"
 sign_and_publish "$KEY_URL" "$pubkey_base64"
 sign_and_publish "$INFO_URL" "$info_base64"
 
-ccnpeek "$KEY_URL" > "$PUBCERT"
+ndnpeek "$KEY_URL" > "$PUBCERT"
 RES1=$?
-ccnpeek "$INFO_URL" >> "$PUBCERT"
+ndnpeek "$INFO_URL" >> "$PUBCERT"
 RES2=$?
 
 echo $KEY_URL

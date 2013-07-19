@@ -1,3 +1,6 @@
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2010-2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -14,7 +17,7 @@
 # pjproject-1.4.5 is configured for the host platform and built,
 # but not installed anywhere.
 
-SUBDIRS = external CCNx-Android-Lib CCNx-Android-Services apps
+SUBDIRS = external NDNx-Android-Lib NDNx-Android-Services apps
 
 .PHONY: subdirs $(SUBDIRS_clean) $(SUBDIRS) $(SUBDIRS_distclean) _always
 
@@ -24,17 +27,17 @@ default all: verifykits $(SUBDIRS)
 # 
 # Do we really want to instead just build it if it doesn't exist?
 #
-checkccnjar:
-	@test -f ../javasrc/ccn.jar || (echo Missing ccn.jar.  Please make CCNx javasrc before the Android port; \
+checkndnjar:
+	@test -f ../javasrc/ndn.jar || (echo Missing ndn.jar.  Please make NDNx javasrc before the Android port; \
 	exit 1;)
 
-CCNx-Android-Lib: checkccnjar
+NDNx-Android-Lib: checkndnjar
 
 # Since we've moved to a modern NDK, we should consider turning external projects
 # into NDK library module projects, and these can then simply be added as modules 
 # during the JNI build phase.  We'll have to still deal with external downloads 
 # because of export control handling.
-CCNx-Android-Services: checkccnjar external
+NDNx-Android-Services: checkndnjar external
 
 apps: 
 
@@ -47,13 +50,13 @@ $(SUBDIRS):
 	done
 
 install uninstall:
-	(cd CCNx-Android-Services && $(MAKE) $@)
+	(cd NDNx-Android-Services && $(MAKE) $@)
 	(cd apps && $(MAKE) $@)
 
 with-bcp:
 	(cd external && $(MAKE) -j 1)
-	(cd CCNx-Android-Lib && $(MAKE))
-	(cd CCNx-Android-Services && $(MAKE) $@)
+	(cd NDNx-Android-Lib && $(MAKE))
+	(cd NDNx-Android-Services && $(MAKE) $@)
 	(cd apps && $(MAKE) $@)
 
 clean distclean:

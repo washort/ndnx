@@ -1,8 +1,11 @@
 /**
  * @file sync/SyncMacros.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -18,8 +21,8 @@
  */
 
 
-#ifndef CCN_SyncMacros
-#define CCN_SyncMacros
+#ifndef NDN_SyncMacros
+#define NDN_SyncMacros
 
 #define SYNC_VERSION 20110614
 #define SLICE_VERSION 20110614

@@ -1,7 +1,10 @@
 # apps/HttpProxy/dir.mk
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,8 +15,8 @@
 # FOR A PARTICULAR PURPOSE.
 #
 
-LDLIBS = -L$(CCNLIBDIR) $(MORE_LDLIBS) $(OPENSSL_LIBS) -lccn -lcrypto
-CCNLIBDIR = ../../csrc/lib
+LDLIBS = -L$(NDNLIBDIR) $(MORE_LDLIBS) $(OPENSSL_LIBS) -lndn -lcrypto
+NDNLIBDIR = ../../csrc/lib
 # Do not install these yet - we should choose names more appropriate for
 # a flat namespace in /usr/local/bin
 # INSTALLED_PROGRAMS = NetFetch HttpProxy
@@ -23,7 +26,7 @@ CSRC = HttpProxy.c NetFetch.c ProxyUtil.c SockHop.c
 
 default all: $(PROGRAMS)
 
-$(PROGRAMS): $(CCNLIBDIR)/libccn.a
+$(PROGRAMS): $(NDNLIBDIR)/libndn.a
 
 HttpProxy: HttpProxy.o ProxyUtil.o SockHop.o
 	$(CC) $(CFLAGS) -o $@ HttpProxy.o ProxyUtil.o SockHop.o $(LDLIBS)
@@ -42,11 +45,11 @@ test: default
 # but must be updated manually.
 ###############################
 HttpProxy.o: HttpProxy.c ProxyUtil.h SockHop.h ProxyUtil.h \
-  ../include/ccn/fetch.h ../include/ccn/ccn.h ../include/ccn/coding.h \
-  ../include/ccn/charbuf.h ../include/ccn/indexbuf.h ../include/ccn/uri.h
+  ../include/ndn/fetch.h ../include/ndn/ndn.h ../include/ndn/coding.h \
+  ../include/ndn/charbuf.h ../include/ndn/indexbuf.h ../include/ndn/uri.h
 NetFetch.o: NetFetch.c ProxyUtil.h SockHop.h ProxyUtil.h \
-  ../include/ccn/ccn.h ../include/ccn/coding.h ../include/ccn/charbuf.h \
-  ../include/ccn/indexbuf.h ../include/ccn/uri.h \
-  ../include/ccn/keystore.h ../include/ccn/signing.h
+  ../include/ndn/ndn.h ../include/ndn/coding.h ../include/ndn/charbuf.h \
+  ../include/ndn/indexbuf.h ../include/ndn/uri.h \
+  ../include/ndn/keystore.h ../include/ndn/signing.h
 ProxyUtil.o: ProxyUtil.c ProxyUtil.h
 SockHop.o: SockHop.c SockHop.h ProxyUtil.h ProxyUtil.h

@@ -113,6 +113,6 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="libccn.null.271930130" name="libccn"/>
+		<project id="libndn.null.271930130" name="libndn"/>
 	</storageModule>
 </cproject>

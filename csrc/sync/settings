@@ -1,7 +1,10 @@
-# ccnr/csrc/sync_perf/settings
+# ndnr/csrc/sync_perf/settings
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009, 2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -11,7 +14,7 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
 #
-# Note: use a different CCN_LOCAL_PORT_BASE than used by the 'settings'
-# in ccnr/csrc/exttests!
-: ${CCN_LOCAL_PORT_BASE:=64000}
+# Note: use a different NDN_LOCAL_PORT_BASE than used by the 'settings'
+# in ndnr/csrc/exttests!
+: ${NDN_LOCAL_PORT_BASE:=64000}
 LONG_LINES=100000

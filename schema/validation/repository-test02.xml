@@ -2,7 +2,7 @@
 <Policy>
   <PolicyVersion>1.0</PolicyVersion>
   <LocalName>Repository</LocalName>
-  <GlobalPrefix>/parc.com/csl/ccn/Repos</GlobalPrefix>
+  <GlobalPrefix>/parc.com/csl/ndn/Repos</GlobalPrefix>
   <Namespace>/testnamespace1</Namespace>
   <Namespace>/testnamespace2</Namespace>
 </Policy>

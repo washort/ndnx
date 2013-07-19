@@ -1,10 +1,10 @@
-CCNx Binary Encoding (ccnb)
+NDNx Binary Encoding (ndnb)
 ===========================
 
 == Design Target: 
 
-   * Custom binary encoding format for XML to meet specific needs of CCNx
-   * Encoding that would be attractive for others to adopt for general use independent of CCNx
+   * Custom binary encoding format for XML to meet specific needs of NDNx
+   * Encoding that would be attractive for others to adopt for general use independent of NDNx
 
 == Goals: 
 
@@ -54,15 +54,15 @@ CCNx Binary Encoding (ccnb)
 == Environment 
 
    - Dictionary: interpretation depends on agreed external dictionaries for tags and attributes that will be commonly used
-     * For CCNx, a link:DTAG.html[single, static dictionary] is used for the DTags
-     * The CCNx protocols do not use any DAttr encoding, so the dictionary is effectively empty
+     * For NDNx, a link:DTAG.html[single, static dictionary] is used for the DTags
+     * The NDNx protocols do not use any DAttr encoding, so the dictionary is effectively empty
 
 == Text Conversions
 
    - When decoding to standard XML text, the arbitrary octets of a BLOB value are encoded as a sequence of UTF-8 characters according to a standard encoding
      * Base 64 is the default encoding (base64Binary)
        . Alternative encodings (e.g. hexBinary) may be used if called for by a schema governing the XML that is produced
-     * A special attribute value named _ccnbencoding_ will be added to the tag of any element containing such BLOB values so that the XML text may be encoded to produce the original binary encoding - i.e. the UTF-8 encoding of the arbitrary value will be reversed when the special attribute value is specified on the containing element
+     * A special attribute value named _ndnbencoding_ will be added to the tag of any element containing such BLOB values so that the XML text may be encoded to produce the original binary encoding - i.e. the UTF-8 encoding of the arbitrary value will be reversed when the special attribute value is specified on the containing element
      * The special attribute value may be specified implicitly by the governing schema definition rather than explicitly included in every tag where it applies
      * XML attributes may not have BLOB-encoded values so that no issue arises for converting them to text representation
 

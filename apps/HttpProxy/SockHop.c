@@ -2,6 +2,9 @@
  * @file SockHop.c
  * @brief Simple routines for sockets.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2010, 2011 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -181,7 +184,7 @@ SH_DestroySockBase(SockBase base) {
  * Prepares for SH_DoSelect, setting the timeout and clearing the
  * FDS vectors.  Prior to the SH_DoSelect one can add more FD's to the
  * FDS vectors (and set fdLen), which allows the SH_DoSelect call to wakeup
- * for other descriptors (e.g. the CCN handle socket). 
+ * for other descriptors (e.g. the NDN handle socket). 
  */
 extern void
 SH_PrepSelect(SockBase base, uint64_t timeoutUsecs) {

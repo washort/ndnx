@@ -1,4 +1,4 @@
-CCNx Link Messages
+NDNx Link Messages
 ==================
 
 In some cases it may be advantageous for adjacent nodes to exchange

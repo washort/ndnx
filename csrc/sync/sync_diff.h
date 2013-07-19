@@ -1,7 +1,7 @@
 /*
  * @file sync/sync_protocol.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1
@@ -15,11 +15,11 @@
  * Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef CCN_SyncDiff
-#define CCN_SyncDiff
+#ifndef NDN_SyncDiff
+#define NDN_SyncDiff
 
-#include <ccn/charbuf.h>
-#include <ccn/schedule.h>
+#include <ndn/charbuf.h>
+#include <ndn/schedule.h>
 #include "SyncHashCache.h"
 #include "SyncRoot.h"
 #include "SyncTreeWorker.h"
@@ -38,14 +38,14 @@ enum sync_diff_side {
  */
 struct sync_diff_add_closure {
     int (* add)(struct sync_diff_add_closure *ac,
-                struct ccn_charbuf *name);
+                struct ndn_charbuf *name);
     struct sync_diff_data *diff_data;
     void *data;
 };
 
 struct sync_diff_fetch_data {
     struct sync_diff_fetch_data *next;
-    struct ccn_closure *action;
+    struct ndn_closure *action;
     struct sync_diff_data *diff_data;
     struct SyncHashCacheEntry *hash_cache_entry;
     enum sync_diff_side side;
@@ -78,8 +78,8 @@ struct sync_diff_data {
     
     /* items supplied by the client, not altered by sync_diff_stop */
     struct SyncRootStruct *root;
-    struct ccn_charbuf *hashX;
-    struct ccn_charbuf *hashY;
+    struct ndn_charbuf *hashX;
+    struct ndn_charbuf *hashY;
     struct sync_diff_add_closure *add_closure;
     struct sync_diff_get_closure *get_closure;
     void *client_data;
@@ -98,10 +98,10 @@ struct sync_diff_data {
     /* Internal resources: supplied by sync_diff_start, reset by sync_diff_stop */
     struct SyncTreeWorkerHead *twX; /**< "local" tree walker state */
     struct SyncTreeWorkerHead *twY; /**< "remote" tree walker state */
-    struct ccn_charbuf *cbX;        /**< "local" tree scratch */
-    struct ccn_charbuf *cbY;        /**< "remote" tree scratch */
+    struct ndn_charbuf *cbX;        /**< "local" tree scratch */
+    struct ndn_charbuf *cbY;        /**< "remote" tree scratch */
     struct sync_diff_fetch_data *fetchQ; /**< cache entries being fetched */
-    struct ccn_scheduled_event *ev; /**< progress event */
+    struct ndn_scheduled_event *ev; /**< progress event */
 };
 
 /**
@@ -145,8 +145,8 @@ struct sync_update_data {
     struct SyncNameAccum *names;    /**< temp storage used while updating */
     struct SyncNodeAccum *nodes;    /**< temp storage used while updating */
     struct SyncTreeWorkerHead *tw;
-    struct ccn_charbuf *cb;
-    struct ccn_scheduled_event *ev; /**< progress event */
+    struct ndn_charbuf *cb;
+    struct ndn_scheduled_event *ev; /**< progress event */
 };
 
 /**

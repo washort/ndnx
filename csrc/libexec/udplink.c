@@ -1,11 +1,14 @@
 /**
  * @file udplink.c
- * @brief A CCNx link adaptor for UDP.
+ * @brief A NDNx link adaptor for UDP.
  *
- * @note Normally ccnd handles UDP directly, so this module is not used.
+ * @note Normally ndnd handles UDP directly, so this module is not used.
  *
- * A CCNx program.
+ * A NDNx program.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2008, 2009 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -43,8 +46,8 @@
 #define AI_ADDRCONFIG 0 /*IEEE Std 1003.1-2001/Cor 1-2002, item XSH/TC1/D6/20*/
 #endif
 
-#include <ccn/ccn.h>
-#include <ccn/ccnd.h>
+#include <ndn/ndn.h>
+#include <ndn/ndnd.h>
 
 void udplink_fatal(int line, char *format, ...);
 
@@ -79,7 +82,7 @@ static struct options {
 
 void
 usage(char *name) {
-    fprintf(stderr, "Usage: %s [-d(ebug)] [-c ccnsocket] -h remotehost -r remoteport [-l localport] [-m multicastlocaladdress] [-t multicastttl]\n", name);
+    fprintf(stderr, "Usage: %s [-d(ebug)] [-c ndnsocket] -h remotehost -r remoteport [-l localport] [-m multicastlocaladdress] [-t multicastttl]\n", name);
 }
 
 void
@@ -128,10 +131,10 @@ ssize_t
 send_remote_unencapsulated(int s, struct addrinfo *r, unsigned char *buf, size_t start, size_t length) {
     ssize_t result;
 
-    if (memcmp(&buf[start], CCN_EMPTY_PDU, CCN_EMPTY_PDU_LENGTH - 1) != 0) {
+    if (memcmp(&buf[start], NDN_EMPTY_PDU, NDN_EMPTY_PDU_LENGTH - 1) != 0) {
         return (-2);
     }
-    result = sendto(s, buf + CCN_EMPTY_PDU_LENGTH - 1 + start, length - CCN_EMPTY_PDU_LENGTH,
+    result = sendto(s, buf + NDN_EMPTY_PDU_LENGTH - 1 + start, length - NDN_EMPTY_PDU_LENGTH,
                     0, r->ai_addr, r->ai_addrlen);
     return (result);
 }
@@ -343,13 +346,13 @@ main (int argc, char * const argv[]) {
     struct addrinfo *laddrinfo = NULL;
     struct addrinfo hints = {0};
     struct pollfd fds[2];
-    struct ccn *ccn;
-    struct ccn_skeleton_decoder ldecoder = {0};
-    struct ccn_skeleton_decoder *ld = &ldecoder;
-    struct ccn_skeleton_decoder rdecoder = {0};
-    struct ccn_skeleton_decoder *rd = &rdecoder;
+    struct ndn *ndn;
+    struct ndn_skeleton_decoder ldecoder = {0};
+    struct ndn_skeleton_decoder *ld = &ldecoder;
+    struct ndn_skeleton_decoder rdecoder = {0};
+    struct ndn_skeleton_decoder *rd = &rdecoder;
     unsigned char rbuf[UDPMAXBUF];
-    struct ccn_charbuf *charbuf;
+    struct ndn_charbuf *charbuf;
     ssize_t msgstart = 0;
     ssize_t dres;
     struct sigaction sigact_changeloglevel;
@@ -367,11 +370,11 @@ main (int argc, char * const argv[]) {
     sigaction(SIGUSR1, &sigact_changeloglevel, NULL);
     sigaction(SIGUSR2, &sigact_changeloglevel, NULL);
 
-    /* connect to the local ccn socket */
-    ccn = ccn_create();
-    localsock_rw = ccn_connect(ccn, options.localsockname);
+    /* connect to the local ndn socket */
+    ndn = ndn_create();
+    localsock_rw = ndn_connect(ndn, options.localsockname);
     if (localsock_rw == -1) {
-        udplink_fatal(__LINE__, "ccn_connect: %s\n", strerror(errno));
+        udplink_fatal(__LINE__, "ndn_connect: %s\n", strerror(errno));
     }
 
     hints.ai_family = AF_UNSPEC;
@@ -453,13 +456,13 @@ main (int argc, char * const argv[]) {
     udplink_note("connected to %s:%s\n", canonical_remote, options.remoteport);
 
 
-    /* announce our presence to ccnd and request CCNx PDU encapsulation */
-    result = send(localsock_rw, CCN_EMPTY_PDU, CCN_EMPTY_PDU_LENGTH, 0);
+    /* announce our presence to ndnd and request NDNx PDU encapsulation */
+    result = send(localsock_rw, NDN_EMPTY_PDU, NDN_EMPTY_PDU_LENGTH, 0);
     if (result == -1) {
         udplink_fatal(__LINE__, "initial send: %s\n", strerror(errno));
     }
 
-    charbuf = ccn_charbuf_create();
+    charbuf = ndn_charbuf_create();
 
     fds[0].fd = localsock_rw;
     fds[0].events = POLLIN;
@@ -506,7 +509,7 @@ main (int argc, char * const argv[]) {
 
         /* process local data */
         if (fds[0].revents & (POLLIN)) {
-            unsigned char *lbuf = ccn_charbuf_reserve(charbuf, 32);
+            unsigned char *lbuf = ndn_charbuf_reserve(charbuf, 32);
             ssize_t recvlen;
             int tries;
             if (charbuf->length == 0) {
@@ -521,7 +524,7 @@ main (int argc, char * const argv[]) {
                 break;
             }
             charbuf->length += recvlen;
-            dres = ccn_skeleton_decode(ld, lbuf, recvlen);
+            dres = ndn_skeleton_decode(ld, lbuf, recvlen);
             tries = 0;
             while (ld->state == 0 && ld->nest == 0) {
                 if (options.logging > 1)
@@ -544,7 +547,7 @@ main (int argc, char * const argv[]) {
                         udplink_fatal(__LINE__, "sendto(remotesock_w, rbuf, %ld): %s\n", (long)ld->index - msgstart, strerror(errno));
                 }
                 else if (result == -2) {
-                    udplink_note("protocol error, missing CCNx PDU encapsulation. Message dropped\n");
+                    udplink_note("protocol error, missing NDNx PDU encapsulation. Message dropped\n");
                 }
 
                 msgstart = ld->index;
@@ -554,7 +557,7 @@ main (int argc, char * const argv[]) {
                     break;
                 }
                 recvlen = charbuf->length - msgstart;
-                dres = ccn_skeleton_decode(ld, charbuf->buf + msgstart, recvlen);
+                dres = ndn_skeleton_decode(ld, charbuf->buf + msgstart, recvlen);
             }
             if (ld->state < 0) {
                 udplink_fatal(__LINE__, "local data protocol error\n");
@@ -576,9 +579,9 @@ main (int argc, char * const argv[]) {
             unsigned char *recvbuf;
             char addrbuf[128];
 
-            memmove(rbuf, CCN_EMPTY_PDU, CCN_EMPTY_PDU_LENGTH - 1);
-            recvbuf = &rbuf[CCN_EMPTY_PDU_LENGTH - 1];
-            recvlen = recvfrom(remotesock_r, recvbuf, sizeof(rbuf) - CCN_EMPTY_PDU_LENGTH,
+            memmove(rbuf, NDN_EMPTY_PDU, NDN_EMPTY_PDU_LENGTH - 1);
+            recvbuf = &rbuf[NDN_EMPTY_PDU_LENGTH - 1];
+            recvlen = recvfrom(remotesock_r, recvbuf, sizeof(rbuf) - NDN_EMPTY_PDU_LENGTH,
                                0, &from, &fromlen);
             if (options.logging > 1) {
                 if (from.sa_family == AF_INET) {
@@ -588,7 +591,7 @@ main (int argc, char * const argv[]) {
                 }
                 udplink_print_data(addrbuf, recvbuf, 0, recvlen, options.logging);
             }
-            if (recvlen == sizeof(rbuf) - CCN_EMPTY_PDU_LENGTH) {
+            if (recvlen == sizeof(rbuf) - NDN_EMPTY_PDU_LENGTH) {
                 udplink_note("remote packet too large, discarded\n");
                 continue;
             }
@@ -598,10 +601,10 @@ main (int argc, char * const argv[]) {
                 continue;
             }
             /* encapsulate, and send the packet out on the local side */
-            recvbuf[recvlen] = CCN_EMPTY_PDU[CCN_EMPTY_PDU_LENGTH - 1];
+            recvbuf[recvlen] = NDN_EMPTY_PDU[NDN_EMPTY_PDU_LENGTH - 1];
             memset(rd, 0, sizeof(*rd));
-            dres = ccn_skeleton_decode(rd, rbuf, recvlen + CCN_EMPTY_PDU_LENGTH);
-            if (rd->state != 0 || dres != (recvlen + CCN_EMPTY_PDU_LENGTH)) {
+            dres = ndn_skeleton_decode(rd, rbuf, recvlen + NDN_EMPTY_PDU_LENGTH);
+            if (rd->state != 0 || dres != (recvlen + NDN_EMPTY_PDU_LENGTH)) {
                 if (recvlen == 1)
                     udplink_note("remote data protocol error (1 byte recv): likely heartbeat from app sending to wrong port\n");
                 else
@@ -609,7 +612,7 @@ main (int argc, char * const argv[]) {
                 continue;
             }
 
-            result = send(localsock_rw, rbuf, recvlen + CCN_EMPTY_PDU_LENGTH, 0);
+            result = send(localsock_rw, rbuf, recvlen + NDN_EMPTY_PDU_LENGTH, 0);
             if (result == -1) {
                 if (errno == EAGAIN) {
                     // XXX if we clear POLLIN the kernel may drop packets
@@ -618,20 +621,20 @@ main (int argc, char * const argv[]) {
                     //fds[1].events &= ~POLLIN;
                     fds[1].events &= ~POLLIN;
                     fds[0].events |= POLLOUT;
-                    deferredbuf = realloc(deferredbuf, recvlen + CCN_EMPTY_PDU_LENGTH);
-                    deferredlen = recvlen + CCN_EMPTY_PDU_LENGTH;
+                    deferredbuf = realloc(deferredbuf, recvlen + NDN_EMPTY_PDU_LENGTH);
+                    deferredlen = recvlen + NDN_EMPTY_PDU_LENGTH;
                     memcpy(deferredbuf, rbuf, deferredlen);
                     if (options.logging > 1)
                         udplink_note("sendto(localsock_rw, rbuf, %ld): %s (deferred)\n", (long) deferredlen, strerror(errno));
                     continue;
                 } else {
-                    udplink_fatal(__LINE__, "sendto(localsock_rw, rbuf, %ld): %s\n", (long) recvlen + CCN_EMPTY_PDU_LENGTH, strerror(errno));
+                    udplink_fatal(__LINE__, "sendto(localsock_rw, rbuf, %ld): %s\n", (long) recvlen + NDN_EMPTY_PDU_LENGTH, strerror(errno));
                 }
             }
-            if (result != recvlen + CCN_EMPTY_PDU_LENGTH) {
+            if (result != recvlen + NDN_EMPTY_PDU_LENGTH) {
                 //fds[1].events &= ~POLLIN;
                 fds[0].events |= POLLOUT;
-                deferredlen = recvlen + CCN_EMPTY_PDU_LENGTH - result;
+                deferredlen = recvlen + NDN_EMPTY_PDU_LENGTH - result;
                 deferredbuf = realloc(deferredbuf, deferredlen);
                 memcpy(deferredbuf, rbuf + result, deferredlen);
                 if (options.logging > 0)
@@ -642,7 +645,7 @@ main (int argc, char * const argv[]) {
     }
 
     udplink_note("disconnected\n");
-    ccn_destroy(&ccn);
+    ndn_destroy(&ndn);
     freeaddrinfo(raddrinfo);
     freeaddrinfo(laddrinfo);
     if (deferredbuf != NULL) {

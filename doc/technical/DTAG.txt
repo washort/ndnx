@@ -1,4 +1,4 @@
-CCNx DTAG Values
+NDNx DTAG Values
 ================
 
 .The DTAG values as defined by schema/tagname.csvdict

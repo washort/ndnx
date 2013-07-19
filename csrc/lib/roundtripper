@@ -1,8 +1,11 @@
 #!/bin/sh
 # lib/roundtripper
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,9 +15,9 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
 #
-# This tries decoding all the ccnb files in the current directory
+# This tries decoding all the ndnb files in the current directory
 # into XML and then back into binary, comparing the result to the original.
 D=`dirname "$0"`/
-test -x "$D"ccn_ccnbtoxml || D=''
-for i in *.ccnb; do "$D"ccn_ccnbtoxml "$i" | "$D"ccn_xmltoccnb - | cmp - "$i" || exit 1; done
-for i in *.ccnb; do "$D"ccn_ccnbtoxml "$i" | xmlwf || exit 1; done
+test -x "$D"ndn_ndnbtoxml || D=''
+for i in *.ndnb; do "$D"ndn_ndnbtoxml "$i" | "$D"ndn_xmltondnb - | cmp - "$i" || exit 1; done
+for i in *.ndnb; do "$D"ndn_ndnbtoxml "$i" | xmlwf || exit 1; done

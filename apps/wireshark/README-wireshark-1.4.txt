@@ -1,9 +1,9 @@
-In order to build the CCN plugin for Wireshark you will first need to install
+In order to build the NDN plugin for Wireshark you will first need to install
 a Wireshark source distribution.
 
 Then -- in your wireshark source directory you should make a directory
-plugins/ccn and copy the contents of the CCN distribution's
-ccn/apps/wireshark/ccn there.
+plugins/ndn and copy the contents of the NDN distribution's
+ndn/apps/wireshark/ndn there.
 
 You'll need to follow the instructions in wireshark file doc/README.plugins
 regarding existing Wireshark files that need to be edited to add a new plugin.
@@ -24,7 +24,7 @@ The patch file wireshark-1.4.2.patch (works on 1.4.6 too) can be applied to
 make the necessary changes:
 
     cd wireshark-1.4.2
-    patch -p1 < .../ccn/apps/wireshark/wireshark-1.4.2.patch
+    patch -p1 < .../ndn/apps/wireshark/wireshark-1.4.2.patch
 
 When you've made the changes per README.plugins or by applying the patch file,
 you must run wireshark's autogen.sh and configure to setup your wireshark build

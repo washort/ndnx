@@ -9,7 +9,7 @@
 
 @subsection starting Getting Started 
 
-For general instructions about how to install CCNx, please refer to
+For general instructions about how to install NDNx, please refer to
 the top-level README file.
 
 @subsection howitworks How the c build works 
@@ -18,7 +18,7 @@ The C build sticks as closely as possible to the common subset
 of make(1) features, using the Posix specifications as a guide.
 
 Since most (or all) make implementations have their own extensions, staying
-within this subset is a continual challenge. The CCNx build is tested with
+within this subset is a continual challenge. The NDNx build is tested with
 GNU make, BSD make, and Solaris make.
 
 The ./configure script's main job is to build the conf.mk file that defines the
@@ -59,9 +59,9 @@ Of course, the appropriate permissions are needed.
 This file is processed by doxygen to create the main page for
 the Content-Centric Networking in C Documentation.
 
-If we want to refer to the directory ccn/csrc/cmd, with a link to the documentation for the
-directory under that text, we would use (at)link cmd ccn/csrc/cmd (at)endlink (like this)
-@link cmd ccn/csrc/cmd @endlink
+If we want to refer to the directory ndn/csrc/cmd, with a link to the documentation for the
+directory under that text, we would use (at)link cmd ndn/csrc/cmd (at)endlink (like this)
+@link cmd ndn/csrc/cmd @endlink
 as the reference.  Note that the single word following the (at)link command is the object
 reference for the directory as doxygen believes it is named (see the Directories tab in the generated documentation)
 */

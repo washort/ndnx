@@ -1,9 +1,12 @@
 /**
  * @file sync/SyncHashCache.c
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  */
 /*
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011-2012 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -26,15 +29,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <ccn/ccn.h>
-#include <ccn/loglevels.h>
+#include <ndn/ndn.h>
+#include <ndn/loglevels.h>
 
 static struct SyncHashCacheEntry *
 localFreeEntry(struct SyncHashCacheEntry *ce) {
     ce->next = NULL;
     if (ce->ncL != NULL) SyncNodeDecRC(ce->ncL);
     if (ce->ncR != NULL) SyncNodeDecRC(ce->ncR);
-    if (ce->hash != NULL) ccn_charbuf_destroy(&ce->hash);
+    if (ce->hash != NULL) ndn_charbuf_destroy(&ce->hash);
     free(ce);
     return NULL;
 }
@@ -91,9 +94,9 @@ SyncHashEnter(struct SyncHashCacheHead *head,
         ent->head = head;
         ent->next = old;
         ent->small = h;
-        ent->hash = ccn_charbuf_create();
+        ent->hash = ndn_charbuf_create();
         ent->index = index;
-        ccn_charbuf_append(ent->hash, xp, xs);
+        ndn_charbuf_append(ent->hash, xp, xs);
         head->ents[hx] = ent;
         head->len++;
     }
@@ -186,20 +189,20 @@ SyncCacheEntryStore(struct SyncHashCacheEntry *ce) {
     } else {
         struct SyncRootStruct *root = ce->head->root;
         struct SyncBaseStruct *base = root->base;
-        struct ccn_charbuf *name = SyncNameForLocalNode(root, ce->hash);
-        struct ccn_charbuf *content = ce->ncL->cb;
+        struct ndn_charbuf *name = SyncNameForLocalNode(root, ce->hash);
+        struct ndn_charbuf *content = ce->ncL->cb;
         
         // TBD: do we want to omit version and segment?
-        res |= ccn_create_version(base->sd->ccn, name, CCN_V_NOW, 0, 0);
-        res |= ccn_name_append_numeric(name, CCN_MARKER_SEQNUM, 0);
+        res |= ndn_create_version(base->sd->ndn, name, NDN_V_NOW, 0, 0);
+        res |= ndn_name_append_numeric(name, NDN_MARKER_SEQNUM, 0);
         
-        res = SyncLocalRepoStore(base, name, content, CCN_SP_FINAL_BLOCK);
+        res = SyncLocalRepoStore(base, name, content, NDN_SP_FINAL_BLOCK);
         if (res > 0) {
             // clear the bits
             ce->state |= SyncHashState_stored;
             ce->state = ce->state - SyncHashState_storing;
         }
-        ccn_charbuf_destroy(&name);
+        ndn_charbuf_destroy(&name);
     }
     return res;
 }
@@ -223,10 +226,10 @@ SyncCacheEntryFetch(struct SyncHashCacheEntry *ce) {
         // a failure should complain
         struct SyncRootStruct *root = ce->head->root;
         struct SyncBaseStruct *base = root->base;
-        struct ccn_charbuf *name = SyncNameForLocalNode(root, ce->hash);
-        struct ccn_charbuf *content = ccn_charbuf_create();
+        struct ndn_charbuf *name = SyncNameForLocalNode(root, ce->hash);
+        struct ndn_charbuf *content = ndn_charbuf_create();
         char *why = "no fetch";
-        struct ccn_parsed_ContentObject pcos;
+        struct ndn_parsed_ContentObject pcos;
         
         res = SyncLocalRepoFetch(base, name, content, &pcos);
         if (res >= 0) {
@@ -234,13 +237,13 @@ SyncCacheEntryFetch(struct SyncHashCacheEntry *ce) {
             const unsigned char *xp = NULL;
             size_t xs = 0;
             // get the encoded node
-            res = ccn_content_get_value(content->buf, content->length,
+            res = ndn_content_get_value(content->buf, content->length,
                                         &pcos, &xp, &xs);
             if (res < 0)
-                why = "ccn_content_get_value failed";
+                why = "ndn_content_get_value failed";
             else {
-                struct ccn_buf_decoder ds;
-                struct ccn_buf_decoder *d = ccn_buf_decoder_start(&ds, xp, xs);
+                struct ndn_buf_decoder ds;
+                struct ndn_buf_decoder *d = ndn_buf_decoder_start(&ds, xp, xs);
                 struct SyncNodeComposite *nc = SyncAllocComposite(root->base);
                 res |= SyncParseComposite(nc, d);
                 if (res < 0) {
@@ -257,10 +260,10 @@ SyncCacheEntryFetch(struct SyncHashCacheEntry *ce) {
             }
         }
         if (res < 0)
-            if (root->base->debug >= CCNL_ERROR)
+            if (root->base->debug >= NDNL_ERROR)
                 SyncNoteUri(root, here, why, name);
-        ccn_charbuf_destroy(&name);
-        ccn_charbuf_destroy(&content);
+        ndn_charbuf_destroy(&name);
+        ndn_charbuf_destroy(&content);
     }
     return res;
 }

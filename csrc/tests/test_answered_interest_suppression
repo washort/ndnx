@@ -1,7 +1,10 @@
 # tests/test_answered_interest_suppression
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -21,12 +24,12 @@
 # Construct the test interest
 #
 UNIQ=`GenSym TIS`
-ccn_xmltoccnb -w - <<EOF >answered.ccnb
+ndn_xmltondnb -w - <<EOF >answered.ndnb
 <Interest>
   <Name>
-    <Component ccnbencoding="text">answered</Component>
-    <Component ccnbencoding="text">test</Component>
-    <Component ccnbencoding="text">$UNIQ</Component>
+    <Component ndnbencoding="text">answered</Component>
+    <Component ndnbencoding="text">test</Component>
+    <Component ndnbencoding="text">$UNIQ</Component>
   </Name>
 </Interest>
 EOF
@@ -34,40 +37,40 @@ EOF
 rm -rf suppr-*.out
 
 #
-# Start up a private ccnd.
+# Start up a private ndnd.
 #
-WithCCND 5 env CCND_DEBUG=-1 ccnd 2>ccnd5.out &
-WithCCND 5 ccndsmoketest        # Let forked ccnd get going
-trap "WithCCND 5 ccndstop" 0    # Tear it down at end of test
+WithNDND 5 env NDND_DEBUG=-1 ndnd 2>ndnd5.out &
+WithNDND 5 ndndsmoketest        # Let forked ndnd get going
+trap "WithNDND 5 ndndstop" 0    # Tear it down at end of test
 
 
 # The heart of the the test
 HasEverybodyGotIt () {
     # One client is just a sink for the interests.
-    ccnpoke -x 1 /answered < /dev/null &
+    ndnpoke -x 1 /answered < /dev/null &
     
     #
     # Get 3 clients to be interested.
     #
     for i in 1 2 3;
-      do ccndsmoketest -t 100 -b recv answered.ccnb timeo 4000 recv > suppr-$i.out &
+      do ndndsmoketest -t 100 -b recv answered.ndnb timeo 4000 recv > suppr-$i.out &
     done
 
     # Provide the answer.
     sleep 1
-    ccndstatus
-    echo "This is the answer" | ccnpoke -f -x 1 /answered/test/$UNIQ
+    ndndstatus
+    echo "This is the answer" | ndnpoke -f -x 1 /answered/test/$UNIQ
 
     # The clients should finish quickly now - give them a second.
     sleep 1
-    ccndstop
+    ndndstop
 }
 
-WithCCND 5 HasEverybodyGotIt
+WithNDND 5 HasEverybodyGotIt
 
 for i in suppr-*.out; do strings -a $i > strings-$i; done
 COUNT=`grep -l "This is the answer" strings-suppr-*.out | wc -l`
 rm -f strings-suppr-*.out
 test "$COUNT" -eq 3 || Fail expecting 3 answers, but got $COUNT
 
-rm -rf answered.ccnb suppr-*.out
+rm -rf answered.ndnb suppr-*.out

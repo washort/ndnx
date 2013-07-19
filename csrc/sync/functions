@@ -1,9 +1,12 @@
-# ccnr/csrc/sync_exp/functions
+# ndnr/csrc/sync_exp/functions
 #
 # Functions for supporting the test_* scripts
 #
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009-2011 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -40,31 +43,31 @@ LongTest () {
   [ "$MAKE_TEST_TARGET" = "check" ] && SkipTest make target is \'check\'
 }
 
-WithCCND () {
+WithNDND () {
   local port;
-  port=$((CCN_LOCAL_PORT_BASE+$1))
+  port=$((NDN_LOCAL_PORT_BASE+$1))
   shift
-  CCN_LOCAL_PORT=$port "$@"
+  NDN_LOCAL_PORT=$port "$@"
 }
 
-CheckForCCND () {
-  WithCCND $1 ccndsmoketest && return 0
-  echo "***" ccnd $1 is not ready yet ... >&2
+CheckForNDND () {
+  WithNDND $1 ndndsmoketest && return 0
+  echo "***" ndnd $1 is not ready yet ... >&2
   return 1
 }
 
-CCNDStatus () {
-  echo 'GET / ' | ccndsmoketest -b -T localhost send - recv recv
+NDNDStatus () {
+  echo 'GET / ' | ndndsmoketest -b -T localhost send - recv recv
 }
 
 Linkup () {
   local A B
-  A=$((CCN_LOCAL_PORT_BASE+$1))
-  B=$((CCN_LOCAL_PORT_BASE+$2))
+  A=$((NDN_LOCAL_PORT_BASE+$1))
+  B=$((NDN_LOCAL_PORT_BASE+$2))
   shift 2
   test $A -ne $B || Fail FIXME
-  env CCN_LOCAL_PORT=$A ccndc add / udp localhost $B
-  env CCN_LOCAL_PORT=$B ccndc add / udp localhost $A
+  env NDN_LOCAL_PORT=$A ndndc add / udp localhost $B
+  env NDN_LOCAL_PORT=$B ndndc add / udp localhost $A
 }
 
 ExpectLines () {
@@ -84,29 +87,29 @@ GenSym () {
 }
 
 ##
-# Start ccnd with specified capacity and minimal logging
-CappedCCNDStart () {
+# Start ndnd with specified capacity and minimal logging
+CappedNDNDStart () {
   [ ${1:=missing} -ge 0 ] || Fail argument missing or invalid: $1
-  WHICHCCND=${CCN_LOCAL_PORT:-9695}
-  ccndsmoketest kill 2>/dev/null
-  env CCND_DEBUG=71 CCND_CAP=$1 ccnd 2>>ccnd$((WHICHCCND % 10))-capped-$1.out &
-  ccndsmoketest -u localhost -t 50 recv >/dev/null
-  ccndsmoketest >/dev/null
+  WHICHNDND=${NDN_LOCAL_PORT:-9695}
+  ndndsmoketest kill 2>/dev/null
+  env NDND_DEBUG=71 NDND_CAP=$1 ndnd 2>>ndnd$((WHICHNDND % 10))-capped-$1.out &
+  ndndsmoketest -u localhost -t 50 recv >/dev/null
+  ndndsmoketest >/dev/null
 }
 
 ##
-# Stage data into the active ccnd by writing it into a fresh repo
+# Stage data into the active ndnd by writing it into a fresh repo
 StageData () { (
   [ ${1:=missing} -ge 1000 ] || Fail argument missing or invalid: $1
   set -e
   rm -rf stage
   mkdir stage
-  env CCNR_DIRECTORY=stage CCNR_DEBUG=0 ccnr &
+  env NDNR_DIRECTORY=stage NDNR_DEBUG=0 ndnr &
   rm -f testfile
   dd bs=1 count=1 seek=$(($1 - 1)) of=testfile if=/dev/zero
-  ccnputfile /test/bulk/${1}.dat testfile 2> putfile-${1}.out
-  ccndstatus
-  ccnnamelist stage/repoFile1 | tail -n 4 >> lastblocks.txt
+  ndnputfile /test/bulk/${1}.dat testfile 2> putfile-${1}.out
+  ndndstatus
+  ndnnamelist stage/repoFile1 | tail -n 4 >> lastblocks.txt
   kill `cat stage/index/.LCK`
   rm testfile
 ) }

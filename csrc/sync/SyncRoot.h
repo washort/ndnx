@@ -1,9 +1,12 @@
 /**
  * @file sync/SyncRoot.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  */
 /*
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011-2012 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -18,10 +21,10 @@
  * Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef CCN_SyncRoot
-#define CCN_SyncRoot
+#ifndef NDN_SyncRoot
+#define NDN_SyncRoot
 
-#include <ccn/ccn.h>
+#include <ndn/ndn.h>
 
 struct SyncHashCacheHead;  // defined in SyncHashCache.h
 struct SyncNameAccum;      // defined in SyncUtil.h
@@ -37,17 +40,17 @@ struct SyncRootStruct {
     struct SyncRootStruct *next;          /**< next root in our list */
     struct SyncRootPrivate *priv;         /**< private to SyncRoot */
     struct SyncHashCacheHead *ch;         /**< cache head */
-    struct ccn_charbuf *topoPrefix;       /**< Sync Protocol topo prefix */
-    struct ccn_charbuf *namingPrefix;     /**< Sync Protocol naming prefix */
+    struct ndn_charbuf *topoPrefix;       /**< Sync Protocol topo prefix */
+    struct ndn_charbuf *namingPrefix;     /**< Sync Protocol naming prefix */
     struct SyncNameAccum *filter;         /**< filter clauses */
-    struct ccn_charbuf *currentHash;      /**< current top-level cache hash */
+    struct ndn_charbuf *currentHash;      /**< current top-level cache hash */
     struct SyncNameAccum *namesToAdd;     /**< names needing addition to root */
     struct SyncNameAccum *namesToFetch;   /**< names needing contents fetch */
     void *actions;                        /**< data for pending interests */
     void *compare;                        /**< data for doing sync tree comparison */
     void *update;                         /**< data for doing sync tree updates */
-    struct ccn_charbuf *sliceCoding;      /**< ccnb encoding for the description */
-    struct ccn_charbuf *sliceHash;        /**< the raw hash of the sliceCoding */
+    struct ndn_charbuf *sliceCoding;      /**< ndnb encoding for the description */
+    struct ndn_charbuf *sliceHash;        /**< the raw hash of the sliceCoding */
 };
 
 /**
@@ -75,8 +78,8 @@ struct SyncRootStruct {
 struct SyncRootStruct *
 SyncAddRoot(struct SyncBaseStruct *base,
             int syncScope,
-            const struct ccn_charbuf *topoPrefix,
-            const struct ccn_charbuf *namingPrefix,
+            const struct ndn_charbuf *topoPrefix,
+            const struct ndn_charbuf *namingPrefix,
             struct SyncNameAccum *filter);
 
 /**
@@ -95,14 +98,14 @@ SyncRemRoot(struct SyncRootStruct *root);
  */
 struct SyncRootStruct *
 SyncRootDecodeAndAdd(struct SyncBaseStruct *base,
-                     struct ccn_buf_decoder *d);
+                     struct ndn_buf_decoder *d);
 
 /**
- * Appends the ccnb encoding for a config slice to the provided cb.
+ * Appends the ndnb encoding for a config slice to the provided cb.
  * @returns -1 for failure, 0 for success.
  */
 int
-SyncRootAppendSlice(struct ccn_charbuf *cd, struct SyncRootStruct *root);
+SyncRootAppendSlice(struct ndn_charbuf *cd, struct SyncRootStruct *root);
 
 enum SyncRootLookupCode {
     SyncRootLookupCode_none,        /**< not covered by this root */
@@ -125,6 +128,6 @@ SyncRootTopEntry(struct SyncRootStruct *root);
  */
 enum SyncRootLookupCode
 SyncRootLookupName(struct SyncRootStruct *root,
-                    const struct ccn_charbuf *name);
+                    const struct ndn_charbuf *name);
 
 #endif

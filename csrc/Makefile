@@ -1,7 +1,10 @@
 # csrc/Makefile
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009, 2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -12,7 +15,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 
-SUBDIRS = lib ccnd sync ccnr libexec cmd util tests exttests
+SUBDIRS = lib ndnd sync ndnr libexec cmd util tests exttests
 OBJTREE = build
 MAKEF =  -f ../conf.mk -f dir.mk -f ../subr.mk
 CFLAGS = $(COPT)
@@ -25,7 +28,7 @@ conf.mk:
 include conf.mk
 
 default all clean depend coverage test check shared install uninstall config_subdir: conf.mk subr.mk generic.mk _always
-	test -d include/ccn || (test -d ../include/ccn && mkdir -p include && ln -s ../../include/ccn include/ccn)
+	test -d include/ndn || (test -d ../include/ndn && mkdir -p include && ln -s ../../include/ndn include/ndn)
 	for i in $(SUBDIRS); do         \
 	  (cd "$$i" && pwd && $(MAKE) $(MAKEF) "COPT=$(CFLAGS)" CFLAGS='$$(REAL_CFLAGS)' SRCDIR=../$(SRCDIR)/$$i $@) || exit 1;	\
 	done

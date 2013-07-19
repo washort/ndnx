@@ -1,8 +1,11 @@
 /**
  * @file sync/sync_diff.c
  *
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2012-2013 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -21,12 +24,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
-#include <ccn/ccn.h>
-#include <ccn/coding.h>
-#include <ccn/digest.h>
-#include <ccn/schedule.h>
-#include <ccn/sync.h>
-#include <ccn/uri.h>
+#include <ndn/ndn.h>
+#include <ndn/coding.h>
+#include <ndn/digest.h>
+#include <ndn/schedule.h>
+#include <ndn/sync.h>
+#include <ndn/uri.h>
 
 #include "IndexSorter.h"
 #include "SyncNode.h"
@@ -150,20 +153,20 @@ showCacheEntry2(struct SyncRootStruct *root, char *here, char *msg,
 
 // forward declaration
 static int
-compareAction(struct ccn_schedule *sched,
+compareAction(struct ndn_schedule *sched,
               void *clienth,
-              struct ccn_scheduled_event *ev,
+              struct ndn_scheduled_event *ev,
               int flags);
 
 static int
-updateAction(struct ccn_schedule *sched,
+updateAction(struct ndn_schedule *sched,
              void *clienth,
-             struct ccn_scheduled_event *ev,
+             struct ndn_scheduled_event *ev,
              int flags);
 
 static void
 freeFetchData(struct sync_diff_fetch_data *fd) {
-    struct ccn_closure *action = fd->action;
+    struct ndn_closure *action = fd->action;
     if (action != NULL && action->data == fd) {
         // don't follow the link to something that is gone
         action->data = NULL;
@@ -178,10 +181,10 @@ resetDiffData(struct sync_diff_data *sdd) {
     if (root == NULL) return;
     struct sync_diff_fetch_data *fd = sdd->fetchQ;
     sdd->fetchQ = NULL;
-    struct ccn_scheduled_event *ev = sdd->ev;
+    struct ndn_scheduled_event *ev = sdd->ev;
     sdd->ev = NULL;
-    ccn_charbuf_destroy(&sdd->cbX);
-    ccn_charbuf_destroy(&sdd->cbY);
+    ndn_charbuf_destroy(&sdd->cbX);
+    ndn_charbuf_destroy(&sdd->cbY);
     while (fd != NULL) {
         struct sync_diff_fetch_data *lag = fd;
         fd = fd->next;
@@ -190,7 +193,7 @@ resetDiffData(struct sync_diff_data *sdd) {
     sdd->twX = SyncTreeWorkerFree(sdd->twX);
     sdd->twY = SyncTreeWorkerFree(sdd->twY);
     if (ev != NULL && ev->evdata == sdd) {
-        ccn_schedule_cancel(root->base->sd->sched, ev);
+        ndn_schedule_cancel(root->base->sd->sched, ev);
     }
 }
 
@@ -200,14 +203,14 @@ resetUpdateData(struct sync_update_data *ud) {
     struct SyncRootStruct *root = ud->root;
     if (root == NULL) return;
     if (ud->cb != NULL)
-        ccn_charbuf_destroy(&ud->cb);
+        ndn_charbuf_destroy(&ud->cb);
     ud->adding = SyncFreeNameAccumAndNames(ud->adding);
     ud->names = SyncFreeNameAccumAndNames(ud->names);
     ud->nodes = SyncFreeNodeAccum(ud->nodes);
     ud->tw = SyncTreeWorkerFree(ud->tw);
-    struct ccn_scheduled_event *ev = ud->ev;
+    struct ndn_scheduled_event *ev = ud->ev;
     if (ev != NULL && ev->evdata == ud) {
-        ccn_schedule_cancel(root->base->sd->sched, ev);
+        ndn_schedule_cancel(root->base->sd->sched, ev);
     }
 }
 
@@ -219,7 +222,7 @@ abortCompare(struct sync_diff_data *sdd, char *why) {
     if (sdd == NULL) return -1;
     struct SyncRootStruct *root = sdd->root;
     if (root != NULL) {
-        if (root->base->debug >= CCNL_WARNING)
+        if (root->base->debug >= NDNL_WARNING)
             SyncNoteSimple(root, "Sync.compare", why);
     }
     sdd->ev = NULL;
@@ -237,16 +240,16 @@ comparisonFailed(struct sync_diff_data *sdd, char *why, int line) {
 }
 
 static int
-extractBuf(struct ccn_charbuf *cb, struct SyncNodeComposite *nc, struct SyncNodeElem *ne) {
-    struct ccn_buf_decoder ds;
-    struct ccn_buf_decoder *d = SyncInitDecoderFromElem(&ds, nc, ne);
-    ccn_charbuf_reset(cb);
+extractBuf(struct ndn_charbuf *cb, struct SyncNodeComposite *nc, struct SyncNodeElem *ne) {
+    struct ndn_buf_decoder ds;
+    struct ndn_buf_decoder *d = SyncInitDecoderFromElem(&ds, nc, ne);
+    ndn_charbuf_reset(cb);
     int res = SyncAppendElementInner(cb, d);
     return res;
 }
 
 static struct SyncHashCacheEntry *
-entryForHash(struct SyncRootStruct *root, struct ccn_charbuf *hash) {
+entryForHash(struct SyncRootStruct *root, struct ndn_charbuf *hash) {
     struct SyncHashCacheEntry *ce = NULL;
     if (hash != NULL && hash->length > 0)
         ce = SyncHashLookup(root->ch, hash->buf, hash->length);
@@ -256,7 +259,7 @@ entryForHash(struct SyncRootStruct *root, struct ccn_charbuf *hash) {
 static void
 initWorkerFromHash(struct SyncRootStruct *root,
                    struct SyncTreeWorkerHead *tw,
-                   struct ccn_charbuf *hash) {
+                   struct ndn_charbuf *hash) {
     struct SyncHashCacheEntry *ce = entryForHash(root, hash);
     SyncTreeWorkerInit(tw, ce);
 }
@@ -268,8 +271,8 @@ cacheEntryForElem(struct sync_diff_data *sdd,
     char *here = "Sync.cacheEntryForElem";
     if (ne->kind == SyncElemKind_leaf) return NULL;
     struct SyncRootStruct *root = sdd->root;
-    struct ccn_buf_decoder ds;
-    struct ccn_buf_decoder *d = SyncInitDecoderFromOffset(&ds, nc,
+    struct ndn_buf_decoder ds;
+    struct ndn_buf_decoder *d = SyncInitDecoderFromOffset(&ds, nc,
                                                           ne->start,
                                                           ne->stop);
     const unsigned char * xp = NULL;
@@ -305,12 +308,12 @@ kickCompare(struct sync_diff_data *sdd, int micros) {
     // we need to restart compareAction
     struct SyncRootStruct *root = sdd->root;
     struct SyncBaseStruct *base = root->base;
-    struct ccn_scheduled_event *ev = sdd->ev;
+    struct ndn_scheduled_event *ev = sdd->ev;
     if (ev != NULL && ev->evdata == sdd) {
         // this one may wait too long, kick it now!
-        ccn_schedule_cancel(base->sd->sched, ev);
+        ndn_schedule_cancel(base->sd->sched, ev);
     }
-    sdd->ev = ccn_schedule_event(base->sd->sched,
+    sdd->ev = ndn_schedule_event(base->sd->sched,
                                  micros,
                                  compareAction,
                                  sdd,
@@ -323,12 +326,12 @@ kickUpdate(struct sync_update_data *ud, int micros) {
     // we need to restart compareAction
     struct SyncRootStruct *root = ud->root;
     struct SyncBaseStruct *base = root->base;
-    struct ccn_scheduled_event *ev = ud->ev;
+    struct ndn_scheduled_event *ev = ud->ev;
     if (ev != NULL && ev->evdata == ud) {
         // this one may wait too long, kick it now!
-        ccn_schedule_cancel(base->sd->sched, ev);
+        ndn_schedule_cancel(base->sd->sched, ev);
     }
-    ud->ev = ccn_schedule_event(base->sd->sched,
+    ud->ev = ndn_schedule_event(base->sd->sched,
                                 micros,
                                 updateAction,
                                 ud,
@@ -336,24 +339,24 @@ kickUpdate(struct sync_update_data *ud, int micros) {
     return;
 }
 
-static struct ccn_charbuf *
+static struct ndn_charbuf *
 constructCommandPrefix(struct SyncRootStruct *root,
-                       struct ccn_charbuf *hash,
+                       struct ndn_charbuf *hash,
                        char *cmd) {
-    struct ccn_charbuf *prefix = ccn_charbuf_create();
+    struct ndn_charbuf *prefix = ndn_charbuf_create();
     int res = 0;
-    ccn_name_init(prefix);
+    ndn_name_init(prefix);
     if (root->topoPrefix != NULL && root->topoPrefix->length > 0) {
         // the topo (if any) always comes first
         res |= SyncAppendAllComponents(prefix, root->topoPrefix);
     }
     // the command comes after the topo
-    ccn_name_append_str(prefix, cmd);
+    ndn_name_append_str(prefix, cmd);
     if (hash != NULL)
-        res |= ccn_name_append(prefix, hash->buf, hash->length);
+        res |= ndn_name_append(prefix, hash->buf, hash->length);
     
     if (res < 0) {
-        ccn_charbuf_destroy(&prefix);
+        ndn_charbuf_destroy(&prefix);
     }
     return prefix;
 }
@@ -390,19 +393,19 @@ start_node_fetch(struct sync_diff_data *sdd,
     if (sdcm != NULL && sdcm->r_sync_lookup != NULL) {
         // we have a means for local lookup (like a Repo)
         struct SyncNodeComposite *nc = NULL;
-        struct ccn_charbuf *content = ccn_charbuf_create();
-        struct ccn_charbuf *name = constructCommandPrefix(root, root->sliceHash, "\xC1.S.nf");
+        struct ndn_charbuf *content = ndn_charbuf_create();
+        struct ndn_charbuf *name = constructCommandPrefix(root, root->sliceHash, "\xC1.S.nf");
         int res = 0;
         if (ce != NULL) {
             // append the best component seen
-            res |= ccn_name_append(name, ce->hash->buf, ce->hash->length);
+            res |= ndn_name_append(name, ce->hash->buf, ce->hash->length);
         }
         res |= sdcm->r_sync_lookup(sd, name, content);
-        ccn_charbuf_destroy(&name);
+        ndn_charbuf_destroy(&name);
         if (res > 0) {
-            struct ccn_parsed_ContentObject pcos;
-            struct ccn_parsed_ContentObject *pco = &pcos;
-            res = ccn_parse_ContentObject(content->buf, content->length, pco, NULL);
+            struct ndn_parsed_ContentObject pcos;
+            struct ndn_parsed_ContentObject *pco = &pcos;
+            res = ndn_parse_ContentObject(content->buf, content->length, pco, NULL);
             if (res >= 0) {
                 nc = SyncNodeFromParsedObject(root, content->buf, pco);
                 if (nc != NULL) {
@@ -424,9 +427,9 @@ start_node_fetch(struct sync_diff_data *sdd,
         if (fd == NULL)
             // already in the fetchQ, don't make me do this again
             return 0;
-        struct ccn_charbuf *name = constructCommandPrefix(root, root->sliceHash, "\xC1.S.nf");
+        struct ndn_charbuf *name = constructCommandPrefix(root, root->sliceHash, "\xC1.S.nf");
         int res = get->get(get, fd);
-        ccn_charbuf_destroy(&name);
+        ndn_charbuf_destroy(&name);
         if (res > 0 && ce->ncL == NULL && ce->ncR == NULL) {
             // we have a node being fetched
         } else {
@@ -454,7 +457,7 @@ doPreload(struct sync_diff_data *sdd,
     int busyLim = root->base->priv->maxFetchBusy;
     int debug = root->base->debug;
     int incomplete = 0;
-    if (debug >= CCNL_FINE) {
+    if (debug >= NDNL_FINE) {
         static char *here = "Sync.doPreload";
         char temp[256];
         int pos = 0;
@@ -540,7 +543,7 @@ doPreload(struct sync_diff_data *sdd,
 static int
 addNameFromCompare(struct sync_diff_data *sdd) {
     //struct SyncRootStruct *root = sdd->root;
-    struct ccn_charbuf *name = sdd->cbY;
+    struct ndn_charbuf *name = sdd->cbY;
     // callback for new name
     struct SyncTreeWorkerEntry *tweR = SyncTreeWorkerTop(sdd->twY);
     if (sdd->add_closure != NULL && sdd->add_closure->add != NULL) {
@@ -825,9 +828,9 @@ doComparison(struct sync_diff_data *sdd) {
 }
 
 static int
-compareAction(struct ccn_schedule *sched,
+compareAction(struct ndn_schedule *sched,
               void *clienth,
-              struct ccn_scheduled_event *ev,
+              struct ndn_scheduled_event *ev,
               int flags) {
     char *here = "Sync.compareAction";
     struct sync_diff_data *sdd = (struct sync_diff_data *) ev->evdata;
@@ -844,7 +847,7 @@ compareAction(struct ccn_schedule *sched,
         // orphaned?
         return -1;
     }
-    if (flags & CCN_SCHEDULE_CANCEL) {
+    if (flags & NDN_SCHEDULE_CANCEL) {
         // cancelled (rescheduled)
         sdd->ev = NULL;
         return -1;
@@ -856,7 +859,7 @@ compareAction(struct ccn_schedule *sched,
     switch (sdd->state) {
         case sync_diff_state_init: {
             // nothing to do, flow into next state
-            if (debug >= CCNL_FINE) {
+            if (debug >= NDNL_FINE) {
                 struct SyncHashCacheEntry *ceX = entryForHash(root, sdd->hashX);
                 struct SyncHashCacheEntry *ceY = entryForHash(root, sdd->hashY);
                 showCacheEntry2(root, here, "at init", ceX, ceY);
@@ -885,7 +888,7 @@ compareAction(struct ccn_schedule *sched,
             sdd->state = sync_diff_state_busy;
         case sync_diff_state_busy:
             // come here when we are comparing the trees
-            if (debug >= CCNL_FINE)
+            if (debug >= NDNL_FINE)
                 SyncNoteSimple(root, here, "busy");
             res = doComparison(sdd);
             if (res < 0)
@@ -893,7 +896,7 @@ compareAction(struct ccn_schedule *sched,
             if (sdd->fetchQ != NULL) {
                 // we had a load start during compare, so stall
                 delay = 100000;
-                if (debug >= CCNL_WARNING)
+                if (debug >= NDNL_WARNING)
                     SyncNoteSimple(root, here, "doComparison fetch stall");
                 break;
             }
@@ -912,7 +915,7 @@ compareAction(struct ccn_schedule *sched,
             
             if (sdd->nodeFetchFailed > 0)
                 return abortCompare(sdd, "node fetch failed");
-            if (debug >= CCNL_INFO) {
+            if (debug >= NDNL_INFO) {
                 char temp[64];
                 mh = (mh + 500) / 1000;
                 dt = (dt + 500) / 1000;
@@ -961,13 +964,13 @@ newNodeCommon(struct SyncRootStruct *root,
         SyncNoteFailed(root, here, "bad node", __LINE__);
         return NULL;
     }
-    struct ccn_charbuf *hash = nc->hash;
+    struct ndn_charbuf *hash = nc->hash;
     struct SyncHashCacheEntry *ce = entryForHash(root, hash);
     SyncCacheEntryFetch(ce);
     if (ce != NULL && ce->ncL != NULL) {
         // an equivalent local node is already in the cache
         // so get rid of the new node and return the existing entry
-        if (debug >= CCNL_FINE) {
+        if (debug >= NDNL_FINE) {
             char *hex = SyncHexStr(hash->buf, hash->length);
             SyncNoteSimple2(root, here, "suppressed duplicate", hex);
             free(hex);
@@ -1003,7 +1006,7 @@ newNodeCommon(struct SyncRootStruct *root,
         root->priv->stats->nodesCreated++;
         if (nc->cb->length >= nodeSplitTrigger) {
             // if this happens then our split estimate was wrong!
-            if (debug >= CCNL_INFO)
+            if (debug >= NDNL_INFO)
                 sync_msg(base,
                          "%s, root#%u, cb->length (%d) >= nodeSplitTrigger (%d)",
                          here, root->rootId,
@@ -1067,7 +1070,7 @@ node_from_nodes(struct SyncRootStruct *root, struct SyncNodeAccum *na) {
     // go recursive just in case we need the extra levels
     ce = node_from_nodes(root, nodes);
     nodes = SyncFreeNodeAccum(nodes);
-    if (debug >= CCNL_FINE) {
+    if (debug >= NDNL_FINE) {
         sync_msg(base, "%s, root#%u, %d refs", here, root->rootId, lim);
     }
     return ce;
@@ -1085,7 +1088,7 @@ node_from_names(struct sync_update_data *ud, int split) {
         return 0;
     int i = 0;
     if (split == 0) split = lim;
-    if (debug >= CCNL_FINE) {
+    if (debug >= NDNL_FINE) {
         char tmp[64];
         snprintf(tmp, sizeof(tmp),
                  "split %d, lim %d",
@@ -1098,7 +1101,7 @@ node_from_names(struct sync_update_data *ud, int split) {
     memset(&longHash, 0, sizeof(struct SyncLongHashStruct));
     longHash.pos = MAX_HASH_BYTES;
     for (i = 0; i < split; i++) {
-        struct ccn_charbuf *name = na->ents[i].name;
+        struct ndn_charbuf *name = na->ents[i].name;
         SyncAccumHash(&longHash, name);
     }
     ssize_t hs = MAX_HASH_BYTES-longHash.pos;
@@ -1108,21 +1111,21 @@ node_from_names(struct sync_update_data *ud, int split) {
         // node already exists
         struct SyncNodeComposite *nc = ce->ncL;
         SyncAccumNode(ud->nodes, nc);
-        if (debug >= CCNL_FINE) {
+        if (debug >= NDNL_FINE) {
             char *hex = SyncHexStr(hp, hs);
             SyncNoteSimple2(root, here, "existing local node", hex);
             free(hex);
         }
     } else {
         // need to create a new node
-        if (debug >= CCNL_FINE) {
+        if (debug >= NDNL_FINE) {
             char *hex = SyncHexStr(hp, hs);
             SyncNoteSimple2(root, here, "need new local node", hex);
             free(hex);
         }
         struct SyncNodeComposite *nc = SyncAllocComposite(root->base);
         for (i = 0; i < split; i++) {
-            struct ccn_charbuf *name = na->ents[i].name;
+            struct ndn_charbuf *name = na->ents[i].name;
             SyncNodeAddName(nc, name);
         }
         SyncEndComposite(nc);
@@ -1131,13 +1134,13 @@ node_from_names(struct sync_update_data *ud, int split) {
     // names 0..split - 1 must be freed as they are either represented by
     // an existing node or have been copied to a new node
     for (i = 0; i < split; i++) {
-        ccn_charbuf_destroy(&na->ents[i].name);
+        ndn_charbuf_destroy(&na->ents[i].name);
     }
     // shift remaining elements down in the name accum
     ud->nameLenAccum = 0;
     i = 0;
     while (split < lim) {
-        struct ccn_charbuf *name = na->ents[split].name;
+        struct ndn_charbuf *name = na->ents[split].name;
         ud->nameLenAccum += name->length;
         na->ents[i] = na->ents[split];
         na->ents[split].name = NULL;
@@ -1166,7 +1169,7 @@ try_node_split(struct sync_update_data *ud) {
     int accLen = 0;
     int prevMatch = 0;
     int split = 0;
-    if (debug >= CCNL_FINE) {
+    if (debug >= NDNL_FINE) {
         char tmp[64];
         snprintf(tmp, sizeof(tmp),
                  "entered, %d names",
@@ -1174,19 +1177,19 @@ try_node_split(struct sync_update_data *ud) {
         SyncNoteSimple(root, here, tmp);
     }
     for (split = 0; split < lim; split++) {
-        struct ccn_charbuf *name = na->ents[split].name;
+        struct ndn_charbuf *name = na->ents[split].name;
         int nameLen = name->length + 8;
         if (nameLen > maxLen) maxLen = nameLen;
         accLen = accLen + nameLen + (maxLen - nameLen) * 2;
         if (split+1 < lim) {
             if (splitMethod & 1) {
                 // use level shift to split
-                struct ccn_charbuf *next = na->ents[split+1].name;
+                struct ndn_charbuf *next = na->ents[split+1].name;
                 int match = SyncComponentMatch(name, next);
                 if (accLen >= accMin
                     && (match < prevMatch || (match > prevMatch+1))) {
                     // force a break due to level changes
-                    if (debug >= CCNL_FINE) {
+                    if (debug >= NDNL_FINE) {
                         char tmp[64];
                         snprintf(tmp, sizeof(tmp),
                                  "split %d, lim %d, match %d, prev %d, accLen %d",
@@ -1203,7 +1206,7 @@ try_node_split(struct sync_update_data *ud) {
                 if (pos > 0 && accLen >= accMin) {
                     unsigned c = name->buf[pos] & 255;
                     if (c < hashSplitTrigger) {
-                        if (debug >= CCNL_FINE) {
+                        if (debug >= NDNL_FINE) {
                             char tmp[64];
                             snprintf(tmp, sizeof(tmp),
                                      "split %d, lim %d, x %u, accLen %d",
@@ -1227,7 +1230,7 @@ try_node_split(struct sync_update_data *ud) {
 // add_update_name adds a name to the current update name accumulator
 // and adds it to the deltas if it is a new name and can be added
 static int
-add_update_name(struct sync_update_data *ud, struct ccn_charbuf *name, int isNew) {
+add_update_name(struct sync_update_data *ud, struct ndn_charbuf *name, int isNew) {
     static char *here = "Sync.add_update_name";
     struct SyncRootStruct *root = ud->root;
     int debug = root->base->debug;
@@ -1237,7 +1240,7 @@ add_update_name(struct sync_update_data *ud, struct ccn_charbuf *name, int isNew
     int res = 0;
     name = SyncCopyName(name);
     SyncNameAccumAppend(dst, name, 0);
-    if (debug >= CCNL_FINE) {
+    if (debug >= NDNL_FINE) {
         char *msg = ((isNew) ? "added+" : "added");
         SyncNoteUri(root, here, msg, name);
     }
@@ -1258,7 +1261,7 @@ merge_names(struct sync_update_data *ud) {
     struct SyncRootStruct *root = ud->root;
     //struct SyncRootPrivate *rp = root->priv;
     int debug = root->base->debug;
-    struct ccn_charbuf *cb = ud->cb;
+    struct ndn_charbuf *cb = ud->cb;
     struct SyncTreeWorkerHead *head = ud->tw;
     int res = 0;
     int namesLim = ud->namesAdded+namesYieldInc;
@@ -1290,7 +1293,7 @@ merge_names(struct sync_update_data *ud) {
                 if (ep->kind & SyncElemKind_leaf) {
                     // a leaf, so the element name is inline
                     enum SyncCompareResult cmp = SCR_after;
-                    struct ccn_charbuf *name = NULL;
+                    struct ndn_charbuf *name = NULL;
                     int ax = ud->ax;
                     int aLen = ud->adding->len;
 
@@ -1323,7 +1326,7 @@ merge_names(struct sync_update_data *ud) {
                         int64_t dt = SyncDeltaTime(ud->entryTime, SyncCurrentTime());
                         if (dt >= namesYieldMicros) {
                             // need to yield
-                            if (debug >= CCNL_FINE)
+                            if (debug >= NDNL_FINE)
                                 SyncNoteSimple(root, here, "yield");
                             return 0;
                         }
@@ -1345,7 +1348,7 @@ merge_names(struct sync_update_data *ud) {
         int ax = ud->ax;
         int aLen = ud->adding->len;
         while (ax < aLen) {
-            struct ccn_charbuf *name = ud->adding->ents[ax].name;
+            struct ndn_charbuf *name = ud->adding->ents[ax].name;
             ud->adding->ents[ax].name = NULL;
             add_update_name(ud, name, 1);
             ax++;
@@ -1359,7 +1362,7 @@ merge_names(struct sync_update_data *ud) {
 static int
 updateError(struct sync_update_data *ud) {
     if (ud != NULL) {
-        struct ccn_scheduled_event *ev = ud->ev;
+        struct ndn_scheduled_event *ev = ud->ev;
         if (ev != NULL) {
             ud->ev = NULL;
             ev->evdata = NULL;
@@ -1370,9 +1373,9 @@ updateError(struct sync_update_data *ud) {
 }
 
 static int
-updateAction(struct ccn_schedule *sched,
+updateAction(struct ndn_schedule *sched,
              void *clienth,
-             struct ccn_scheduled_event *ev,
+             struct ndn_scheduled_event *ev,
              int flags) {
     char *here = "Sync.updateAction";
     int64_t now = SyncCurrentTime();
@@ -1389,7 +1392,7 @@ updateAction(struct ccn_schedule *sched,
         // orphaned?
         return -1;
     }
-    if (flags & CCN_SCHEDULE_CANCEL) {
+    if (flags & NDN_SCHEDULE_CANCEL) {
         // cancelled (rescheduled)
         ud->ev = NULL;
         return -1;
@@ -1400,7 +1403,7 @@ updateAction(struct ccn_schedule *sched,
     switch (ud->state) {
         case sync_update_state_init: {
             // we are mostly initialized
-            if (debug >= CCNL_FINE) {
+            if (debug >= NDNL_FINE) {
                 showCacheEntry1(root, here, "at init", ud->ceStart);
             }
             int res = merge_names(ud);
@@ -1409,7 +1412,7 @@ updateAction(struct ccn_schedule *sched,
             res = node_from_names(ud, 0);
             // done, either normally or with error
             // free the resources
-            ccn_charbuf_destroy(&ud->cb);
+            ndn_charbuf_destroy(&ud->cb);
             if (res < 0) {
                 // this is bad news!
                 SyncNoteFailed(root, here, "merge names", __LINE__);
@@ -1420,7 +1423,7 @@ updateAction(struct ccn_schedule *sched,
         case sync_update_state_busy: {
             // ud->nodes has the nodes created from the names
             // the last step is to make up the node superstructure
-            if (debug >= CCNL_FINE) {
+            if (debug >= NDNL_FINE) {
                 SyncNoteSimple(root, here, "sync_update_state_busy");
             }
             int initCount = root->priv->currentSize;
@@ -1434,7 +1437,7 @@ updateAction(struct ccn_schedule *sched,
                     struct SyncNodeComposite *nc = ce->ncL;
                     if (nc == NULL) nc = ce->ncR;
                     if (nc != NULL) {
-                        struct ccn_charbuf *hash = SyncLongHashToBuf(&nc->longHash);
+                        struct ndn_charbuf *hash = SyncLongHashToBuf(&nc->longHash);
                         char *hex = SyncHexStr(hash->buf, hash->length);
                         struct SyncHashCacheEntry *ce = SyncHashEnter(root->ch, 
                                                                       hash->buf, hash->length,
@@ -1447,7 +1450,7 @@ updateAction(struct ccn_schedule *sched,
                         int64_t mh = SyncDeltaTime(ud->entryTime, now);
                         if (mh < ud->maxHold) mh = ud->maxHold;
                         mh = (mh + 500) / 1000;
-                        if (debug >= CCNL_INFO) {
+                        if (debug >= NDNL_INFO) {
                             char temp[256];
                             snprintf(temp, sizeof(temp)-2,
                                      "%d.%03d secs [%d.%03d], %d names, depth %d, hash %s",
@@ -1458,7 +1461,7 @@ updateAction(struct ccn_schedule *sched,
                         }
                         if (ud->ceStart != ud->ceStop) {
                             // only do this if the update got something
-                            if (debug >= CCNL_INFO) {
+                            if (debug >= NDNL_INFO) {
                                 char temp[64];
                                 snprintf(temp, sizeof(temp),
                                          "done (%d)",
@@ -1468,7 +1471,7 @@ updateAction(struct ccn_schedule *sched,
                             }
                         } 
                         free(hex);
-                        ccn_charbuf_destroy(&hash);
+                        ndn_charbuf_destroy(&hash);
                     } else {
                         count = SyncNoteFailed(root, here, "bad node", __LINE__);
                     }
@@ -1476,8 +1479,8 @@ updateAction(struct ccn_schedule *sched,
             }
             if (count <= initCount) {
                 // we were supposed to add something?
-                if (debug >= CCNL_INFO) {
-                    struct ccn_charbuf *hash = root->currentHash;
+                if (debug >= NDNL_INFO) {
+                    struct ndn_charbuf *hash = root->currentHash;
                     char *hex = SyncHexStr(hash->buf, hash->length);
                     sync_msg(base,
                              "%s, root#%u, note, count %d, initCount %d, hash %s",
@@ -1488,7 +1491,7 @@ updateAction(struct ccn_schedule *sched,
             ud->ev = NULL;
             ev->evdata = NULL;
             ud->state = ((count < 0) ? sync_update_state_error : sync_update_state_done);
-            if (debug >= CCNL_FINE)
+            if (debug >= NDNL_FINE)
                 showCacheEntry2(root, here, "at exit", ud->ceStart, ud->ceStop);
             if (ud->done_closure != NULL) {
                 // notify the caller
@@ -1529,8 +1532,8 @@ sync_diff_start(struct sync_diff_data *sdd) {
     sdd->lastEnter = mark;
     sdd->lastMark = mark;
     sdd->lastFetchOK = mark;
-    sdd->cbX = ccn_charbuf_create();
-    sdd->cbY = ccn_charbuf_create();
+    sdd->cbX = ndn_charbuf_create();
+    sdd->cbY = ndn_charbuf_create();
     sdd->namesAdded = 0;
     sdd->nodeFetchBusy = 0;
     sdd->nodeFetchFailed = 0;
@@ -1553,7 +1556,7 @@ sync_diff_note_node(struct sync_diff_data *sdd,
         struct sync_diff_fetch_data *fd = remNodeFetch(sdd, ce);
         struct SyncRootStruct *root = sdd->root;
         int debug = root->base->debug;
-        if (debug >= CCNL_FINE) {
+        if (debug >= NDNL_FINE) {
             static char *here = "Sync.sync_diff_note_node";
             char temp[256];
             int pos = 0;
@@ -1608,10 +1611,10 @@ sync_diff_stop(struct sync_diff_data *sdd) {
     struct SyncRootStruct *root = sdd->root;
     if (sdd == NULL)
         return 0;
-    struct ccn_scheduled_event *ev = sdd->ev;
+    struct ndn_scheduled_event *ev = sdd->ev;
     if (ev != NULL && ev->evdata == sdd) {
         // no more callbacks
-        ccn_schedule_cancel(root->base->sd->sched, ev);
+        ndn_schedule_cancel(root->base->sd->sched, ev);
     }
     resetDiffData(sdd);
     return 1; 
@@ -1630,7 +1633,7 @@ sync_update_start(struct sync_update_data *ud, struct SyncNameAccum *acc) {
         case sync_update_state_done: {
             // OK to restart
             if (acc == NULL || acc->len == 0) return 0;
-            if (debug >= CCNL_FINE) {
+            if (debug >= NDNL_FINE) {
                 SyncNoteSimple(root, here, "starting");
             }
             struct SyncHashCacheEntry *ent = ud->ceStart;
@@ -1639,7 +1642,7 @@ sync_update_start(struct sync_update_data *ud, struct SyncNameAccum *acc) {
             resetUpdateData(ud);
             ud->adding = SyncSortNames(root, acc);
             acc->len = 0; // source no longer owns the names
-            ud->cb = ccn_charbuf_create();
+            ud->cb = ndn_charbuf_create();
             ud->names = SyncAllocNameAccum(0);
             ud->nodes = SyncAllocNodeAccum(0);
             ud->namesAdded = 0;
@@ -1667,7 +1670,7 @@ sync_update_stop(struct sync_update_data *ud) {
         return 0;
     root = ud->root;
     int debug = root->base->debug;
-    if (debug >= CCNL_FINE) {
+    if (debug >= NDNL_FINE) {
         SyncNoteSimple(root, here, "stopping");
     }
     resetUpdateData(ud);

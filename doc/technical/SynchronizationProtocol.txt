@@ -1,16 +1,16 @@
-CCNx Synchronization Protocol
+NDNx Synchronization Protocol
 =============================
 
 == Introduction
 
-Sync is a CCNx facility that allows CCN components and applications to define Collections of named data in Repositories that are to be automatically kept in sync with identically defined Collections in neighboring Repositories. Sync is currently embedded in the Repository, and will be available separately in the future.
+Sync is a NDNx facility that allows NDN components and applications to define Collections of named data in Repositories that are to be automatically kept in sync with identically defined Collections in neighboring Repositories. Sync is currently embedded in the Repository, and will be available separately in the future.
 
 [[SynchronizationProtocol]]
 == Synchronization Protocol
 
 Associated with each Repository is a Sync Agent that is responsible for keeping information about local Collections up to date as content is added to the Repository, for detecting and acquiring Content Objects in remote copies of the Collections that are not in the local Repository, and for responding to inquiries from remote Sync Agents for information about content in local Collections. The Synchronization Protocol is the dialog between Sync Agents for doing this.
 
-A Collection is a set of content whose names share a common prefix, and is defined by an application through use of a Create Slice request as described in link:CreateCollectionProtocol.html[CCNx Create Collection Protocol]. (The definition of a Collection is known as a _slice_.) Each Collection is synchronized independently of all others. When it detects a new Collection, the local Sync Agent builds a 'sync tree' for the Collection that represents its content. As Content Objects are added to the Repository, their names are passed to the local Sync Agent, which updates relevant sync trees whenever it detects new content with matching names.
+A Collection is a set of content whose names share a common prefix, and is defined by an application through use of a Create Slice request as described in link:CreateCollectionProtocol.html[NDNx Create Collection Protocol]. (The definition of a Collection is known as a _slice_.) Each Collection is synchronized independently of all others. When it detects a new Collection, the local Sync Agent builds a 'sync tree' for the Collection that represents its content. As Content Objects are added to the Repository, their names are passed to the local Sync Agent, which updates relevant sync trees whenever it detects new content with matching names.
 
 The combined hash for each node in the tree is the arithmetic sum of the hashes of individual names in that node and of the combined hashes of all its child nodes (with carries). The combined hash for the sync tree is thus the sum of the hashes of all names in sync tree.
 
@@ -23,7 +23,7 @@ If the root hashes differ, the remote Sync Agent responds with its own root hash
 
 A Root Advise Interest is used to determine if there are any names in a remote Collection that are not in the local Collection. For each local sync tree, the Sync Agent expresses a Root Advise Interest with a name that is, when expressed as a URI, of the form:
 
- ccnx:/<topo>/%C1.S.ra/<slicehash>/<roothash>
+ ndn:/<topo>/%C1.S.ra/<slicehash>/<roothash>
 
 where:
 [[RootAdviseComponents]]
@@ -31,7 +31,7 @@ where:
 
 * *`%C1.S.ra`* is the command marker for the Root Advise Interest.
 
-* *'<slicehash>'* is a hash code that names the collection. Computing *'<slicehash>'* uses the CCN default hash algorithm to form a hash over the ccnb encoding of the configuration slice for the root.
+* *'<slicehash>'* is a hash code that names the collection. Computing *'<slicehash>'* uses the NDN default hash algorithm to form a hash over the ndnb encoding of the configuration slice for the root.
 
 * *'<roothash>'* is the combined hash of the root node for the sync tree.
 
@@ -41,7 +41,7 @@ A Repository with a corresponding sync set that does not have a combined hash of
 
 The response to a Root Advise Interest is, when expressed as a URI, of the form:
 
- ccnx:/<topo>/%C1.S.ra/<slicehash>/<roothash>/<responsehash>/<version>/<segment>
+ ndn:/<topo>/%C1.S.ra/<slicehash>/<roothash>/<responsehash>/<version>/<segment>
 
 where:
 
@@ -49,17 +49,17 @@ where:
 
 * *'<responsehash>'* is the hash for the responder’s root.
 
-* *'<version>'* and *'<segment>'* are optional, and follow normal CCN naming practice. (See link:NameConventions.html[CCNx Basic Name Conventions].) 
+* *'<version>'* and *'<segment>'* are optional, and follow normal NDN naming practice. (See link:NameConventions.html[NDNx Basic Name Conventions].) 
 
-The Content Object in the response to the Root Advise Interest has the ccnb encoding of the root node of the remote sync tree, and is described below in <<ContentObjects,Root Advise and Node Fetch Response Content>>.
+The Content Object in the response to the Root Advise Interest has the ndnb encoding of the root node of the remote sync tree, and is described below in <<ContentObjects,Root Advise and Node Fetch Response Content>>.
 
-As a Sync Agent examines nodes from the remote sync tree, it may encounter combined hash codes that are included in the local sync tree. In the above example, regardless of updates to the local sync tree, there is no need to receive remote roots with hashes of *'<roothash>'* or *'<responsehash>'* in response to subsequent Root Advise requests. The CCN Interest mechanism allows them to be excluded using an exclusion filter. This minimizes the likelihood of responses containing names that are already known to be included in the local tree.
+As a Sync Agent examines nodes from the remote sync tree, it may encounter combined hash codes that are included in the local sync tree. In the above example, regardless of updates to the local sync tree, there is no need to receive remote roots with hashes of *'<roothash>'* or *'<responsehash>'* in response to subsequent Root Advise requests. The NDN Interest mechanism allows them to be excluded using an exclusion filter. This minimizes the likelihood of responses containing names that are already known to be included in the local tree.
 
 === Node Fetch Interest
 
 When Root Hashes differ, the Sync Agent must fetch nodes of the remote sync tree that have combined hashes that differ from hashes in the local tree. To obtain these nodes, the Sync Agent uses a Node Fetch Interest that is, when expressed as a URI, of the form:
 
- ccnx:/<topo>/%C1.S.nf/<slicehash>/<responsehash>
+ ndn:/<topo>/%C1.S.nf/<slicehash>/<responsehash>
 
 where:
 [[NodeFetchComponents]]
@@ -73,17 +73,17 @@ Note that the Root Advise refers to the node at the root of the sync tree, while
 
 The response is, when expressed as a URI, of the form:
 
- ccnx:/<topo>/%C1.S.nf/<slicehash>/<responsehash>/<version>/<segment>
+ ndn:/<topo>/%C1.S.nf/<slicehash>/<responsehash>/<version>/<segment>
 
 where:
 
 * *'<topo>'*, *'<slicehash>'*, and *'<responsehash>'* are as <<NodeFetchComponents,described above>> for Node Fetch, and must be the same as for the request.
 
-* *'<version>'* and *'<segment>'* are optional, and follow normal CCN naming practice. (See link:NameConventions.html[CCNx Basic Name Conventions].) 
+* *'<version>'* and *'<segment>'* are optional, and follow normal NDN naming practice. (See link:NameConventions.html[NDNx Basic Name Conventions].) 
 
-The content for the response is the ccnb encoding of the requested tree node, and is described below in <<ContentObjects,Root Advise and Node Fetch Response Content>>.
+The content for the response is the ndnb encoding of the requested tree node, and is described below in <<ContentObjects,Root Advise and Node Fetch Response Content>>.
 
-As Content Objects are found in remote Repositories that are not present locally, they are fetched using normal CCN Interests (see link:InterestMessage.html[CCNx Interest Message]) and stored in the local Repository.
+As Content Objects are found in remote Repositories that are not present locally, they are fetched using normal NDN Interests (see link:InterestMessage.html[NDNx Interest Message]) and stored in the local Repository.
 
 === Example
 
@@ -126,7 +126,7 @@ From this point on, Sync-1 and/or Sync-2 will periodically send Root Advise Inte
 
 The Content Object sent in response to a Root Advise or Node Fetch Interest contains a node of the sync tree associated with the specified Collection. For Root Advise, the Content Object is for the root node; for Node Fetch, it is for the requested node.
 
-The content of a sync tree node is shown below. The content of the Content Object is the ccnb encoding of this data.
+The content of a sync tree node is shown below. The content of the Content Object is the ndnb encoding of this data.
 
 .......................................................
 SyncNode ::= SyncVersion
@@ -150,7 +150,7 @@ SyncNode ::= SyncVersion
 
  SyncNodeElements ::= (Name | SyncContentHash)*
 
-*SyncNodeElements* specifies the elements in a sync tree node. An individual element can be the name of a Content Object as defined in the link:Name.html[CCNx Name Specification], or the combined hash of a child node. There can be any mix of names and hashes in a sync tree node.
+*SyncNodeElements* specifies the elements in a sync tree node. An individual element can be the name of a Content Object as defined in the link:Name.html[NDNx Name Specification], or the combined hash of a child node. There can be any mix of names and hashes in a sync tree node.
 
 === SyncContentHash
 
@@ -160,7 +160,7 @@ SyncNode ::= SyncVersion
 
 === Name, Name
 
-*Name*, *Name* are the minimum and maximum names respectively. The 'minimum name' is the least name in the covered set, and the 'maximum name' is the greatest name in the set, based on canonical ordering of CCN names. The 'covered set' for a node is the union of the set of all names in the node with the covered sets of all descendant nodes.
+*Name*, *Name* are the minimum and maximum names respectively. The 'minimum name' is the least name in the covered set, and the 'maximum name' is the greatest name in the set, based on canonical ordering of NDN names. The 'covered set' for a node is the union of the set of all names in the node with the covered sets of all descendant nodes.
 
 === SyncNodeKind
 

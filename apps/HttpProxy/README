@@ -1,25 +1,28 @@
 -- apps/HttpProxy/README
 
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2010, 2011 Palo Alto Research Center, Inc.
 
 -------------------------------------------------------------------------
-This file describes the test conditions for running the CCN HttpProxy demo.
+This file describes the test conditions for running the NDN HttpProxy demo.
 
-First, we assume that there is a running ccnd program.  If that is not the
-case, then refer to the ccnx documentation.
+First, we assume that there is a running ndnd program.  If that is not the
+case, then refer to the ndnx documentation.
 
 HttpProxy is a specialized HTTP proxy that handles a subset of the HTTP GET
-requests by converting them into CCN interests.  Those interests are then
-satisfied through the ccnd.  HttpProxy listens for HTTP GET requests on a
+requests by converting them into NDN interests.  Those interests are then
+satisfied through the ndnd.  HttpProxy listens for HTTP GET requests on a
 given port, and has sufficient logic to serve as a proxy for browsers with
 configurable proxies (Firefox and Safari have been tested).  The subset of
-GET requests that can be handled via CCN is given as a list of permitted host
+GET requests that can be handled via NDN is given as a list of permitted host
 names or host name prefixes, plus a small set of additional restrictions.
 Subrange requests are not honored.
 
-NetFetch listens for CCN interests of a particular form, and turns them into
+NetFetch listens for NDN interests of a particular form, and turns them into
 HTTP GET requests.  When the HTTP requests result in content, this content
-is segmented and stored into the local ccnd to satisfy the interests.  The
+is segmented and stored into the local ndnd to satisfy the interests.  The
 NetFetch program stores whole files, and does not handle subrange requests.
 Once a file is stored it remains until deleted by the client (NetFetch does
 not delete files).
@@ -33,13 +36,13 @@ Ground rules.
 2.  There must be at least one HttpProxy server and one NetFetch server.
     [OK for them to be on the same machine]
 
-3.  Each server running HTTPProxy or NetFetch must also run ccnd.
+3.  Each server running HTTPProxy or NetFetch must also run ndnd.
 
 4.  Full header (in request or reply) must be less than 16k bytes.
 
-5.  Only GET requests using HTTP will use CCN.
+5.  Only GET requests using HTTP will use NDN.
 
-6.  Only hosts in the HttpProxy.list file will use CCN.
+6.  Only hosts in the HttpProxy.list file will use NDN.
 
 
 -------------------------------------------------------------------------
@@ -49,18 +52,18 @@ Running tests.
 0.  We will use the following symbols:
 	HHH		-- the host machine running HttpProxy
 	NNN		-- the host machine running NetFetch
-	$CCNBin		-- the CCN tool binaries (such as ccnd)
+	$NDNBin		-- the NDN tool binaries (such as ndnd)
 	$ProxyHome	-- the directory for HTTPProxy and NetFetch files
 	$FetchCache	-- the directory for storing files for NetFetch
-	$TestCCN	-- the CCN prefix for interests (default: TestCCN)
+	$TestNDN	-- the NDN prefix for interests (default: TestNDN)
 
-1.  Starting ccnd
+1.  Starting ndnd
 	-- on HHH
-		$CCNBin/ccndstart
+		$NDNBin/ndndstart
 	-- on NNN
-		$CCNBin/ccndstart
-	-- if HHH is not NNN, route ccnd demon from HHH to NNN using
-		ccndc add ccnx:/ udp NNN
+		$NDNBin/ndndstart
+	-- if HHH is not NNN, route ndnd demon from HHH to NNN using
+		ndndc add ndn:/ udp NNN
 
 2.  Any HTTP source programs should use port 8080 on HHH for HTTPProxy service
     (hint, for Firefox, use Preferences->Advanced and use Settings to set the
@@ -83,8 +86,8 @@ Running tests.
 
 Additional commands and information
 
-1.  To make a ccnd mark all content as stale, use:
-	$CCNBin/ccnrm ccnx:/
+1.  To make a ndnd mark all content as stale, use:
+	$NDNBin/ndnrm ndn:/
 
 2.  To delete all files cached by NetFetch, use:
 	rm -Rf $FetchCache/*
@@ -95,17 +98,17 @@ Statistics in the logs
 
 In HttpProxy, the lines of interest look like:
 
-	@25320.607, stats, req 1598, rep 1565, reads 3568, bytes 13803166, repCCN 345, readsCCN 713, bytesCCN 2078741
+	@25320.607, stats, req 1598, rep 1565, reads 3568, bytes 13803166, repNDN 345, readsNDN 713, bytesNDN 2078741
 
 where
 	@25320.607		-- seconds since the start of HttProxy
 	req 1598		-- HTTP requests handled
-	rep 1565		-- HTTP replies handled (incl. CCN)
-	reads 3568		-- read operations issued (incl. CCN)
-	bytes 13803166		-- bytes read (incl. CCN)
-	repCCN 345		-- HTTP replies handled via CCN
-	readsCCN 713		-- read operations via CCN
-	bytesCCN 2078741 	-- bytes read via CCN
+	rep 1565		-- HTTP replies handled (incl. NDN)
+	reads 3568		-- read operations issued (incl. NDN)
+	bytes 13803166		-- bytes read (incl. NDN)
+	repNDN 345		-- HTTP replies handled via NDN
+	readsNDN 713		-- read operations via NDN
+	bytesNDN 2078741 	-- bytes read via NDN
 
 
 In NetFetch the lines of interest look like:
@@ -118,12 +121,12 @@ where
 	changes 4082		-- changes in state since start of NetFetch
 	filesCreated 438	-- files created
 	interestsSeen 1527	-- interests seen
-	segmentsPut 1424	-- segments put via CCN
-	bytesPut 4762527	-- bytes put via CCN
+	segmentsPut 1424	-- segments put via NDN
+	bytesPut 4762527	-- bytes put via NDN
 
 The interestsSeen number includes interests expressed beyond the EOF for the
 file, and are therefore ignored.  It sometimes includes duplicate interests
 that came about through race conditions.  The segmentsPut number is the number
-of segments put via CCN, and may include some duplicates.  Duplicate replies
-are suppressed by ccnd.
+of segments put via NDN, and may include some duplicates.  Duplicate replies
+are suppressed by ndnd.
 

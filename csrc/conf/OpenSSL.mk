@@ -1,7 +1,10 @@
 # conf/OpenSSL.mk
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2010 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -14,7 +17,7 @@
 
 ################################################################
 #
-# This provides a way to build CCNx using a version of OpenSSL that you
+# This provides a way to build NDNx using a version of OpenSSL that you
 # have built and installed, instead of using the system's version.
 # To use this, copy this file into conf/local.mk and customize as needed,
 # then do the top-level ./configure && make.

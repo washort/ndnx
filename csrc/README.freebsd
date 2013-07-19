@@ -1,6 +1,6 @@
-CCNx csrc/README for FreeBSD
+NDNx csrc/README for FreeBSD
 
-It is possible to build the c portions of CCNx 
+It is possible to build the c portions of NDNx 
 on FreeBSD 7 or newer without any software beyond
 that provided in the base system.
 
@@ -45,8 +45,8 @@ these have dependencies on many other ports, including xorg.
 If you run the tests in a FreeBSD jail, you will probably get a failure in
 test_spur_traffic, saying "more spur traffic than expected".  There are a
 at least two workarounds for this:
-    1. Bind to the jail's IP address when starting ccnd. For example,
-        export CCND_LISTEN_ON=203.0.113.42
+    1. Bind to the jail's IP address when starting ndnd. For example,
+        export NDND_LISTEN_ON=203.0.113.42
     before running the tests (replace 203.0.113.42 with the jail's IP address).
 OR
     2. Associate the localhost name with the jail's IP

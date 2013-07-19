@@ -1,18 +1,18 @@
-CCNx Signature Generation and Verification
+NDNx Signature Generation and Verification
 ==========================================
 
 == Source references
-link:xsd.html[ccnx.xsd] is the xml schema that describes what the xml rendition of ccn data (including ContentObject messages) should look like.
+link:xsd.html[ndnx.xsd] is the xml schema that describes what the xml rendition of ndn data (including ContentObject messages) should look like.
 
-link:dtd.html[ccnx.dtd] is a dtd that should describe the same, in a less strongly-typed fashion.
+link:dtd.html[ndnx.dtd] is a dtd that should describe the same, in a less strongly-typed fashion.
 
 link:DTAG.html[tagname.csvdict] contains the mapping between the DTAG values used in the binary encoding and the element names used in the XML representation.
 
-Here we specify how content signatures are generated in CCNx.
+Here we specify how content signatures are generated in NDNx.
 
 == Signed Content
 
-A link:ContentObject.html[ContentObject] in CCNx consists
+A link:ContentObject.html[ContentObject] in NDNx consists
 of:
 
 .......................................................
@@ -22,7 +22,7 @@ ContentObject ::= Signature
                   Content
 .......................................................
 
-The Signature, described below, is computed over the concatenated ccnb
+The Signature, described below, is computed over the concatenated ndnb
 binary encoding of the `Name`, `SignedInfo` and `Content` components of the 
 ContentObject, with all of their start and end tags, but *without* the
 start or end tag of the ContentObject itself, or any component of the `Signature`.
@@ -101,7 +101,7 @@ itself, encoded as appropriate for the particular cryptographic algorithm used
 
 == Signature Generation
 
-Signature generation in CCNx takes one of two forms: either individual
+Signature generation in NDNx takes one of two forms: either individual
 blocks are individually digitally signed with a standard public key signature
 algorithm, or multiple blocks are signed at once using an aggregated signature.
 
@@ -154,7 +154,7 @@ it is indeed a member of the set, that it was signed as part of the set by the
 designated public key, and that it has not been altered since (up to the security
 of the cryptographic algorithms used).
 
-The CCNx standard library currently implements a single aggregated
+The NDNx standard library currently implements a single aggregated
 signature algorithm, using Merkle hash trees. However, the intent is
 to make the aggregated, or bulk signature implementation sufficiently
 parameterizable that other algorithms (for experimental or production
@@ -174,7 +174,7 @@ together and so will be able to reuse cached verification data.)
 ==== Merkle Hash Tree Aggregated Signatures
 
 We describe here the aggregated signature algorithm implemented in the 
-CCNx library (as of September 2009). Some of the design elements used
+NDNx library (as of September 2009). Some of the design elements used
 in this algorithm were selected to maximize overlap with the standard
 signing implementation, and would be good common elements to use for
 any aggregated signature implementation. Additional details of the 
@@ -197,12 +197,12 @@ root value matches the value that was originally computed and signed.
 Assuming the security of the cryptographic digest algorithm used to compute
 the tree, this verifies the content and position of the leaf in the tree.
 
-CCNx uses binary Merkle hash trees, with a parameterizable digest
+NDNx uses binary Merkle hash trees, with a parameterizable digest
 algorithm used to compute the leaf and interior (node) digests. Given
 a set of 2 or more ContentObjects, the leaf digest of each of those
 ContentObjects is computed using the same method used to compute an
 individual signature over a single ContentObject.  In other words, each
-leaf is represented by the cryptographic digest of the concatenated ccnb binary
+leaf is represented by the cryptographic digest of the concatenated ndnb binary
 encodings of its contained Name, SignedInfo and Content fields.
 The node (interior) digests of the tree are computed as described above -- as
 the digest of the concatenation of the two children of the node to be computed.
@@ -217,7 +217,7 @@ just wrap it up in some PKCS#1 padding, encrypt it with our private
 key, and voila! A signature. But there are basically no crypto
 software packages that provide signature primitives that take
 already-digested data and just do the padding and encryption, and so
-we'd be asking anyone attempting to implement CCN MHT signing
+we'd be asking anyone attempting to implement NDN MHT signing
 (including ourselves) to re-implement a very complicated wheel, across
 a number of signature algorithms.  We might also want to sign with a
 key that does not support the digest algorithm we used to compute the
@@ -271,7 +271,7 @@ of that DigestInfo contains an OID that specifies both that this is
 a Merkle path, and the component digest algorithm used to compute the
 leaf and interior node digests.  The OCTET STRING of that DigestInfo
 contains the DER-encoded MerklePath for this leaf. OIDs for initial
-MHT algorithms are below. The default for the CCNx library is `SHA256MHT`.
+MHT algorithms are below. The default for the NDNx library is `SHA256MHT`.
 
 .......................................................
 SHA-1-Merkle-Hash-Tree ::= 1.2.840.113550.11.1.2.1

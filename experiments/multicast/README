@@ -1,7 +1,7 @@
 experiments/multicast/README
 
 The scripts in this directory may be used to experiment with
-content distribution performance using CCN over a local multicast group.
+content distribution performance using NDN over a local multicast group.
 
 Before using, make sure that the ports and addresses in the settings
 file are consistent with local use.
@@ -14,12 +14,12 @@ using to allow you to login without having to type your password,
 or you will end up spending a lot of time typing your password.
 
 ./pushtar
-	bundles up a compressed tar file of the ccn sources from
+	bundles up a compressed tar file of the ndn sources from
 	your working tree, and copies it over to the DISTHOST.
 
 ./setup
 	fetches, unpacks, and builds the tarball created by pushtar,
-	and starts the experimental ccnd.
+	and starts the experimental ndnd.
 	This is all done in a subdirectory of /tmp, so it will
 	not conflict with anything in your home directory.
 	This is to be run on each of your test machines.
@@ -34,17 +34,17 @@ or you will end up spending a lot of time typing your password.
 	Re-executing the setup script on a test machine will redo
 	the setup.
 
-./startccnd
-	will (re)start the test ccnd.  It is the last thing in the
+./startndnd
+	will (re)start the test ndnd.  It is the last thing in the
 	./setup script.
 
 ./connectsource upstream
 	should be done on one or more of the machines designated as
 	having a direct to the upstream source.
-	This machine should have a ccnd running on the default
-	port (ccndstart will start one) which has been populated with
+	This machine should have a ndnd running on the default
+	port (ndndstart will start one) which has been populated with
 	test data, for example:
-	(jot 1000000 | ccnsendchunks /experiments/multicast/DATA/1e6 &)
+	(jot 1000000 | ndnsendchunks /experiments/multicast/DATA/1e6 &)
 	The default for upstream is taken from the settings file.
 
 ./sink
@@ -56,13 +56,13 @@ or you will end up spending a lot of time typing your password.
 
 ./go 
 	can be executed on any of the machines (typically the source) to start
-	a test.  It works by providing a CCN content object that all the
+	a test.  It works by providing a NDN content object that all the
 	sink machines are patiently waiting for.
 
 ./waitgo
 	is used by the sink script to await the go signal.
 
 ./gather
-	uses ccnx to gather the results for posterity.
+	uses ndnx to gather the results for posterity.
 
 

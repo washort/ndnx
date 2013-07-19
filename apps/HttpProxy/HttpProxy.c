@@ -1,8 +1,11 @@
 /*
  * HttpProxy/HttpProxy.c
  * 
- * A CCNx program.
+ * A NDNx program.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2010, 2011, 2013 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -19,21 +22,21 @@
 
 /**
  * Provides a proxy for HTTP that allows some traffic to be served via
- * the CCN protocol.
+ * the NDN protocol.
  */
 
 #include "./ProxyUtil.h"
 #include "./SockHop.h"
-#include <ccn/fetch.h>
+#include <ndn/fetch.h>
 
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include <ccn/ccn.h>
-#include <ccn/charbuf.h>
-#include <ccn/uri.h>
+#include <ndn/ndn.h>
+#include <ndn/charbuf.h>
+#include <ndn/uri.h>
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -53,7 +56,7 @@
 #define FetchBuffers 8
 #define RobustMillis 200
 
-#define CCN_CHUNK_SIZE 4096
+#define NDN_CHUNK_SIZE 4096
 
 #define BufferSize (4400*4)
 
@@ -105,11 +108,11 @@ struct HostLineStruct {
 struct StatsStruct {
 	uint64_t requests;
 	uint64_t replies;
-	uint64_t repliesCCN;
+	uint64_t repliesNDN;
 	uint64_t replyReads;
 	uint64_t replyBytes;
-	uint64_t replyReadsCCN;
-	uint64_t replyBytesCCN;
+	uint64_t replyReadsNDN;
+	uint64_t replyBytesNDN;
 };
 
 struct MainBaseStruct {
@@ -117,18 +120,18 @@ struct MainBaseStruct {
     char *custom;
 	int removeProxy;
 	int removeHost;
-	string ccnRoot;
+	string ndnRoot;
 	HostLine hostLines;
 	double timeoutSecs;
 	int defaultKeepAlive;
 	int sockFD;
-	int ccnFD;
+	int ndnFD;
     int usePort;
-	struct ccn_fetch * fetchBase;
+	struct ndn_fetch * fetchBase;
 	SockEntry client;
 	RequestBase requestList;
 	SockBase sockBase;
-    ccn_fetch_flags ccn_flags;
+    ndn_fetch_flags ndn_flags;
 	int maxBusy;
 	int maxConn;
 	int nReady;
@@ -221,7 +224,7 @@ struct RequestBaseStruct {
 	RequestBaseState state;
 	string request;
 	string shortName;
-	struct ccn_fetch_stream * fetchStream;
+	struct ndn_fetch_stream * fetchStream;
 	int recvOff;
 	int sendOff;
 	int origin;
@@ -748,7 +751,7 @@ LinkSockEntry(RequestBase rb, SockEntry se) {
 	MainBase mb = rb->mb;
 	if (se->fd >= 0
 		&& se->fd != mb->sockFD
-		&& se->fd != mb->ccnFD) {
+		&& se->fd != mb->ndnFD) {
 		if (rb->host != NULL && se->host == NULL)
 			se->host = Concat(rb->host, "");
 		if (se->kind == NULL)
@@ -816,7 +819,7 @@ static void
 ShowNameInfo(RequestBase rb, string prefix) {
 	FILE *f = rb->mb->debug;
 	if (f == NULL) f = stdout;
-	string kind = "CCN";
+	string kind = "NDN";
 	if (rb->fetchStream == NULL)
 		kind = ((rb->origin > 0) ? "request" : "reply");
 	fprintf(f, "%s%s, %s:%s", prefix, kind, rb->host, rb->shortName);
@@ -1001,8 +1004,8 @@ TrySelect(MainBase mb) {
 	int timeout = 20;
 	InitSelectData(&mb->sds, timeout);
 	
-	// first, make sure that CCN wakes up
-	int max = mb->ccnFD;
+	// first, make sure that NDN wakes up
+	int max = mb->ndnFD;
 	FD_SET(max, &mb->sds.readFDS);
 	FD_SET(max, &mb->sds.errorFDS);
     
@@ -1061,8 +1064,8 @@ TrySelect(MainBase mb) {
 					int busy = mb->requestCount - mb->requestDone;
 					fprintf(f, "\n");
 					PutTimeMark(mb);
-					fprintf(f, "select, sockFD %d, ccnFD %d, busy %d, ready %d:",
-                            mb->sockFD, mb->ccnFD, busy, res);
+					fprintf(f, "select, sockFD %d, ndnFD %d, busy %d, ready %d:",
+                            mb->sockFD, mb->ndnFD, busy, res);
 				}
 				fprintf(f, " %d ", i);
 				if (bitR) fprintf(f, "r");
@@ -1086,26 +1089,26 @@ TrySelect(MainBase mb) {
 }
 
 static int
-SetNameCCN(MainBase mb,
-		   struct ccn_charbuf *cb,
-		   char *ccnRoot, char *dir, char *name) {
+SetNameNDN(MainBase mb,
+		   struct ndn_charbuf *cb,
+		   char *ndnRoot, char *dir, char *name) {
 	FILE *f = mb->debug;
 	char temp[NameMax];
-	snprintf(temp, sizeof(temp), "ccnx:/%s/", ccnRoot);
-	int res = ccn_name_from_uri(cb, temp);
+	snprintf(temp, sizeof(temp), "ndn:/%s/", ndnRoot);
+	int res = ndn_name_from_uri(cb, temp);
 	if (dir != NULL) {
 		// use our HTTP convention
-		res = res | ccn_name_append_str(cb, (const char *) "http");
-		res = res | ccn_name_append_str(cb, (const char *) dir);
+		res = res | ndn_name_append_str(cb, (const char *) "http");
+		res = res | ndn_name_append_str(cb, (const char *) dir);
 	}
 	// name
-	res = res | ccn_name_append_str(cb, (const char *) name);
-	if (res < 0) return retErr(mb, "SetNameCCN bad name");
+	res = res | ndn_name_append_str(cb, (const char *) name);
+	if (res < 0) return retErr(mb, "SetNameNDN bad name");
     if (f != NULL) {
-        struct ccn_charbuf *uri = ccn_charbuf_create();
-        ccn_uri_append(uri, cb->buf, cb->length, 0);
-        fprintf(f, "-- SetNameCCN, %s\n", ccn_charbuf_as_string(uri));
-        ccn_charbuf_destroy(&uri);
+        struct ndn_charbuf *uri = ndn_charbuf_create();
+        ndn_uri_append(uri, cb->buf, cb->length, 0);
+        fprintf(f, "-- SetNameNDN, %s\n", ndn_charbuf_as_string(uri));
+        ndn_charbuf_destroy(&uri);
     }
 	return 0;
 }
@@ -2310,11 +2313,11 @@ RequestBaseStart(RequestBase rb) {
 	int firstLineLen = NextLine(buf, 0, nb);
 	HostLine hostLine = NULL;
 	int failQuick = 0;
-	if (mb->ccnRoot != NULL
+	if (mb->ndnRoot != NULL
         && (h->httpVerb == HTTP_GET
             || h->httpVerb == HTTP_HEAD
             || h->httpVerb == HTTP_OPTIONS)) {
-            // determine if this is an acceptable host for CCN
+            // determine if this is an acceptable host for NDN
             string effectiveHost = rb->host;
             string effectiveName = rb->shortName;
             struct ShortNameInfo info;
@@ -2358,7 +2361,7 @@ RequestBaseStart(RequestBase rb) {
             }
             // now, we have an effective host and we have flags for the name
             while (hostLine != NULL) {
-                // maybe CCN, so process the flags for this host
+                // maybe NDN, so process the flags for this host
                 int flags = hostLine->flags;
                 if (f != NULL) {
                     fprintf(f, "-- SelectHostSuffix, host %s, flags %d\n",
@@ -2398,7 +2401,7 @@ RequestBaseStart(RequestBase rb) {
                     break;
                 }
                 if (info.count < 0 || firstLineLen >= NameMax/2) {
-                    // CCN can't handle excessively long names
+                    // NDN can't handle excessively long names
                     hostLine = NULL;
                     break;
                 }
@@ -2421,7 +2424,7 @@ RequestBaseStart(RequestBase rb) {
                 break;
             }
             if (hostLine == NULL && failQuick == 0) {
-                fprintf(f, "-- Prevent CCN for %s:%s; using HTTP\n",
+                fprintf(f, "-- Prevent NDN for %s:%s; using HTTP\n",
                         rb->host, rb->shortName);
             }
         }
@@ -2479,28 +2482,28 @@ RequestBaseStart(RequestBase rb) {
             return -1;
         }
     } else if (hostLine != NULL) {
-		// for this host we use CCN
+		// for this host we use NDN
 		
 		// make up the name
-		struct ccn_charbuf *cb = ccn_charbuf_create();
-		SetNameCCN(mb, cb, mb->ccnRoot, rb->host, rb->shortName);
+		struct ndn_charbuf *cb = ndn_charbuf_create();
+		SetNameNDN(mb, cb, mb->ndnRoot, rb->host, rb->shortName);
 		
-		struct ccn_fetch_stream * fs = ccn_fetch_open(mb->fetchBase, cb,
+		struct ndn_fetch_stream * fs = ndn_fetch_open(mb->fetchBase, cb,
 													  rb->shortName,
 													  NULL,
 													  FetchBuffers,
 													  mb->resolveFlags,
 													  1);
-		ccn_charbuf_destroy(&cb);
+		ndn_charbuf_destroy(&cb);
 		
 		if (fs == NULL) {
 			// failed to open, so report, then fall through
 			// and use HHTP
-			fprintf(f, "-- Could not use CCN for %s:%s; using HTTP\n",
+			fprintf(f, "-- Could not use NDN for %s:%s; using HTTP\n",
                     rb->host, rb->shortName);
 			flushLog(f);
 		} else {
-			fprintf(f, "-- Using CCN for %s:%s\n",
+			fprintf(f, "-- Using NDN for %s:%s\n",
                     rb->host, rb->shortName);
 			flushLog(f);
 			rb->fetchStream = fs;
@@ -2516,7 +2519,7 @@ RequestBaseStart(RequestBase rb) {
 			SetMsgLen(rb, -1);
 			rb->origin = 0;
             rb->parentVerb = h->httpVerb;
-			mb->stats.repliesCCN++;
+			mb->stats.repliesNDN++;
 			return 0;
 		}
 	}
@@ -2672,7 +2675,7 @@ AdjustForRanges(RequestBase rb) {
                         (intmax_t) rStart,
                         (intmax_t) rStop);
             }
-            ccn_fetch_seek(rb->fetchStream, seekTo);
+            ndn_fetch_seek(rb->fetchStream, seekTo);
             rb->bufferLen = off;
             rb->fetchOff = off;
             return 0;
@@ -2757,16 +2760,16 @@ RequestBaseStep(RequestBase rb) {
                     flushLog(f);
                 }
             } else if (rb->fetchStream != NULL) {
-				// we get this buffer through CCN
+				// we get this buffer through NDN
 				int off = rb->fetchOff;
                 string buf = (string) rb->buffer;
-                nb = ccn_fetch_read(rb->fetchStream, buf+off, CCN_CHUNK_SIZE);
+                nb = ndn_fetch_read(rb->fetchStream, buf+off, NDN_CHUNK_SIZE);
 				if (nb < 0)
 					// nothing to do, no characters available
 					return 0;
 				if (nb > 0) {
-					mb->stats.replyReadsCCN++;
-					mb->stats.replyBytesCCN = mb->stats.replyBytesCCN + nb;
+					mb->stats.replyReadsNDN++;
+					mb->stats.replyBytesNDN = mb->stats.replyBytesNDN + nb;
                     rb->bufferLen = nb + off;
                     rb->fetchOff = 0;
 				}
@@ -2805,9 +2808,9 @@ RequestBaseStep(RequestBase rb) {
 					fprintf(f, " %jd bytes on sock %d, dt %4.3f, %s\n",
                             nb, se->fd, dt, rb->host);
 				} else {
-					intmax_t pos = ccn_fetch_position(rb->fetchStream) - nb;
-					intmax_t seg = pos / CCN_CHUNK_SIZE;
-					fprintf(f, " %jd bytes via CCN, seg %jd, dt %4.3f, %s\n",
+					intmax_t pos = ndn_fetch_position(rb->fetchStream) - nb;
+					intmax_t seg = pos / NDN_CHUNK_SIZE;
+					fprintf(f, " %jd bytes via NDN, seg %jd, dt %4.3f, %s\n",
                             nb, seg, dt, rb->host);
 				}
 				flushLog(f);
@@ -2979,7 +2982,7 @@ RequestBaseStep(RequestBase rb) {
 				rb->recentTime = now;
 				RequestBase reply = rb->backPath;
 				if (rb->fetchStream != NULL) {
-					// we get this buffer through CCN
+					// we get this buffer through NDN
 				} else if (reply != NULL && reply->state == RB_None) {
 					// allow the replies to start coming back
 					// once the write has worked
@@ -3010,7 +3013,7 @@ RequestBaseStep(RequestBase rb) {
 }
 
 static MainBase
-NewMainBase(FILE *f, int maxBusy, struct ccn_fetch * fetchBase) {
+NewMainBase(FILE *f, int maxBusy, struct ndn_fetch * fetchBase) {
 	MainBase mb = ProxyUtil_StructAlloc(1, MainBaseStruct);
 	TimeMarker now = GetCurrentTime();
 	mb->startTime = now;
@@ -3023,9 +3026,9 @@ NewMainBase(FILE *f, int maxBusy, struct ccn_fetch * fetchBase) {
 	if (maxBusy > 20) maxBusy = 20;
 	mb->maxBusy = maxBusy;
 	mb->fetchBase = fetchBase;
-	mb->ccnFD = ccn_get_connection_fd(ccn_fetch_get_ccn(fetchBase));
+	mb->ndnFD = ndn_get_connection_fd(ndn_fetch_get_ndn(fetchBase));
 	mb->usePort = 8080;
-	mb->ccn_flags = (ccn_fetch_flags_NoteAll);
+	mb->ndn_flags = (ndn_fetch_flags_NoteAll);
 	mb->debug = f;
     mb->custom = "./HttpProxy.list";
     return mb;
@@ -3116,7 +3119,7 @@ DestroyMainBase(MainBase mb) {
 			rb = next;
 		}
 		if (mb->fetchBase != NULL)
-			ccn_fetch_destroy(mb->fetchBase);
+			ndn_fetch_destroy(mb->fetchBase);
 		
 		
 		HostLine h = mb->hostLines;
@@ -3133,8 +3136,8 @@ DestroyMainBase(MainBase mb) {
 }
 
 static void
-ScanRequestsCCN(MainBase mb) {
-	ccn_fetch_poll(mb->fetchBase);
+ScanRequestsNDN(MainBase mb) {
+	ndn_fetch_poll(mb->fetchBase);
 	RequestBase rb = mb->requestList;
 	while (rb != NULL) {
 		RequestBaseState state = rb->state;
@@ -3253,10 +3256,10 @@ ShowStats(MainBase mb) {
             (intmax_t) mb->stats.replies,
             (intmax_t) mb->stats.replyReads,
             (intmax_t) mb->stats.replyBytes);
-	fprintf(f, ", repCCN %jd, readsCCN %jd, bytesCCN %jd",
-            (intmax_t) mb->stats.repliesCCN,
-            (intmax_t) mb->stats.replyReadsCCN,
-            (intmax_t) mb->stats.replyBytesCCN);
+	fprintf(f, ", repNDN %jd, readsNDN %jd, bytesNDN %jd",
+            (intmax_t) mb->stats.repliesNDN,
+            (intmax_t) mb->stats.replyReadsNDN,
+            (intmax_t) mb->stats.replyBytesNDN);
 	fprintf(f, "\n");
 	flushLog(f);
 }
@@ -3272,7 +3275,7 @@ DispatchLoop(MainBase mb) {
 		
 		TrySelect(mb);
 		
-		ScanRequestsCCN(mb);
+		ScanRequestsNDN(mb);
 		if (mb->nReady > 0) {
 			
 			// next, try any HTTP traffic
@@ -3346,20 +3349,20 @@ ExecMainBase(MainBase mb) {
     res = StartMainBase(mb);
     if (res < 0) return res;
     if (mb->fetchBase == NULL)
-        // should not happen unless ccnd is not answering
-        return retErr(mb, "Init failed!  No ccnd?");
+        // should not happen unless ndnd is not answering
+        return retErr(mb, "Init failed!  No ndnd?");
     SetSockFD(mb, sockFD);
     SetSockEntryAddr(mb->client, sap);
-    mb->ccnRoot = "TestCCN";
+    mb->ndnRoot = "TestNDN";
     mb->removeProxy = 0;
     mb->removeHost = 1;
     mb->defaultKeepAlive = 13;
     mb->timeoutSecs = 30;
     mb->maxConn = 2; // RFC 2616 (pg. 2)
-    mb->resolveFlags = CCN_V_HIGHEST;
+    mb->resolveFlags = NDN_V_HIGHEST;
     
-    if (mb->debug != NULL && mb->ccn_flags != ccn_fetch_flags_None)
-        ccn_fetch_set_debug(mb->fetchBase, mb->debug, mb->ccn_flags);
+    if (mb->debug != NULL && mb->ndn_flags != ndn_fetch_flags_None)
+        ndn_fetch_set_debug(mb->fetchBase, mb->debug, mb->ndn_flags);
     
     return DispatchLoop(mb);
 }
@@ -3369,9 +3372,9 @@ main(int argc, string *argv) {
 	
 	FILE *f = stdout;
 	
-	struct ccn_fetch * fetchBase = ccn_fetch_new(NULL);
+	struct ndn_fetch * fetchBase = ndn_fetch_new(NULL);
 	if (fetchBase == NULL) {
-		fprintf(stdout, "** Can't connect to ccnd\n");
+		fprintf(stdout, "** Can't connect to ndnd\n");
 		return -1;
 	}
     
@@ -3383,10 +3386,10 @@ main(int argc, string *argv) {
         string arg = argv[i];
 		if (arg == NULL || arg[0] == 0) {
 		} else if (arg[0] == '-') {
-			if (strcasecmp(arg, "-ccnRoot") == 0) {
+			if (strcasecmp(arg, "-ndnRoot") == 0) {
 				i++;
 				arg = argv[i];
-				mb->ccnRoot = arg;
+				mb->ndnRoot = arg;
 			} else if (strcasecmp(arg, "-remProxy") == 0) {
 				mb->removeProxy = 1;
 			} else if (strcasecmp(arg, "-remHost") == 0) {
@@ -3397,13 +3400,13 @@ main(int argc, string *argv) {
 				mb->removeHost = 0;
 			} else if (strcasecmp(arg, "-noDebug") == 0) {
 				mb->debug = NULL;
-				mb->ccn_flags = ccn_fetch_flags_None;
+				mb->ndn_flags = ndn_fetch_flags_None;
 			} else if (strcasecmp(arg, "-absTime") == 0) {
 				mb->startTime = 0;
 			} else if (strcasecmp(arg, "-resolveHigh") == 0) {
-				mb->resolveFlags = CCN_V_HIGH;
+				mb->resolveFlags = NDN_V_HIGH;
 			} else if (strcasecmp(arg, "-resolveHighest") == 0) {
-				mb->resolveFlags = CCN_V_HIGHEST;
+				mb->resolveFlags = NDN_V_HIGHEST;
 			} else if (strcasecmp(arg, "-hostFromGet") == 0) {
 				mb->hostFromGet = 1;
 				mb->removeHost = 1;

@@ -1,9 +1,12 @@
 /**
  * @file sync/SyncPrivate.h
  *  
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  */
 /*
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011-2012 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -18,8 +21,8 @@
  * Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef CCN_SyncPrivate
-#define CCN_SyncPrivate
+#ifndef NDN_SyncPrivate
+#define NDN_SyncPrivate
 
 #include "SyncBase.h"
 #include "SyncRoot.h"
@@ -41,11 +44,11 @@ struct SyncPrivate {
     struct SyncNameAccum *topoAccum;
     struct SyncNameAccum *prefixAccum;
     struct SyncNameAccumList *filters;
-    struct ccn_charbuf *localHostPrefix;
-    struct ccn_charbuf *sliceCmdPrefix;
+    struct ndn_charbuf *localHostPrefix;
+    struct ndn_charbuf *sliceCmdPrefix;
     struct SyncHashCacheEntry *storingHead;
     struct SyncHashCacheEntry *storingTail;
-    struct ccn_indexbuf *comps;     /*< used by SyncNotifyContent */
+    struct ndn_indexbuf *comps;     /*< used by SyncNotifyContent */
     int nStoring;
     int64_t lastCacheClean;
     int64_t lastFenceTime;
@@ -106,9 +109,9 @@ struct SyncRootDeltas {
     int64_t whenSent;                   /*< when last sent */
     int deltasCount;                    /*< number of names in coding */
     int closed;                         /*< 1 if coding is complete */
-    struct ccn_charbuf *coding;         /*< coding for updates */
-    struct ccn_charbuf *name;           /*< name used for reply */
-    struct ccn_charbuf *cob;            /*< signed response buffer */
+    struct ndn_charbuf *coding;         /*< coding for updates */
+    struct ndn_charbuf *name;           /*< name used for reply */
+    struct ndn_charbuf *cob;            /*< signed response buffer */
 };
 
 struct SyncRootPrivate {

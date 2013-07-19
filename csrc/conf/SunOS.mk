@@ -1,7 +1,10 @@
 # conf/SunOS.mk
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -14,7 +17,7 @@
 MORE_LDLIBS = -lmtmalloc -lnsl -lsocket -L/usr/sfw/lib -R/usr/sfw/lib
 CPREFLAGS = -I../include -I/usr/sfw/include
 SHEXT = so
-SHLIBNAME=libccn.$(SHEXT).1
+SHLIBNAME=libndn.$(SHEXT).1
 SHLIBDEPS=
 SHARED_LD_FLAGS = -G -z allextract
 INSTALL = ginstall

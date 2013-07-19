@@ -1,5 +1,8 @@
 # exttests/testdriver.sh
 # 
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009, 2012 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -28,23 +31,23 @@ cd $(dirname "$0")
 # Set up PATH so the tested programs are used, rather than any that
 # might be installed.
 X=..
-export PATH=.:../ccnr:../sync:$X/ccnd:$X/libexec:$X/cmd:$X/lib:$X/util:../../bin:$PATH:./stubs
-type ccnd
-type ccnr
-type ccncat
+export PATH=.:../ndnr:../sync:$X/ndnd:$X/libexec:$X/cmd:$X/lib:$X/util:../../bin:$PATH:./stubs
+type ndnd
+type ndnr
+type ndncat
 type jot
 type SyncTest
 
-# If there are any ccnds running on test ports, wait a minute and retry.
+# If there are any ndnds running on test ports, wait a minute and retry.
 TestBusy () {
-  (. settings; ls ${CCN_LOCAL_SOCKNAME:-/tmp/.ccnd.sock}.$((CCN_LOCAL_PORT_BASE/10))[01234] 2>/dev/null)
+  (. settings; ls ${NDN_LOCAL_SOCKNAME:-/tmp/.ndnd.sock}.$((NDN_LOCAL_PORT_BASE/10))[01234] 2>/dev/null)
 }
 TestBusy && { echo There is something else happening, waiting one minute ... '' >&2; sleep 60; }
 TestBusy && exit 1
 
 # If we are running in a git repo, print out the git hash
 test -d ../../.git && {
-  git rev-parse HEAD | xargs echo ccnx at
+  git rev-parse HEAD | xargs echo ndnx at
 }
 
 # If we need to generate key pairs for the tests, make them smallish

@@ -1,7 +1,10 @@
 # doc/manpages/Makefile
 #
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2010, 2013 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -14,45 +17,45 @@
 
 # The order here determines the order in the generated index.
 PAGE_NAMES =        		\
-	ccn_ccnbtoxml		\
-	ccn_xmltoccnb		\
-	ccnacl			\
-	ccngroup		\
-	ccnc			\
-	ccnd			\
-	ccndc			\
-	ccndcontrol		\
-	ccndlogging		\
-	ccndsmoketest		\
-	ccndstart		\
-	ccndstatus		\
-	ccndstop		\
-	ccnexplore		\
-	ccnls			\
-	ccnlsrepo		\
-	ccngetfile		\
-	ccnputfile		\
-	ccnputmeta		\
-	ccngetmeta		\
-	ccnlibtest		\
-	ccnnamelist		\
-	ccnrm			\
-	ccnseqwriter		\
-	ccn_repo		\
-	ccncat			\
-	ccnslurp		\
-	ccnchat			\
-	ccnpeek			\
-	ccnpoke			\
-	ccnr			\
-	ccnrpolicyedit		\
-	ccnsyncslice		\
-	ccnsyncwatch		\
-	ccnlink			\
-	ccnprintlink		\
-	ccnrepoimport		\
-	ccntestloop 		\
-        ccnd-autoconfig \
+	ndn_ndnbtoxml		\
+	ndn_xmltondnb		\
+	ndnacl			\
+	ndngroup		\
+	ndnc			\
+	ndnd			\
+	ndndc			\
+	ndndcontrol		\
+	ndndlogging		\
+	ndndsmoketest		\
+	ndndstart		\
+	ndndstatus		\
+	ndndstop		\
+	ndnexplore		\
+	ndnls			\
+	ndnlsrepo		\
+	ndngetfile		\
+	ndnputfile		\
+	ndnputmeta		\
+	ndngetmeta		\
+	ndnlibtest		\
+	ndnnamelist		\
+	ndnrm			\
+	ndnseqwriter		\
+	ndn_repo		\
+	ndncat			\
+	ndnslurp		\
+	ndnchat			\
+	ndnpeek			\
+	ndnpoke			\
+	ndnr			\
+	ndnrpolicyedit		\
+	ndnsyncslice		\
+	ndnsyncwatch		\
+	ndnlink			\
+	ndnprintlink		\
+	ndnrepoimport		\
+	ndntestloop 		\
+        ndnd-autoconfig \
 
 
 PROJECT_NUMBER = 0.7.2

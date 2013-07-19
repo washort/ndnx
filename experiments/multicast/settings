@@ -1,7 +1,10 @@
 # multicast/settings
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -11,11 +14,11 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
 #
-export CCN_LOCAL_PORT=63981
+export NDN_LOCAL_PORT=63981
 export PATH=`(cd ../../bin && pwd)`:$PATH
-: ${CCND_CAP:=200}
-: ${CCND_DATA_PAUSE_MICROSEC:=10000}
-export CCND_CAP CCND_DATA_PAUSE_MICROSEC
+: ${NDND_CAP:=200}
+: ${NDND_DATA_PAUSE_MICROSEC:=10000}
+export NDND_CAP NDND_DATA_PAUSE_MICROSEC
 
 SELF=`hostname | cut -d . -f 1`
 DATAHOST=pepe
@@ -24,5 +27,5 @@ DATASET=1e7
 PIPELINE=20
 MULTICAST_ADDRESS=224.0.0.65
 MULTICAST_PORT=62009
-CCND_DATA_PAUSE_MICROSEC=5000
-CCND_CAP=100000
+NDND_DATA_PAUSE_MICROSEC=5000
+NDND_CAP=100000

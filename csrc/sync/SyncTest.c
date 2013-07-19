@@ -1,9 +1,12 @@
 /**
  * @file sync/SyncTest.c
  * 
- * Part of CCNx Sync.
+ * Part of NDNx Sync.
  */
 /*
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011-2013 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -39,12 +42,12 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
-#include <ccn/ccn.h>
-#include <ccn/charbuf.h>
-#include <ccn/digest.h>
-#include <ccn/fetch.h>
-#include <ccn/seqwriter.h>
-#include <ccn/uri.h>
+#include <ndn/ndn.h>
+#include <ndn/charbuf.h>
+#include <ndn/digest.h>
+#include <ndn/fetch.h>
+#include <ndn/seqwriter.h>
+#include <ndn/uri.h>
 
 #define MAX_READ_LEN 1000000
 #define DEFAULT_CMD_TIMEOUT 6000
@@ -76,7 +79,7 @@ struct SyncTestParms {
 };
 
 //////////////////////////////////////////////////////////////////////
-// Dummy for ccnr routines (needed to avoid link errors)
+// Dummy for ndnr routines (needed to avoid link errors)
 //////////////////////////////////////////////////////////////////////
 
 #include "sync_plumbing.h"
@@ -90,16 +93,16 @@ static int
 noteErr(const char *fmt, ...) {
     struct timeval t;
     va_list ap;
-    struct ccn_charbuf *b = ccn_charbuf_create();
-    ccn_charbuf_reserve(b, 1024);
+    struct ndn_charbuf *b = ndn_charbuf_create();
+    ndn_charbuf_reserve(b, 1024);
     gettimeofday(&t, NULL);
-    ccn_charbuf_putf(b, "** ERROR: %s\n", fmt);
-    char *fb = ccn_charbuf_as_string(b);
+    ndn_charbuf_putf(b, "** ERROR: %s\n", fmt);
+    char *fb = ndn_charbuf_as_string(b);
     va_start(ap, fmt);
     vfprintf(stderr, fb, ap);
     va_end(ap);
     fflush(stderr);
-    ccn_charbuf_destroy(&b);
+    ndn_charbuf_destroy(&b);
     return -1;
 }
 
@@ -118,12 +121,12 @@ parseAndAccumName(char *s, struct SyncNameAccum *na) {
     }
     char save = s[i];
     s[i] = 0;
-    struct ccn_charbuf *cb = ccn_charbuf_create();
-    int skip = ccn_name_from_uri(cb, (const char *) s);
+    struct ndn_charbuf *cb = ndn_charbuf_create();
+    int skip = ndn_name_from_uri(cb, (const char *) s);
     s[i] = save;
     if (skip <= 0) {
         // not legal, so don't append the name
-        ccn_charbuf_destroy(&cb);
+        ndn_charbuf_destroy(&cb);
         return skip;
     }
     // extract the size, which is the next numeric string
@@ -166,7 +169,7 @@ readAndAccumNames(FILE *input, int rem) {
         break;
         // now grab the name we found
         int pos = 0;
-        static char *key = "ccnx:";
+        static char *key = "ndn:";
         int keyLen = strlen(key);
         int found = 0;
         while (pos < len) {
@@ -179,7 +182,7 @@ readAndAccumNames(FILE *input, int rem) {
             pos++;
         }
         if (found == 0) {
-            // did not get "ccnx:" so try for "/" start
+            // did not get "ndn:" so try for "/" start
             for (pos = 0; pos < len; pos++) {
                 if (temp[pos]== '/') {
                     parseAndAccumName(temp+pos, na);
@@ -199,8 +202,8 @@ readAndAccumNames(FILE *input, int rem) {
 
 static void
 printTreeInner(struct SyncTreeWorkerHead *head,
-               struct ccn_charbuf *tmpB,
-               struct ccn_charbuf *tmpD,
+               struct ndn_charbuf *tmpB,
+               struct ndn_charbuf *tmpD,
                FILE *f) {
     int i = 0;
     struct SyncTreeWorkerEntry *ent = SyncTreeWorkerTop(head);
@@ -226,15 +229,15 @@ printTreeInner(struct SyncTreeWorkerHead *head,
         ent->pos = pos;
         if (ep->kind & SyncElemKind_leaf) {
             // a leaf, so the element name is inline
-            struct ccn_buf_decoder nameDec;
-            struct ccn_buf_decoder *nameD = NULL;
+            struct ndn_buf_decoder nameDec;
+            struct ndn_buf_decoder *nameD = NULL;
             nameD = SyncInitDecoderFromOffset(&nameDec, nc, ep->start, ep->stop);
-            ccn_charbuf_reset(tmpB);
-            ccn_charbuf_reset(tmpD);
+            ndn_charbuf_reset(tmpB);
+            ndn_charbuf_reset(tmpD);
             SyncAppendElementInner(tmpB, nameD);
-            ccn_uri_append(tmpD, tmpB->buf, tmpB->length, 1);
+            ndn_uri_append(tmpD, tmpB->buf, tmpB->length, 1);
             for (i = 0; i < head->level; i++) fprintf(f, "  | ");
-            fprintf(f, "%s\n", ccn_charbuf_as_string(tmpD));
+            fprintf(f, "%s\n", ndn_charbuf_as_string(tmpD));
         } else {
             // a node, so try this recursively
             SyncTreeWorkerPush(head);
@@ -247,11 +250,11 @@ printTreeInner(struct SyncTreeWorkerHead *head,
 
 static void
 printTree(struct SyncTreeWorkerHead *head, FILE *f) {
-    struct ccn_charbuf *tmpB = ccn_charbuf_create();
-    struct ccn_charbuf *tmpD = ccn_charbuf_create();
+    struct ndn_charbuf *tmpB = ndn_charbuf_create();
+    struct ndn_charbuf *tmpD = ndn_charbuf_create();
     printTreeInner(head, tmpB, tmpD, f);
-    ccn_charbuf_destroy(&tmpB);
-    ccn_charbuf_destroy(&tmpD);
+    ndn_charbuf_destroy(&tmpB);
+    ndn_charbuf_destroy(&tmpD);
 }
 
 static void putMark(FILE *f) {
@@ -271,18 +274,18 @@ static struct SyncNodeComposite *
 testGenComposite(struct SyncBaseStruct *base, int nRefs) {
     int res = 0;
     struct SyncNodeComposite *nc = SyncAllocComposite(base);
-    struct ccn_charbuf *tmp = ccn_charbuf_create();
+    struct ndn_charbuf *tmp = ndn_charbuf_create();
     
     // append the references
     while (nRefs > 0 && res == 0) {
-        ccn_charbuf_reset(tmp);
+        ndn_charbuf_reset(tmp);
         res |= SyncAppendRandomName(tmp, 5, 12);
         SyncNodeAddName(nc, tmp);
         nRefs--;
     }
     
     SyncEndComposite(nc); // appends finals counts
-    ccn_charbuf_destroy(&tmp);
+    ndn_charbuf_destroy(&tmp);
     
     nc->err = res;
     return nc;
@@ -291,31 +294,31 @@ testGenComposite(struct SyncBaseStruct *base, int nRefs) {
 static int
 testEncodeDecode(struct SyncTestParms *parms) {
     struct SyncBaseStruct *base = parms->base;
-    struct ccn_charbuf *cb = ccn_charbuf_create();
+    struct ndn_charbuf *cb = ndn_charbuf_create();
     cb->length = 0;
-    ccnb_element_begin(cb, CCN_DTAG_Content); // artificial!  only for testing!
+    ndnb_element_begin(cb, NDN_DTAG_Content); // artificial!  only for testing!
     fwrite(cb->buf, sizeof(unsigned char), cb->length, stdout);
     
     struct SyncNodeComposite *nc = testGenComposite(base, 4);
     
     SyncWriteComposite(nc, stdout);
     
-    struct ccn_buf_decoder ds;
-    struct ccn_buf_decoder *d = SyncInitDecoderFromCharbuf(&ds, nc->cb, 0);
+    struct ndn_buf_decoder ds;
+    struct ndn_buf_decoder *d = SyncInitDecoderFromCharbuf(&ds, nc->cb, 0);
     struct SyncNodeComposite *chk = SyncAllocComposite(base);
     SyncParseComposite(chk, d);
     SyncWriteComposite(chk, stdout);
     SyncFreeComposite(chk);
     
     int pos = cb->length;
-    ccnb_element_end(cb);  // CCN_DTAG_Content
+    ndnb_element_end(cb);  // NDN_DTAG_Content
     fwrite(cb->buf+pos, sizeof(unsigned char), cb->length-pos, stdout);
     fflush(stdout);
     
     SyncFreeComposite(nc);
     
     cb->length = 0;
-    ccn_charbuf_destroy(&cb);
+    ndn_charbuf_destroy(&cb);
     
     return 0;
 }
@@ -330,7 +333,7 @@ testReader(struct SyncTestParms *parms) {
         int64_t startTime = SyncCurrentTime();
         struct SyncNameAccum *na = readAndAccumNames(f, MAX_READ_LEN);
         fclose(f);
-        struct ccn_charbuf *tmp = ccn_charbuf_create();
+        struct ndn_charbuf *tmp = ndn_charbuf_create();
         int i = 0;
         IndexSorter_Base ixBase = NULL;
         int accumNameBytes = 0;
@@ -343,11 +346,11 @@ testReader(struct SyncTestParms *parms) {
             IndexSorter_Index ix = 0;
             for (; ix < ixLim; ix++) IndexSorter_Add(ixBase, ix);
         }
-        struct ccn_charbuf *lag = NULL;
+        struct ndn_charbuf *lag = NULL;
         for (;i < na->len; i++) {
             int j = i;
             if (ixBase != NULL) j = IndexSorter_Rem(ixBase);
-            struct ccn_charbuf *each = na->ents[j].name;
+            struct ndn_charbuf *each = na->ents[j].name;
             if (sort == 1 && lag != NULL) {
                 int cmp = SyncCmpNames(each, lag);
                 if (cmp < 0)
@@ -355,20 +358,20 @@ testReader(struct SyncTestParms *parms) {
                 if (cmp == 0)
                 return noteErr("bad sort (duplicate)!");
             }
-            struct ccn_charbuf *repl = each;
+            struct ndn_charbuf *repl = each;
             accumNameBytes = accumNameBytes + repl->length;
             ssize_t size = na->ents[j].data;
             accumContentBytes = accumContentBytes + size;
-            ccn_charbuf_reset(tmp);
-            ccn_uri_append(tmp, repl->buf, repl->length, 1);
+            ndn_charbuf_reset(tmp);
+            ndn_uri_append(tmp, repl->buf, repl->length, 1);
             if (sort != 2) {
                 fprintf(stdout, "%4d", i);
                 if (sort) fprintf(stdout, ", %4d", j);
                 fprintf(stdout, ", %8zd, ", size);
             }
-            fprintf(stdout, "%s\n", ccn_charbuf_as_string(tmp));
+            fprintf(stdout, "%s\n", ndn_charbuf_as_string(tmp));
             lag = each;
-            if (repl != each) ccn_charbuf_destroy(&repl);
+            if (repl != each) ndn_charbuf_destroy(&repl);
         }
         int64_t dt = SyncDeltaTime(startTime, SyncCurrentTime());
         dt = (dt + 500)/ 1000;
@@ -376,7 +379,7 @@ testReader(struct SyncTestParms *parms) {
                 na->len, accumNameBytes, accumContentBytes,
                 (int) (dt / 1000), (int) (dt % 1000));
         if (ixBase != NULL) IndexSorter_Free(&ixBase);
-        ccn_charbuf_destroy(&tmp);
+        ndn_charbuf_destroy(&tmp);
         na = SyncFreeNameAccum(na);
     } else {
         return noteErr("testReader, could not open %s", fn);
@@ -395,11 +398,11 @@ testReadBuilder(struct SyncTestParms *parms) {
         
         if (root == NULL) {
             // need a new one
-            struct ccn_charbuf *topo = ccn_charbuf_create();
-            ccn_name_from_uri(topo, "/ccn/test/sync");
+            struct ndn_charbuf *topo = ndn_charbuf_create();
+            ndn_name_from_uri(topo, "/ndn/test/sync");
             
-            struct ccn_charbuf *prefix = ccn_charbuf_create();
-            ccn_name_from_uri(prefix, "/ccn/test");
+            struct ndn_charbuf *prefix = ndn_charbuf_create();
+            ndn_name_from_uri(prefix, "/ndn/test");
             
             root = SyncAddRoot(parms->base,
                                parms->syncScope,
@@ -407,8 +410,8 @@ testReadBuilder(struct SyncTestParms *parms) {
                                prefix,
                                NULL);
             parms->root = root;
-            ccn_charbuf_destroy(&topo);
-            ccn_charbuf_destroy(&prefix);
+            ndn_charbuf_destroy(&topo);
+            ndn_charbuf_destroy(&prefix);
         }
         
         if (root->namesToAdd != NULL)
@@ -446,8 +449,8 @@ testReadBuilder(struct SyncTestParms *parms) {
             }
             // TBD: fix this -- SyncUpdateRoot(root);
             
-            struct ccn_charbuf *hb = SyncLongHashToBuf(&longHash);
-            struct ccn_charbuf *rb = root->currentHash;
+            struct ndn_charbuf *hb = SyncLongHashToBuf(&longHash);
+            struct ndn_charbuf *rb = root->currentHash;
             if (rb->length != hb->length
                 || memcmp(rb->buf, hb->buf, hb->length) != 0) {
                 // this is not right!
@@ -458,7 +461,7 @@ testReadBuilder(struct SyncTestParms *parms) {
                 free(hexR);
                 return res;
             }
-            ccn_charbuf_destroy(&hb);
+            ndn_charbuf_destroy(&hb);
             
             struct SyncHashCacheEntry *ce = SyncRootTopEntry(root);
             struct SyncTreeWorkerHead *tw = SyncTreeWorkerCreate(root->ch, ce);
@@ -504,18 +507,18 @@ testReadBuilder(struct SyncTestParms *parms) {
 static struct SyncRootStruct *
 genTestRootRouting(struct SyncTestParms *parms) {
     struct SyncBaseStruct *base = parms->base;
-    struct ccn_charbuf *topoPrefix = ccn_charbuf_create();
-    struct ccn_charbuf *namingPrefix = ccn_charbuf_create();
+    struct ndn_charbuf *topoPrefix = ndn_charbuf_create();
+    struct ndn_charbuf *namingPrefix = ndn_charbuf_create();
     
-    ccn_name_from_uri(topoPrefix, "/ccn/test/sync");
-    ccn_name_from_uri(namingPrefix, "/ccn/test/routing");
+    ndn_name_from_uri(topoPrefix, "/ndn/test/sync");
+    ndn_name_from_uri(namingPrefix, "/ndn/test/routing");
     struct SyncRootStruct *root = SyncAddRoot(base,
                                               parms->syncScope,
                                               topoPrefix,
                                               namingPrefix,
                                               NULL);
-    ccn_charbuf_destroy(&topoPrefix);
-    ccn_charbuf_destroy(&namingPrefix);
+    ndn_charbuf_destroy(&topoPrefix);
+    ndn_charbuf_destroy(&namingPrefix);
     return root;
 }
 
@@ -524,15 +527,15 @@ genTestRootRouting(struct SyncTestParms *parms) {
 static struct SyncRootStruct *
 genTestRootRepos(struct SyncTestParms *parms) {
     struct SyncBaseStruct *base = parms->base;
-    struct ccn_charbuf *topoPrefix = ccn_charbuf_create();
-    struct ccn_charbuf *namingPrefix = ccn_charbuf_create();
+    struct ndn_charbuf *topoPrefix = ndn_charbuf_create();
+    struct ndn_charbuf *namingPrefix = ndn_charbuf_create();
     
-    ccn_name_from_uri(topoPrefix, "/ccn/test/sync");
-    ccn_name_from_uri(namingPrefix, "/ccn/test/repos");
+    ndn_name_from_uri(topoPrefix, "/ndn/test/sync");
+    ndn_name_from_uri(namingPrefix, "/ndn/test/repos");
     
     struct SyncNameAccum *filter = SyncAllocNameAccum(4);
-    struct ccn_charbuf *clause = ccn_charbuf_create();
-    ccn_name_from_uri(clause, "/PARC");
+    struct ndn_charbuf *clause = ndn_charbuf_create();
+    ndn_name_from_uri(clause, "/PARC");
     SyncNameAccumAppend(filter, clause, 0);
     
     struct SyncRootStruct *root = SyncAddRoot(base,
@@ -540,9 +543,9 @@ genTestRootRepos(struct SyncTestParms *parms) {
                                               topoPrefix,
                                               namingPrefix,
                                               filter);
-    ccn_charbuf_destroy(&topoPrefix);
-    ccn_charbuf_destroy(&namingPrefix);
-    ccn_charbuf_destroy(&clause);
+    ndn_charbuf_destroy(&topoPrefix);
+    ndn_charbuf_destroy(&namingPrefix);
+    ndn_charbuf_destroy(&clause);
     SyncFreeNameAccum(filter);
     
     return root;
@@ -551,21 +554,21 @@ genTestRootRepos(struct SyncTestParms *parms) {
 static struct SyncRootStruct *
 testRootCoding(struct SyncTestParms *parms, struct SyncRootStruct *root) {
     struct SyncBaseStruct *base = parms->base;
-    struct ccn_charbuf *cb1 = ccn_charbuf_create();
+    struct ndn_charbuf *cb1 = ndn_charbuf_create();
     int res = 0;
     SyncRootAppendSlice(cb1, root);  // generate the encoding
     
     SyncRemRoot(root);  // smoke test the removal
     
-    struct ccn_buf_decoder ds;
-    struct ccn_buf_decoder *d = SyncInitDecoderFromCharbuf(&ds, cb1, 0);
+    struct ndn_buf_decoder ds;
+    struct ndn_buf_decoder *d = SyncInitDecoderFromCharbuf(&ds, cb1, 0);
     root = SyncRootDecodeAndAdd(base, d);
     if (root == NULL) {
         res = noteErr("SyncRootDecodeAndAdd, failed");
     }
     if (res ==0) {
         // we have a root
-        struct ccn_charbuf *cb2 = ccn_charbuf_create();
+        struct ndn_charbuf *cb2 = ndn_charbuf_create();
         SyncRootAppendSlice(cb2, root);
         
         if (res == 0) {
@@ -584,9 +587,9 @@ testRootCoding(struct SyncTestParms *parms, struct SyncRootStruct *root) {
                 res = -1;
             }
         }
-        ccn_charbuf_destroy(&cb2);
+        ndn_charbuf_destroy(&cb2);
     }
-    ccn_charbuf_destroy(&cb1);
+    ndn_charbuf_destroy(&cb1);
     
     if (res == 0) return root;
     
@@ -600,15 +603,15 @@ testRootLookup (struct SyncTestParms *parms, struct SyncRootStruct *root,
                 char * goodName, char * badName) {
     int res = 0;
     // now try a few lookups
-    struct ccn_charbuf *name = ccn_charbuf_create();
-    ccn_name_from_uri(name, goodName);
+    struct ndn_charbuf *name = ndn_charbuf_create();
+    ndn_name_from_uri(name, goodName);
     enum SyncRootLookupCode ec = SyncRootLookupName(root, name);
     if (ec != SyncRootLookupCode_covered) {
         res = noteErr("testRootLookup, good name not covered, %s",
                       goodName);
     }
-    ccn_charbuf_reset(name);
-    ccn_name_from_uri(name, badName);
+    ndn_charbuf_reset(name);
+    ndn_name_from_uri(name, badName);
     ec = SyncRootLookupName(root, name);
     if (ec != SyncRootLookupCode_none) {
         res = noteErr("testRootLookup, bad name not rejected, %s",
@@ -622,14 +625,14 @@ testRootBasic(struct SyncTestParms *parms) {
     int res = 0;
     struct SyncRootStruct *root = NULL;
     
-    struct ccn_charbuf *cb = ccn_charbuf_create();
+    struct ndn_charbuf *cb = ndn_charbuf_create();
     uintmax_t val = 37;
-    res |= SyncAppendTaggedNumber(cb, CCN_DTAG_SyncVersion, val);
+    res |= SyncAppendTaggedNumber(cb, NDN_DTAG_SyncVersion, val);
     
     if (res == 0) {
-        struct ccn_buf_decoder ds;
-        struct ccn_buf_decoder *d = ccn_buf_decoder_start(&ds, cb->buf, cb->length);
-        if (SyncParseUnsigned(d, CCN_DTAG_SyncVersion) != val
+        struct ndn_buf_decoder ds;
+        struct ndn_buf_decoder *d = ndn_buf_decoder_start(&ds, cb->buf, cb->length);
+        if (SyncParseUnsigned(d, NDN_DTAG_SyncVersion) != val
             || d->decoder.state < 0)
         res = -__LINE__;
     }
@@ -642,8 +645,8 @@ testRootBasic(struct SyncTestParms *parms) {
     root = genTestRootRouting(parms);
     root = testRootCoding(parms, root);
     res = testRootLookup(parms, root,
-                         "ccnx:/ccn/test/routing/XXX",
-                         "ccnx:/ccn/test/repos/PARC/XXX");
+                         "ndn:/ndn/test/routing/XXX",
+                         "ndn:/ndn/test/repos/PARC/XXX");
     SyncRemRoot(root);
     if (res < 0) return res;
     
@@ -651,8 +654,8 @@ testRootBasic(struct SyncTestParms *parms) {
     root = genTestRootRepos(parms);
     root = testRootCoding(parms, root);
     res = testRootLookup(parms, root,
-                         "ccnx:/ccn/test/repos/PARC/XXX",
-                         "ccnx:/ccn/test/routing/XXX");
+                         "ndn:/ndn/test/repos/PARC/XXX",
+                         "ndn:/ndn/test/routing/XXX");
     SyncRemRoot(root);
     if (res < 0) {
         return noteErr("testRootBasic, failed");
@@ -663,44 +666,44 @@ testRootBasic(struct SyncTestParms *parms) {
 
 static int
 localStore(struct SyncTestParms *parms,
-           struct ccn *ccn, struct ccn_charbuf *nm, struct ccn_charbuf *cb) {
+           struct ndn *ndn, struct ndn_charbuf *nm, struct ndn_charbuf *cb) {
     int res = 0;
-    struct ccn_charbuf *template = SyncGenInterest(NULL,
+    struct ndn_charbuf *template = SyncGenInterest(NULL,
                                                    1,  // always local
                                                    parms->life,
                                                    -1, -1, NULL);
-    struct ccn_charbuf *tmp = ccn_charbuf_create();
-    ccn_create_version(ccn, nm, CCN_V_NOW, 0, 0);
-    ccn_charbuf_append_charbuf(tmp, nm);
-    ccn_name_from_uri(tmp, "%C1.R.sw");
-    ccn_name_append_nonce(tmp);
-    ccn_get(ccn, tmp, NULL, DEFAULT_CMD_TIMEOUT, NULL, NULL, NULL, 0);
-    ccn_charbuf_destroy(&tmp);
-    ccn_charbuf_destroy(&template);
+    struct ndn_charbuf *tmp = ndn_charbuf_create();
+    ndn_create_version(ndn, nm, NDN_V_NOW, 0, 0);
+    ndn_charbuf_append_charbuf(tmp, nm);
+    ndn_name_from_uri(tmp, "%C1.R.sw");
+    ndn_name_append_nonce(tmp);
+    ndn_get(ndn, tmp, NULL, DEFAULT_CMD_TIMEOUT, NULL, NULL, NULL, 0);
+    ndn_charbuf_destroy(&tmp);
+    ndn_charbuf_destroy(&template);
     if (res < 0) return res;
     
-    struct ccn_charbuf *cob = ccn_charbuf_create();
-    struct ccn_signing_params sp = CCN_SIGNING_PARAMS_INIT;
+    struct ndn_charbuf *cob = ndn_charbuf_create();
+    struct ndn_signing_params sp = NDN_SIGNING_PARAMS_INIT;
     const void *cp = NULL;
     size_t cs = 0;
     if (cb != NULL) {
-        sp.type = CCN_CONTENT_DATA;
+        sp.type = NDN_CONTENT_DATA;
         cp = (const void *) cb->buf;
         cs = cb->length;
     } else {
-        sp.type = CCN_CONTENT_GONE;
+        sp.type = NDN_CONTENT_GONE;
     }
-    ccn_name_append_numeric(nm, CCN_MARKER_SEQNUM, 0);
-    sp.sp_flags |= CCN_SP_FINAL_BLOCK;
-    res |= ccn_sign_content(ccn,
+    ndn_name_append_numeric(nm, NDN_MARKER_SEQNUM, 0);
+    sp.sp_flags |= NDN_SP_FINAL_BLOCK;
+    res |= ndn_sign_content(ndn,
                             cob,
                             nm,
                             &sp,
                             cp,
                             cs);
-    res |= ccn_put(ccn, (const void *) cob->buf, cob->length);
-    // ccn_run(ccn, 150);
-    ccn_charbuf_destroy(&cob);
+    res |= ndn_put(ndn, (const void *) cob->buf, cob->length);
+    // ndn_run(ndn, 150);
+    ndn_charbuf_destroy(&cob);
     return res;
 }
 
@@ -709,112 +712,112 @@ sendSlice(struct SyncTestParms *parms,
           char *topo, char *prefix,
           int count, char **clauses) {
     // constructs a simple config slice and sends it to an attached repo
-    struct ccn_charbuf *cb = ccn_charbuf_create();
-    struct ccn_charbuf *hash = ccn_charbuf_create();
-    struct ccn_charbuf *nm = ccn_charbuf_create();
+    struct ndn_charbuf *cb = ndn_charbuf_create();
+    struct ndn_charbuf *hash = ndn_charbuf_create();
+    struct ndn_charbuf *nm = ndn_charbuf_create();
     int i = 0;
     int res = 0;
-    res |= ccnb_element_begin(cb, CCN_DTAG_SyncConfigSlice);
-    res |= SyncAppendTaggedNumber(cb, CCN_DTAG_SyncVersion, SLICE_VERSION);
-    res |= ccn_name_from_uri(nm, topo);
-    res |= ccn_charbuf_append_charbuf(cb, nm);
-    res |= ccn_name_from_uri(nm, prefix);
-    res |= ccn_charbuf_append_charbuf(cb, nm);
-    res |= ccnb_element_begin(cb, CCN_DTAG_SyncConfigSliceList);
+    res |= ndnb_element_begin(cb, NDN_DTAG_SyncConfigSlice);
+    res |= SyncAppendTaggedNumber(cb, NDN_DTAG_SyncVersion, SLICE_VERSION);
+    res |= ndn_name_from_uri(nm, topo);
+    res |= ndn_charbuf_append_charbuf(cb, nm);
+    res |= ndn_name_from_uri(nm, prefix);
+    res |= ndn_charbuf_append_charbuf(cb, nm);
+    res |= ndnb_element_begin(cb, NDN_DTAG_SyncConfigSliceList);
     for (i = 0; i < count ; i++) {
-        res |= SyncAppendTaggedNumber(cb, CCN_DTAG_SyncConfigSliceOp, 0);
-        res |= ccn_name_from_uri(nm, clauses[i]);
-        res |= ccn_charbuf_append_charbuf(cb, nm);
+        res |= SyncAppendTaggedNumber(cb, NDN_DTAG_SyncConfigSliceOp, 0);
+        res |= ndn_name_from_uri(nm, clauses[i]);
+        res |= ndn_charbuf_append_charbuf(cb, nm);
     }
-    res |= ccnb_element_end(cb);
-    res |= ccnb_element_end(cb);
+    res |= ndnb_element_end(cb);
+    res |= ndnb_element_end(cb);
     
     if (res >= 0) {
         // now we have the encoding, so make the hash
-        struct ccn *ccn = NULL;
-        struct ccn_digest *cow = ccn_digest_create(CCN_DIGEST_DEFAULT);
-        size_t sz = ccn_digest_size(cow);
-        unsigned char *dst = ccn_charbuf_reserve(hash, sz);
-        ccn_digest_init(cow);
-        ccn_digest_update(cow, cb->buf, cb->length);
-        ccn_digest_final(cow, dst, sz);
+        struct ndn *ndn = NULL;
+        struct ndn_digest *cow = ndn_digest_create(NDN_DIGEST_DEFAULT);
+        size_t sz = ndn_digest_size(cow);
+        unsigned char *dst = ndn_charbuf_reserve(hash, sz);
+        ndn_digest_init(cow);
+        ndn_digest_update(cow, cb->buf, cb->length);
+        ndn_digest_final(cow, dst, sz);
         hash->length = sz;
-        ccn_digest_destroy(&cow);
+        ndn_digest_destroy(&cow);
         
         // form the Sync protocol name
         static char *localLit = "\xC1.M.S.localhost";
         static char *sliceCmd = "\xC1.S.cs";
-        res |= ccn_name_init(nm);
-        res |= ccn_name_append_str(nm, localLit);
-        res |= ccn_name_append_str(nm, sliceCmd);
-        res |= ccn_name_append(nm, hash->buf, hash->length);
+        res |= ndn_name_init(nm);
+        res |= ndn_name_append_str(nm, localLit);
+        res |= ndn_name_append_str(nm, sliceCmd);
+        res |= ndn_name_append(nm, hash->buf, hash->length);
         
         if (parms->noSend) {
             // don't send the slice, just print the hash as a URI
-            struct ccn_charbuf *hName = ccn_charbuf_create();
-            ccn_name_init(hName);
-            ccn_name_append(hName, hash->buf, hash->length);
-            struct ccn_charbuf *uri = SyncUriForName(hName);
-            fprintf(stdout, "%s\n", ccn_charbuf_as_string(uri));
-            ccn_charbuf_destroy(&hName);
-            ccn_charbuf_destroy(&uri);
+            struct ndn_charbuf *hName = ndn_charbuf_create();
+            ndn_name_init(hName);
+            ndn_name_append(hName, hash->buf, hash->length);
+            struct ndn_charbuf *uri = SyncUriForName(hName);
+            fprintf(stdout, "%s\n", ndn_charbuf_as_string(uri));
+            ndn_charbuf_destroy(&hName);
+            ndn_charbuf_destroy(&uri);
             return 0;
         }
         
-        ccn = ccn_create();
-        if (ccn_connect(ccn, NULL) == -1) {
-            perror("Could not connect to ccnd");
+        ndn = ndn_create();
+        if (ndn_connect(ndn, NULL) == -1) {
+            perror("Could not connect to ndnd");
             exit(1);
         }
-        if (res >= 0) res |= localStore(parms, ccn, nm, cb);
+        if (res >= 0) res |= localStore(parms, ndn, nm, cb);
         if (res < 0) {
             res = noteErr("sendSlice, failed");
         } else {
             if (parms->mode != 0) {
-                struct ccn_charbuf *uri = SyncUriForName(nm);
+                struct ndn_charbuf *uri = SyncUriForName(nm);
                 if (parms->mark) putMark(stdout);
                 fprintf(stdout, "sendSlice, sent %s\n",
-                        ccn_charbuf_as_string(uri));
-                ccn_charbuf_destroy(&uri);
+                        ndn_charbuf_as_string(uri));
+                ndn_charbuf_destroy(&uri);
             }
         }
         
-        ccn_destroy(&ccn);
+        ndn_destroy(&ndn);
     }
     
-    ccn_charbuf_destroy(&cb);
-    ccn_charbuf_destroy(&hash);
-    ccn_charbuf_destroy(&nm);
+    ndn_charbuf_destroy(&cb);
+    ndn_charbuf_destroy(&hash);
+    ndn_charbuf_destroy(&nm);
     if (res > 0) res = 0;
     return res;
 }
 
 struct storeFileStruct {
     struct SyncTestParms *parms;
-    struct ccn_charbuf *nm;
-    struct ccn_charbuf *cb;
-    struct ccn *ccn;
+    struct ndn_charbuf *nm;
+    struct ndn_charbuf *cb;
+    struct ndn *ndn;
     off_t bs;
     off_t fSize;
     FILE *file;
     unsigned char *segData;
     int nSegs;
     int stored;
-    struct ccn_charbuf *template;
+    struct ndn_charbuf *template;
 };
 
 static int64_t
-segFromInfo(struct ccn_upcall_info *info) {
+segFromInfo(struct ndn_upcall_info *info) {
 	// gets the current segment number for the info
 	// returns -1 if not known
 	if (info == NULL) return -1;
-	const unsigned char *ccnb = info->content_ccnb;
-	struct ccn_indexbuf *cc = info->content_comps;
-	if (cc == NULL || ccnb == NULL) {
+	const unsigned char *ndnb = info->content_ndnb;
+	struct ndn_indexbuf *cc = info->content_comps;
+	if (cc == NULL || ndnb == NULL) {
 		// go back to the interest
 		cc = info->interest_comps;
-		ccnb = info->interest_ccnb;
-		if (cc == NULL || ccnb == NULL) return -1;
+		ndnb = info->interest_ndnb;
+		if (cc == NULL || ndnb == NULL) return -1;
 	}
 	int ns = cc->n;
 	if (ns > 2) {
@@ -824,11 +827,11 @@ segFromInfo(struct ccn_upcall_info *info) {
 		if (start < stop) {
 			size_t len = 0;
 			const unsigned char *data = NULL;
-			ccn_ref_tagged_BLOB(CCN_DTAG_Component, ccnb, start, stop, &data, &len);
+			ndn_ref_tagged_BLOB(NDN_DTAG_Component, ndnb, start, stop, &data, &len);
 			if (len > 0 && data != NULL) {
 				// parse big-endian encoded number
 				// TBD: where is this in the library?
-				if (data[0] == CCN_MARKER_SEQNUM) {
+				if (data[0] == NDN_MARKER_SEQNUM) {
                     int64_t n = 0;
                     int i = 0;
                     for (i = 1; i < len; i++) {
@@ -842,35 +845,35 @@ segFromInfo(struct ccn_upcall_info *info) {
 	return -1;
 }
 
-static enum ccn_upcall_res
-storeHandler(struct ccn_closure *selfp,
-             enum ccn_upcall_kind kind,
-             struct ccn_upcall_info *info) {
+static enum ndn_upcall_res
+storeHandler(struct ndn_closure *selfp,
+             enum ndn_upcall_kind kind,
+             struct ndn_upcall_info *info) {
     struct storeFileStruct *sfd = selfp->data;
-    enum ccn_upcall_res ret = CCN_UPCALL_RESULT_OK;
+    enum ndn_upcall_res ret = NDN_UPCALL_RESULT_OK;
     switch (kind) {
-        case CCN_UPCALL_FINAL:
+        case NDN_UPCALL_FINAL:
         free(selfp);
         break;
-        case CCN_UPCALL_INTEREST: {
+        case NDN_UPCALL_INTEREST: {
             int64_t seg = segFromInfo(info);
             if (seg < 0) seg = 0;
-            struct ccn_charbuf *uri = ccn_charbuf_create();
-            ccn_uri_append(uri, sfd->nm->buf, sfd->nm->length, 0);
-            char *str = ccn_charbuf_as_string(uri);
-            ret = CCN_UPCALL_RESULT_INTEREST_CONSUMED;
+            struct ndn_charbuf *uri = ndn_charbuf_create();
+            ndn_uri_append(uri, sfd->nm->buf, sfd->nm->length, 0);
+            char *str = ndn_charbuf_as_string(uri);
+            ret = NDN_UPCALL_RESULT_INTEREST_CONSUMED;
             if (seg >= 0 && seg < sfd->nSegs) {
-                struct ccn_charbuf *name = SyncCopyName(sfd->nm);
-                struct ccn_charbuf *cb = ccn_charbuf_create();
-                struct ccn_charbuf *cob = ccn_charbuf_create();
+                struct ndn_charbuf *name = SyncCopyName(sfd->nm);
+                struct ndn_charbuf *cb = ndn_charbuf_create();
+                struct ndn_charbuf *cob = ndn_charbuf_create();
                 off_t bs = sfd->bs;
                 off_t pos = seg * bs;
                 off_t rs = sfd->fSize - pos;
                 if (rs > bs) rs = bs;
                 
-                ccn_charbuf_reserve(cb, rs);
+                ndn_charbuf_reserve(cb, rs);
                 cb->length = rs;
-                char *cp = ccn_charbuf_as_string(cb);
+                char *cp = ndn_charbuf_as_string(cb);
                 
                 // fill in the contents
                 int res = fseeko(sfd->file, pos, SEEK_SET);
@@ -888,15 +891,15 @@ storeHandler(struct ccn_closure *selfp,
                 }
                 
                 if (res >= 0) {
-                    struct ccn_signing_params sp = CCN_SIGNING_PARAMS_INIT;
+                    struct ndn_signing_params sp = NDN_SIGNING_PARAMS_INIT;
                     const void *cp = NULL;
-                    sp.type = CCN_CONTENT_DATA;
+                    sp.type = NDN_CONTENT_DATA;
                     cp = (const void *) cb->buf;
-                    sp.template_ccnb = sfd->template;
+                    sp.template_ndnb = sfd->template;
                     
-                    if (seg+1 == sfd->nSegs) sp.sp_flags |= CCN_SP_FINAL_BLOCK;
-                    ccn_name_append_numeric(name, CCN_MARKER_SEQNUM, seg);
-                    res |= ccn_sign_content(sfd->ccn,
+                    if (seg+1 == sfd->nSegs) sp.sp_flags |= NDN_SP_FINAL_BLOCK;
+                    ndn_name_append_numeric(name, NDN_MARKER_SEQNUM, seg);
+                    res |= ndn_sign_content(sfd->ndn,
                                             cob,
                                             name,
                                             &sp,
@@ -904,14 +907,14 @@ storeHandler(struct ccn_closure *selfp,
                                             rs);
                     if (sfd->parms->digest) {
                         // not sure if this generates the right hash
-                        struct ccn_parsed_ContentObject pcos;
-                        ccn_parse_ContentObject(cob->buf, cob->length,
+                        struct ndn_parsed_ContentObject pcos;
+                        ndn_parse_ContentObject(cob->buf, cob->length,
                                                 &pcos, NULL);
-                        ccn_digest_ContentObject(cob->buf, &pcos);
+                        ndn_digest_ContentObject(cob->buf, &pcos);
                         if (pcos.digest_bytes > 0)
-                            res |= ccn_name_append(name, pcos.digest, pcos.digest_bytes);
+                            res |= ndn_name_append(name, pcos.digest, pcos.digest_bytes);
                     }
-                    res |= ccn_put(sfd->ccn, (const void *) cob->buf, cob->length);
+                    res |= ndn_put(sfd->ndn, (const void *) cob->buf, cob->length);
                     
                     if (res < 0) {
                         return noteErr("seg %d, %s",
@@ -919,13 +922,13 @@ storeHandler(struct ccn_closure *selfp,
                                        str);
                     } else if (sfd->parms->verbose) {
                         if (sfd->parms->mark) putMark(stdout);
-                        struct ccn_charbuf *nameUri = ccn_charbuf_create();
-                        ccn_uri_append(nameUri, name->buf, name->length, 0);
-                        char *nameStr = ccn_charbuf_as_string(nameUri);
+                        struct ndn_charbuf *nameUri = ndn_charbuf_create();
+                        ndn_uri_append(nameUri, name->buf, name->length, 0);
+                        char *nameStr = ndn_charbuf_as_string(nameUri);
                         fprintf(stdout, "put seg %d, %s\n",
                                 (int) seg,
                                 nameStr);
-                        ccn_charbuf_destroy(&nameUri);
+                        ndn_charbuf_destroy(&nameUri);
                     }
                     
                     // update the tracking
@@ -944,16 +947,16 @@ storeHandler(struct ccn_closure *selfp,
                     sfd->segData[seg] = uc;
                 }
                 
-                ccn_charbuf_destroy(&name);
-                ccn_charbuf_destroy(&cb);
-                ccn_charbuf_destroy(&cob);
+                ndn_charbuf_destroy(&name);
+                ndn_charbuf_destroy(&cb);
+                ndn_charbuf_destroy(&cob);
                 
             }
-            ccn_charbuf_destroy(&uri);
+            ndn_charbuf_destroy(&uri);
             break;
         }
         default:
-        ret = CCN_UPCALL_RESULT_ERR;
+        ret = NDN_UPCALL_RESULT_ERR;
         break;
     }
     return ret;
@@ -973,7 +976,7 @@ formatStats(struct SyncTestParms *parms) {
         }
         case 3: {
             // catchunks2 compatible
-            const char *expid = getenv("CCN_EXPERIMENT_ID");
+            const char *expid = getenv("NDN_EXPERIMENT_ID");
             const char *sep = " ";
             if (expid == NULL) {
                 expid = "";
@@ -1028,63 +1031,63 @@ getFile(struct SyncTestParms *parms, char *src, char *dst) {
         }
     }
     
-    struct ccn *ccn = NULL;
-    ccn = ccn_create();
+    struct ndn *ndn = NULL;
+    ndn = ndn_create();
     // special case to remove verification overhead
     if (dst == NULL)
-    ccn_defer_verification(ccn, 1);
-    if (ccn_connect(ccn, NULL) == -1) {
-        perror("Could not connect to ccnd");
+    ndn_defer_verification(ndn, 1);
+    if (ndn_connect(ndn, NULL) == -1) {
+        perror("Could not connect to ndnd");
         return -1;
     }
-    struct ccn_charbuf *cb = ccn_charbuf_create();
-    struct ccn_charbuf *nm = ccn_charbuf_create();
+    struct ndn_charbuf *cb = ndn_charbuf_create();
+    struct ndn_charbuf *nm = ndn_charbuf_create();
     int bs = parms->blockSize;
     
-    int res = ccn_name_from_uri(nm, src);
+    int res = ndn_name_from_uri(nm, src);
     if (res < 0) {
-        perror("ccn_name_from_uri failed");
+        perror("ndn_name_from_uri failed");
         return -1;
     }
     
     if (parms->resolve) {
-        res = ccn_resolve_version(ccn, nm, CCN_V_HIGH, parms->life*1000);
+        res = ndn_resolve_version(ndn, nm, NDN_V_HIGH, parms->life*1000);
         // TBD: use parms to determine versioning_flags and timeout_ms?
         if (res < 0) {
-            perror("ccn_resolve_version failed");
+            perror("ndn_resolve_version failed");
             return -1;
         }
     }
     
-    struct ccn_fetch *cf = ccn_fetch_new(ccn);
-    struct ccn_charbuf *template = SyncGenInterest(NULL,
+    struct ndn_fetch *cf = ndn_fetch_new(ndn);
+    struct ndn_charbuf *template = SyncGenInterest(NULL,
                                                    parms->scope,
                                                    parms->life,
                                                    -1, -1, NULL);
     
     if (parms->verbose) {
-        ccn_fetch_set_debug(cf, stderr,
-                            ccn_fetch_flags_NoteOpenClose
-                            | ccn_fetch_flags_NoteNeed
-                            | ccn_fetch_flags_NoteFill
-                            | ccn_fetch_flags_NoteTimeout
-                            | ccn_fetch_flags_NoteFinal);
+        ndn_fetch_set_debug(cf, stderr,
+                            ndn_fetch_flags_NoteOpenClose
+                            | ndn_fetch_flags_NoteNeed
+                            | ndn_fetch_flags_NoteFill
+                            | ndn_fetch_flags_NoteTimeout
+                            | ndn_fetch_flags_NoteFinal);
     }
     gettimeofday(&parms->startTime, 0);
     
     if (parms->segmented == 0) {
         // no segments, so use a single get
-        struct ccn_parsed_ContentObject pcos;
-        res = ccn_get(ccn, nm, template,
+        struct ndn_parsed_ContentObject pcos;
+        res = ndn_get(ndn, nm, template,
                       parms->life*1000,
                       cb, &pcos, NULL, 0);
-        ccn_charbuf_destroy(&template);
+        ndn_charbuf_destroy(&template);
         if (res < 0) {
             perror("get failed");
             return -1;
         }
         if (file != NULL) {
-            size_t nItems = fwrite(ccn_charbuf_as_string(cb), cb->length, 1, file);
+            size_t nItems = fwrite(ndn_charbuf_as_string(cb), cb->length, 1, file);
             if (nItems < 1) {
                 perror("fwrite failed");
                 return -1;
@@ -1094,31 +1097,31 @@ getFile(struct SyncTestParms *parms, char *src, char *dst) {
         
     } else {
         // segmented, so use fetch.h
-        struct ccn_fetch_stream *fs = ccn_fetch_open(cf, nm,
+        struct ndn_fetch_stream *fs = ndn_fetch_open(cf, nm,
                                                      "SyncTest",
                                                      template,
                                                      parms->bufs,
                                                      0, 0);
-        ccn_charbuf_destroy(&template);
+        ndn_charbuf_destroy(&template);
         if (fs == NULL) {
-            perror("ccn_fetch_open failed");
+            perror("ndn_fetch_open failed");
             return -1;
         }
-        ccn_charbuf_reserve(cb, bs);
+        ndn_charbuf_reserve(cb, bs);
         cb->length = bs;
-        char *cp = ccn_charbuf_as_string(cb);
+        char *cp = ndn_charbuf_as_string(cb);
         
         for (;;) {
-            intmax_t av = ccn_fetch_avail(fs);
-            if (av == CCN_FETCH_READ_NONE) {
-                res = ccn_run(ccn, 1);
+            intmax_t av = ndn_fetch_avail(fs);
+            if (av == NDN_FETCH_READ_NONE) {
+                res = ndn_run(ndn, 1);
                 if (res < 0) {
-                    perror("ccn_run failed");
+                    perror("ndn_run failed");
                     return -1;
                 }
                 continue;
             }
-            int nb = ccn_fetch_read(fs, cp, bs);
+            int nb = ndn_fetch_read(fs, cp, bs);
             if (nb > 0) {
                 if (file != NULL) {
                     size_t nItems = fwrite(cp, nb, 1, file);
@@ -1128,26 +1131,26 @@ getFile(struct SyncTestParms *parms, char *src, char *dst) {
                     }
                 }
                 parms->fSize = parms->fSize + nb;
-            } else if (nb == CCN_FETCH_READ_NONE) {
+            } else if (nb == NDN_FETCH_READ_NONE) {
                 // try again
-                res = ccn_run(ccn, 1);
+                res = ndn_run(ndn, 1);
                 if (res < 0) {
-                    perror("ccn_run failed");
+                    perror("ndn_run failed");
                     return -1;
                 }                
             } else {
-                if (nb == CCN_FETCH_READ_END) break;
-                if (nb == CCN_FETCH_READ_TIMEOUT) {
+                if (nb == NDN_FETCH_READ_END) break;
+                if (nb == NDN_FETCH_READ_TIMEOUT) {
                     perror("read failed, timeout");
                     exit(1);
                 }
                 char temp[256];
-                snprintf(temp, sizeof(temp), "ccn_fetch_read failed: %d", nb);
+                snprintf(temp, sizeof(temp), "ndn_fetch_read failed: %d", nb);
                 perror(temp);
                 return -1;
             }
         }
-        ccn_fetch_close(fs);
+        ndn_fetch_close(fs);
     }
     
     gettimeofday(&parms->stopTime, 0);
@@ -1155,11 +1158,11 @@ getFile(struct SyncTestParms *parms, char *src, char *dst) {
     if (file != NULL)
     fclose(file);
     
-    ccn_fetch_destroy(cf);
+    ndn_fetch_destroy(cf);
     
-    ccn_destroy(&ccn);
-    ccn_charbuf_destroy(&cb);
-    ccn_charbuf_destroy(&nm);
+    ndn_destroy(&ndn);
+    ndn_charbuf_destroy(&cb);
+    ndn_charbuf_destroy(&nm);
     
     formatStats(parms);
     
@@ -1188,21 +1191,21 @@ putFile(struct SyncTestParms *parms, char *src, char *dst) {
         return -1;
     }
     
-    struct ccn *ccn = NULL;
-    ccn = ccn_create();
-    if (ccn_connect(ccn, NULL) == -1) {
-        return noteErr("putFile, could not connect to ccnd");
+    struct ndn *ndn = NULL;
+    ndn = ndn_create();
+    if (ndn_connect(ndn, NULL) == -1) {
+        return noteErr("putFile, could not connect to ndnd");
     }
-    struct ccn_charbuf *cb = ccn_charbuf_create();
-    struct ccn_charbuf *nm = ccn_charbuf_create();
-    struct ccn_charbuf *cmd = ccn_charbuf_create();
+    struct ndn_charbuf *cb = ndn_charbuf_create();
+    struct ndn_charbuf *nm = ndn_charbuf_create();
+    struct ndn_charbuf *cmd = ndn_charbuf_create();
     int bs = parms->blockSize;
     
-    res = ccn_name_from_uri(nm, dst);
+    res = ndn_name_from_uri(nm, dst);
     if (res < 0) {
-        return noteErr("putFile, ccn_name_from_uri failed");
+        return noteErr("putFile, ndn_name_from_uri failed");
     }
-    ccn_create_version(ccn, nm, CCN_V_NOW, 0, 0);
+    ndn_create_version(ndn, nm, NDN_V_NOW, 0, 0);
     
     struct storeFileStruct *sfData = NEW_STRUCT(1, storeFileStruct);
     sfData->parms = parms;
@@ -1210,7 +1213,7 @@ putFile(struct SyncTestParms *parms, char *src, char *dst) {
     sfData->bs = bs;
     sfData->nm = nm;
     sfData->cb = cb;
-    sfData->ccn = ccn;
+    sfData->ndn = ndn;
     sfData->fSize = fSize;
     sfData->nSegs = (fSize + bs -1) / bs;
     sfData->segData = NEW_ANY(sfData->nSegs, unsigned char);
@@ -1222,80 +1225,80 @@ putFile(struct SyncTestParms *parms, char *src, char *dst) {
         ssize_t vs;
         SyncGetComponentPtr(nm, SyncComponentCount(nm)-1, &vp, &vs);
         if (vp != NULL && vs > 0) {
-            sfData->template = ccn_charbuf_create();
-            ccnb_element_begin(sfData->template, CCN_DTAG_SignedInfo);
-            ccnb_append_tagged_blob(sfData->template, CCN_DTAG_Timestamp, vp, vs);
-            ccnb_element_end(sfData->template);
+            sfData->template = ndn_charbuf_create();
+            ndnb_element_begin(sfData->template, NDN_DTAG_SignedInfo);
+            ndnb_append_tagged_blob(sfData->template, NDN_DTAG_Timestamp, vp, vs);
+            ndnb_element_end(sfData->template);
         } else return noteErr("putFile, create store template failed");
     }
     
-    struct ccn_charbuf *template = SyncGenInterest(NULL,
+    struct ndn_charbuf *template = SyncGenInterest(NULL,
                                                    parms->scope,
                                                    parms->life,
                                                    -1, -1, NULL);
-    struct ccn_closure *action = NEW_STRUCT(1, ccn_closure);
+    struct ndn_closure *action = NEW_STRUCT(1, ndn_closure);
     action->p = storeHandler;
     action->data = sfData;
     
     parms->fSize = fSize;
     
     // fire off a listener
-    res = ccn_set_interest_filter(ccn, nm, action);
+    res = ndn_set_interest_filter(ndn, nm, action);
     if (res < 0) {
-        return noteErr("putFile, ccn_set_interest_filter failed");
+        return noteErr("putFile, ndn_set_interest_filter failed");
     }
-    res = ccn_run(ccn, 40);
+    res = ndn_run(ndn, 40);
     if (res < 0) {
-        return noteErr("putFile, ccn_run failed");
+        return noteErr("putFile, ndn_run failed");
     }
     // initiate the write
     // construct the store request and "send" it as an interest
-    ccn_charbuf_append_charbuf(cmd, nm);
-    ccn_name_from_uri(cmd, "%C1.R.sw");
-    ccn_name_append_nonce(cmd);
+    ndn_charbuf_append_charbuf(cmd, nm);
+    ndn_name_from_uri(cmd, "%C1.R.sw");
+    ndn_name_append_nonce(cmd);
     
     if (parms->verbose && parms->mode != 0) {
-        struct ccn_charbuf *uri = SyncUriForName(nm);
+        struct ndn_charbuf *uri = SyncUriForName(nm);
         if (parms->mark) putMark(stdout);
         fprintf(stdout, "put init, %s\n",
-                ccn_charbuf_as_string(uri));
-        ccn_charbuf_destroy(&uri);
+                ndn_charbuf_as_string(uri));
+        ndn_charbuf_destroy(&uri);
     }
     gettimeofday(&parms->startTime, 0);
-    ccn_get(ccn, cmd, template, DEFAULT_CMD_TIMEOUT, NULL, NULL, NULL, 0);
-    ccn_charbuf_destroy(&template);
+    ndn_get(ndn, cmd, template, DEFAULT_CMD_TIMEOUT, NULL, NULL, NULL, 0);
+    ndn_charbuf_destroy(&template);
     if (res < 0) {
-        return noteErr("putFile, ccn_get failed");
+        return noteErr("putFile, ndn_get failed");
     }
     
     // wait for completion
     res = 0;
     while (res == 0 && sfData->stored < sfData->nSegs) {
-        res = ccn_run(ccn, 2);
+        res = ndn_run(ndn, 2);
     }
     if (res < 0) {
-        return noteErr("putFile, ccn_run failed while storing");
+        return noteErr("putFile, ndn_run failed while storing");
     }
     
     gettimeofday(&parms->stopTime, 0);
     
-    res = ccn_set_interest_filter(ccn, nm, NULL);
+    res = ndn_set_interest_filter(ndn, nm, NULL);
     if (res < 0) {
-        return noteErr("putFile, ccn_set_interest_filter failed (removal)");
+        return noteErr("putFile, ndn_set_interest_filter failed (removal)");
     }
-    res = ccn_run(ccn, 40);
+    res = ndn_run(ndn, 40);
     if (res < 0) {
-        return noteErr("putFile, ccn_run failed");
+        return noteErr("putFile, ndn_run failed");
     }
     
-    ccn_charbuf_destroy(&sfData->template);
+    ndn_charbuf_destroy(&sfData->template);
     free(sfData->segData);
     free(sfData);
-    ccn_destroy(&ccn);
+    ndn_destroy(&ndn);
     fclose(file);
-    ccn_charbuf_destroy(&cb);
-    ccn_charbuf_destroy(&cmd);
-    ccn_charbuf_destroy(&nm);
+    ndn_charbuf_destroy(&cb);
+    ndn_charbuf_destroy(&cmd);
+    ndn_charbuf_destroy(&nm);
     
     formatStats(parms);
     
@@ -1304,36 +1307,36 @@ putFile(struct SyncTestParms *parms, char *src, char *dst) {
 }
 
 extern int
-appendComponents(struct ccn_charbuf *dst,
-                 const struct ccn_charbuf *src,
+appendComponents(struct ndn_charbuf *dst,
+                 const struct ndn_charbuf *src,
                  int start, int len) {
-    struct ccn_buf_decoder sbd;
-    struct ccn_buf_decoder *s = SyncInitDecoderFromCharbuf(&sbd, src, 0);
+    struct ndn_buf_decoder sbd;
+    struct ndn_buf_decoder *s = SyncInitDecoderFromCharbuf(&sbd, src, 0);
     int count = 0;
     int pos = 0;
-    if (!ccn_buf_match_dtag(s, CCN_DTAG_Name))
+    if (!ndn_buf_match_dtag(s, NDN_DTAG_Name))
         // src is not a name
         return -__LINE__;
-    ccn_buf_advance(s);
+    ndn_buf_advance(s);
     int lim = start + len;
     while (count < lim) {
-        if (!ccn_buf_match_dtag(s, CCN_DTAG_Component)) {
-            ccn_buf_check_close(s);
+        if (!ndn_buf_match_dtag(s, NDN_DTAG_Component)) {
+            ndn_buf_check_close(s);
             if (SyncCheckDecodeErr(s)) return -__LINE__;
             break;
         }
-        ccn_buf_advance(s);
+        ndn_buf_advance(s);
         const unsigned char *cPtr = NULL;
         size_t cSize = 0;
-        if (ccn_buf_match_blob(s, &cPtr, &cSize)) ccn_buf_advance(s);
+        if (ndn_buf_match_blob(s, &cPtr, &cSize)) ndn_buf_advance(s);
         if (cPtr == NULL)
             return -__LINE__;
         if (count >= start) {
-            if (ccn_name_append(dst, cPtr, cSize) < 0)
+            if (ndn_name_append(dst, cPtr, cSize) < 0)
                 return -__LINE__;
         }
         count++;
-        ccn_buf_check_close(s);
+        ndn_buf_check_close(s);
         if (SyncCheckDecodeErr(s)) return -__LINE__;
         pos++;
     }
@@ -1342,10 +1345,10 @@ appendComponents(struct ccn_charbuf *dst,
 
 static int
 putFileList(struct SyncTestParms *parms, char *listName) {
-    struct ccn *ccn = NULL;
-    ccn = ccn_create();
-    if (ccn_connect(ccn, NULL) == -1) {
-        return noteErr("putFile, could not connect to ccnd");
+    struct ndn *ndn = NULL;
+    ndn = ndn_create();
+    if (ndn_connect(ndn, NULL) == -1) {
+        return noteErr("putFile, could not connect to ndnd");
     }
     FILE *listFile = fopen(listName, "r");
     if (listFile == NULL) {
@@ -1355,23 +1358,23 @@ putFileList(struct SyncTestParms *parms, char *listName) {
     struct SyncNameAccum *na = readAndAccumNames(listFile, MAX_READ_LEN);
     int i = 0;
     fclose(listFile);
-    struct ccn_charbuf *tmp = ccn_charbuf_create();
-    struct ccn_charbuf *template = SyncGenInterest(NULL,
+    struct ndn_charbuf *tmp = ndn_charbuf_create();
+    struct ndn_charbuf *template = SyncGenInterest(NULL,
                                                    parms->scope,
                                                    parms->life,
                                                    -1, -1, NULL);
     while (i < na->len) {
         tmp->length = 0;
-        ccn_name_init(tmp);
-        struct ccn_charbuf *each = na->ents[i].name;
+        ndn_name_init(tmp);
+        struct ndn_charbuf *each = na->ents[i].name;
         int nc = SyncComponentCount(each);
         if (parms->verbose) {
-            struct ccn_charbuf *uri = SyncUriForName(each);
+            struct ndn_charbuf *uri = SyncUriForName(each);
             if (parms->mark) putMark(stdout);
             fprintf(stdout, "putFileList %d, %s\n",
-                    i, ccn_charbuf_as_string(uri));
+                    i, ndn_charbuf_as_string(uri));
             fflush(stdout);
-            ccn_charbuf_destroy(&uri);
+            ndn_charbuf_destroy(&uri);
         }
         if (nc < 3) {
             ret = noteErr("putFileList, bad name");
@@ -1383,32 +1386,32 @@ putFileList(struct SyncTestParms *parms, char *listName) {
         if (xs > 0 && xp[0] == '\000') {
             // segment info, so split the name
             ret |= appendComponents(tmp, each, 0, nc-2);
-            ret |= ccn_name_append_str(tmp, "\xC1.R.sw-c");
-            ret |= ccn_name_append_nonce(tmp);
+            ret |= ndn_name_append_str(tmp, "\xC1.R.sw-c");
+            ret |= ndn_name_append_nonce(tmp);
             ret |= appendComponents(tmp, each, nc-2, 2);
         } else {
             // no segment, so use the whole name
             ret |= appendComponents(tmp, each, 0, nc);
-            ret |= ccn_name_append_str(tmp, "\xC1.R.sw-c");
-            ret |= ccn_name_append_nonce(tmp);
+            ret |= ndn_name_append_str(tmp, "\xC1.R.sw-c");
+            ret |= ndn_name_append_nonce(tmp);
         }
         
         if (ret < 0) {
             ret = noteErr("putFileList, bad name");
             break;
         }
-        ccn_get(ccn, tmp, template, DEFAULT_CMD_TIMEOUT, NULL, NULL, NULL, 0);
-        ret = ccn_run(ccn, 10);
+        ndn_get(ndn, tmp, template, DEFAULT_CMD_TIMEOUT, NULL, NULL, NULL, 0);
+        ret = ndn_run(ndn, 10);
         if (ret < 0) {
-            ret = noteErr("putFileList, ccn_run failed");
+            ret = noteErr("putFileList, ndn_run failed");
             break;
         }
         i++;
     }
-    ccn_charbuf_destroy(&template);
-    ccn_charbuf_destroy(&tmp);
+    ndn_charbuf_destroy(&template);
+    ndn_charbuf_destroy(&tmp);
     na = SyncFreeNameAccumAndNames(na);
-    ccn_destroy(&ccn);
+    ndn_destroy(&ndn);
     return ret;
 }
 
@@ -1418,53 +1421,53 @@ existingRootOp(struct SyncTestParms *parms,
                int delete) {
     // constructs a simple config slice and sends it to an attached repo
     // now we have the encoding, so make the hash
-    struct ccn *ccn = NULL;
+    struct ndn *ndn = NULL;
     int res = 0;
     
-    ccn = ccn_create();
-    if (ccn_connect(ccn, NULL) == -1) {
-        perror("Could not connect to ccnd");
+    ndn = ndn_create();
+    if (ndn_connect(ndn, NULL) == -1) {
+        perror("Could not connect to ndnd");
         exit(1);
     }
     
     // form the Sync protocol name
     static char *cmdLit = "\xC1.S.rs";
-    struct ccn_charbuf *nm = ccn_charbuf_create();
+    struct ndn_charbuf *nm = ndn_charbuf_create();
     if (delete) cmdLit = "\xC1.S.cs";
     
-    res |= ccn_name_init(nm);
-    res |= ccn_name_from_uri(nm, topo);
+    res |= ndn_name_init(nm);
+    res |= ndn_name_from_uri(nm, topo);
     if (prefix != NULL) {
-        struct ccn_charbuf *pre = ccn_charbuf_create();
-        res |= ccn_name_from_uri(pre, prefix);
-        res |= ccn_name_append_str(nm, cmdLit);
+        struct ndn_charbuf *pre = ndn_charbuf_create();
+        res |= ndn_name_from_uri(pre, prefix);
+        res |= ndn_name_append_str(nm, cmdLit);
         res |= SyncAppendAllComponents(nm, pre);
-        ccn_charbuf_destroy(&pre);
+        ndn_charbuf_destroy(&pre);
     }
     
-    struct ccn_charbuf *cb = ccn_charbuf_create();
+    struct ndn_charbuf *cb = ndn_charbuf_create();
     if (delete) {
         // requesting deletion
-        res |= localStore(parms, ccn, nm, NULL);
+        res |= localStore(parms, ndn, nm, NULL);
         if (res < 0) {
             res = noteErr("requestDelete, failed");
         } else {
             // claimed success 
-            struct ccn_charbuf *uri = SyncUriForName(nm);
+            struct ndn_charbuf *uri = SyncUriForName(nm);
             if (parms->mark) putMark(stdout);
             fprintf(stdout, "requestDelete, sent %s\n",
-                    ccn_charbuf_as_string(uri));
-            ccn_charbuf_destroy(&uri);
+                    ndn_charbuf_as_string(uri));
+            ndn_charbuf_destroy(&uri);
         }
     } else {
         // requesting stats
-        struct ccn_charbuf *tmpl = SyncGenInterest(NULL, 1, 2, -1, 1, NULL);
-        res |= ccn_get(ccn, nm, tmpl, DEFAULT_CMD_TIMEOUT, cb, NULL, NULL, 0);
+        struct ndn_charbuf *tmpl = SyncGenInterest(NULL, 1, 2, -1, 1, NULL);
+        res |= ndn_get(ndn, nm, tmpl, DEFAULT_CMD_TIMEOUT, cb, NULL, NULL, 0);
         
         const unsigned char *xp = NULL;
         size_t xs = 0;
         if (res < 0) {
-            res = noteErr("requestStats, ccn_get failed");
+            res = noteErr("requestStats, ndn_get failed");
         } else {
             res |= SyncPointerToContent(cb, NULL, &xp, &xs);
             
@@ -1476,11 +1479,11 @@ existingRootOp(struct SyncTestParms *parms,
                 fprintf(stdout, "\n");
             }
         }
-        ccn_charbuf_destroy(&tmpl);
+        ndn_charbuf_destroy(&tmpl);
     }
-    ccn_charbuf_destroy(&cb);
-    ccn_charbuf_destroy(&nm);
-    ccn_destroy(&ccn);
+    ndn_charbuf_destroy(&cb);
+    ndn_charbuf_destroy(&nm);
+    ndn_destroy(&ndn);
     if (res > 0) res = 0;
     return res;
 }
@@ -1506,14 +1509,14 @@ struct sync_plumbing_client_methods client_methods = {
 static void
 SyncFreeBase(struct SyncBaseStruct *base) {
     struct sync_plumbing *sd = base->sd;
-    struct ccn_charbuf *state_buf = ccn_charbuf_create();
+    struct ndn_charbuf *state_buf = ndn_charbuf_create();
     sd->sync_methods->sync_stop(sd, state_buf);
-    ccn_charbuf_destroy(&state_buf);
+    ndn_charbuf_destroy(&state_buf);
 }
 
-// TBD: make this NOT cloned, but also not taken from ccnr!
+// TBD: make this NOT cloned, but also not taken from ndnr!
 int
-ccnr_msg_level_from_string(const char *s)
+ndnr_msg_level_from_string(const char *s)
 {
     long v;
     char *ep;
@@ -1521,23 +1524,23 @@ ccnr_msg_level_from_string(const char *s)
     if (s == NULL || s[0] == 0)
         return(1);
     if (0 == strcasecmp(s, "NONE"))
-        return(CCNL_NONE);
+        return(NDNL_NONE);
     if (0 == strcasecmp(s, "SEVERE"))
-        return(CCNL_SEVERE);
+        return(NDNL_SEVERE);
     if (0 == strcasecmp(s, "ERROR"))
-        return(CCNL_ERROR);
+        return(NDNL_ERROR);
     if (0 == strcasecmp(s, "WARNING"))
-        return(CCNL_WARNING);
+        return(NDNL_WARNING);
     if (0 == strcasecmp(s, "INFO"))
-        return(CCNL_INFO);
+        return(NDNL_INFO);
     if (0 == strcasecmp(s, "FINE"))
-        return(CCNL_FINE);
+        return(NDNL_FINE);
     if (0 == strcasecmp(s, "FINER"))
-        return(CCNL_FINER);
+        return(NDNL_FINER);
     if (0 == strcasecmp(s, "FINEST"))
-        return(CCNL_FINEST);
+        return(NDNL_FINEST);
     v = strtol(s, &ep, 10);
-    if (v > CCNL_FINEST || v < 0 || ep[0] != 0)
+    if (v > NDNL_FINEST || v < 0 || ep[0] != 0)
         return(-1);
     return(v);
 }
@@ -1576,7 +1579,7 @@ main(int argc, char **argv) {
         if (i+1 < argc) arg2 = argv[i+1];
         if (strcasecmp(sw, "-debug") == 0 || strcasecmp(sw, "-d") == 0) {
             i++;
-            base->debug = ccnr_msg_level_from_string(arg1);
+            base->debug = ndnr_msg_level_from_string(arg1);
             if (base->debug < 0) {
                 res = noteErr("invalid debug level %s", arg1);
             }
@@ -1592,7 +1595,7 @@ main(int argc, char **argv) {
             parms->mode = 0;
         } else if (strcasecmp(sw, "-binary") == 0) {
             parms->mode = 1;
-        } else if (strcasecmp(sw, "-ccnb") == 0) {
+        } else if (strcasecmp(sw, "-ndnb") == 0) {
             parms->mode = 1;
         } else if (strcasecmp(sw, "-text") == 0) {
             parms->mode = 2;
@@ -1814,10 +1817,10 @@ main(int argc, char **argv) {
         printf("    -debug S        set debug level {NONE, SEVERE, ERROR, WARNING, INFO, FINE, FINER, FINEST}\n");
         printf("    -v              verbose\n");
         printf("    -null           no output\n");
-        printf("    -ccnb           use binary output\n");
+        printf("    -ndnb           use binary output\n");
         printf("    -binary         use binary output\n");
         printf("    -text           use text output\n");
-        printf("    -cat2           use ccncatchunks2 format\n");
+        printf("    -cat2           use ndncatchunks2 format\n");
         printf("    -mark           print a time code prefix\n");
         printf("    -digest         show the digest when doing a put\n");
         printf("    -nodup          disallow duplicate segment requests for -put\n");

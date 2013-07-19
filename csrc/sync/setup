@@ -1,7 +1,7 @@
 #
-# ccnr/csrc/sync_exp/setup
+# ndnr/csrc/sync_exp/setup
 
-# must be executed in ccnx/csrc/sync_exp
+# must be executed in ndnx/csrc/sync_exp
 . ./settings
 . ./functions
 . ./preamble
@@ -27,16 +27,16 @@ InitTest () {
   ClearFailed
   export SyncPutFlags="-scope 1 -bs $SyncTestSegSize"
   if [ ${SyncTestDebug:=0} -gt 0 ] ; then
-    export CCND_DEBUG=7
-    export CCNR_DEBUG=INFO
-    export CCNS_DEBUG=INFO
+    export NDND_DEBUG=7
+    export NDNR_DEBUG=INFO
+    export NDNS_DEBUG=INFO
     export SyncPutFlags="$SyncPutFlags -nodup -v -mark"
   fi
-  CheckProc ccnd
-  CheckProc ccnr
+  CheckProc ndnd
+  CheckProc ndnr
   CheckProc SyncTest
   if [ $FailReason ]; then
-     echo Missing path to ccnd, ccnr, or SyncTest?
+     echo Missing path to ndnd, ndnr, or SyncTest?
      return
   fi
   export RootBeerHash=`SyncTest -nosend -slice $SyncTestTopo /root/beer`
@@ -44,11 +44,11 @@ InitTest () {
 }
 StartEmptyRepo () {
   N=$1
-  export CCNR_NAME="repo.$N"
-  export CCNR_DIRECTORY=$SyncTestDir/$CCNR_NAME.dir
-  rm -Rf $CCNR_DIRECTORY; mkdir $CCNR_DIRECTORY
+  export NDNR_NAME="repo.$N"
+  export NDNR_DIRECTORY=$SyncTestDir/$NDNR_NAME.dir
+  rm -Rf $NDNR_DIRECTORY; mkdir $NDNR_DIRECTORY
   ulimit -c unlimited
-  ccnr 2>$SyncTestDir/ccnr.$N.$SyncTestNames.txt
+  ndnr 2>$SyncTestDir/ndnr.$N.$SyncTestNames.txt
 }
 GetStats () {
   while true; do
@@ -79,7 +79,7 @@ WaitRepoLeaves () {
   N=$1
   while true; do
     printf "."
-    WithCCND $N GetStats $RootBeerHash $SyncTestDir/stats.$N.txt
+    WithNDND $N GetStats $RootBeerHash $SyncTestDir/stats.$N.txt
     { grep "treeNames $2" $SyncTestDir/stats.$N.txt >/dev/null ; } && break
     StatsPause
   done
@@ -88,7 +88,7 @@ WaitRepoLeaves () {
 EndTest () {
   I=0
   while test $I -le $SyncTestRepos; do
-    WithCCND $I ccndsmoketest kill
+    WithNDND $I ndndsmoketest kill
     I=`expr $I + 1`
   done
   sleep 1
@@ -107,9 +107,9 @@ ZeroPoint () {
   local I
   I=1
   while test $I -le $SyncTestRepos; do
-    WithCCND $I SyncTest -scope 1 -mark -slice $SyncTestTopo /zero/point >/dev/null
-    WithCCND $I SyncTest $SyncPutFlags -put $SyncTestDir/small.data ccnx:/zero/point/data >$SyncTestDir/tfr0.$I.txt
-    WithCCND $I GetStats $ZeroPointHash $SyncTestDir/zero.$I.txt
+    WithNDND $I SyncTest -scope 1 -mark -slice $SyncTestTopo /zero/point >/dev/null
+    WithNDND $I SyncTest $SyncPutFlags -put $SyncTestDir/small.data ndn:/zero/point/data >$SyncTestDir/tfr0.$I.txt
+    WithNDND $I GetStats $ZeroPointHash $SyncTestDir/zero.$I.txt
     I=`expr $I + 1`
   done
 }
@@ -168,8 +168,8 @@ AppendSummary () {
   echo $intLine
 }
 InitData () {
-  WithCCND 1 SyncTest $SyncPutFlags -put $SyncTestDir/test.data ccnx:/root/beer/floatX >$SyncTestDir/tfr1.txt
-  WithCCND 1 SyncTest $SyncPutFlags -put $SyncTestDir/test.data ccnx:/root/beer/floatZ >>$SyncTestDir/tfr2.txt
+  WithNDND 1 SyncTest $SyncPutFlags -put $SyncTestDir/test.data ndn:/root/beer/floatX >$SyncTestDir/tfr1.txt
+  WithNDND 1 SyncTest $SyncPutFlags -put $SyncTestDir/test.data ndn:/root/beer/floatZ >>$SyncTestDir/tfr2.txt
 }
 WaitLim () {
   local I
@@ -183,7 +183,7 @@ SetSlices () {
   local I
   I=1
   while test $I -le $SyncTestRepos; do {
-     WithCCND $I DoSlice $I >$SyncTestDir/slice.$I.txt
+     WithNDND $I DoSlice $I >$SyncTestDir/slice.$I.txt
       I=`expr $I + 1`
   }; done
 }
@@ -196,7 +196,7 @@ DoTest () {
   echo $testLine >>$SyncTestDir/res.txt
   I=1
   while test $I -le $SyncTestRepos; do
-      WithCCND $I ccnd 2>$SyncTestDir/ccnd.$I.$SyncTestNames.txt &
+      WithNDND $I ndnd 2>$SyncTestDir/ndnd.$I.$SyncTestNames.txt &
       sleep 0.2
       I=`expr $I + 1`
   done
@@ -219,7 +219,7 @@ DoTest () {
   fi
   I=1
   while test $I -le $SyncTestRepos; do {
-    WithCCND $I StartEmptyRepo $I &
+    WithNDND $I StartEmptyRepo $I &
     I=`expr $I + 1`
   }; done
   sleep $(( $SyncTestRepos / 4 ))
@@ -246,10 +246,10 @@ DoTest () {
   if [ $stp -gt 0 ] ; then
     I=1
     while test $I -le $SyncTestRepos; do
-      WithCCND $I GetStats $RootBeerHash $SyncTestDir/prev.$I.txt
+      WithNDND $I GetStats $RootBeerHash $SyncTestDir/prev.$I.txt
       I=`expr $I + 1`
     done
-    WithCCND 1 SyncTest $SyncPutFlags -put $SyncTestDir/small.data ccnx:/root/beer/floatY >$SyncTestDir/tfr3.txt
+    WithNDND 1 SyncTest $SyncPutFlags -put $SyncTestDir/small.data ndn:/root/beer/floatY >$SyncTestDir/tfr3.txt
     LIM=`expr $LIM + $stp`
     ncLine="Added $stp name"
     ncMax=0
@@ -328,13 +328,13 @@ CheckFile () {
 StartTest () {
   I=0
   while test $I -le $SyncTestRepos; do
-      WithCCND $I ccnd 2>$SyncTestDir/ccnd.$I.$SyncTestNames.txt &
+      WithNDND $I ndnd 2>$SyncTestDir/ndnd.$I.$SyncTestNames.txt &
       sleep 0.2
       I=`expr $I + 1`
   done
   I=1
   while test $I -le $SyncTestRepos; do
-     WithCCND $I StartEmptyRepo $I &
+     WithNDND $I StartEmptyRepo $I &
      I=`expr $I + 1`
   done
   I=0
@@ -352,7 +352,7 @@ StartTest () {
   SetSlices
 }
 StoreFile () {
-  WithCCND $1 SyncTest -v -put test/$2.data ccnx:/root/beer/$2
+  WithNDND $1 SyncTest -v -put test/$2.data ndn:/root/beer/$2
 }
 Setup () {
   export SyncTestDebug=1

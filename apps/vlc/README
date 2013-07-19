@@ -27,16 +27,16 @@ libid3tag libmad libmatroska libebml libmodplug libmpcdec live555 lua
 taglib cmake libidn twolame libsndfile
 
 or you may install a VLC binary distribution from videolan.org, and
-locate the corresponding VLC sources, and compile the CCN plugin for
+locate the corresponding VLC sources, and compile the NDN plugin for
 VLC against the include files in the VLC sources.
  
 Three system-dependent makefiles are provided, Makefile.Linux, Makefile.OSX,
 and Makefile.OSX-VLCsrconly
 
-If you have not already compiled the CCN library, do so, then use
-the appropriate Makefile to compile the CCN VLC plugin.
+If you have not already compiled the NDN library, do so, then use
+the appropriate Makefile to compile the NDN VLC plugin.
 
-The CCN vlc plugin Makefile.Linux and Makefile.OSX make use of the
+The NDN vlc plugin Makefile.Linux and Makefile.OSX make use of the
 pkg-config info to locate the necessary vlc include files, and the
 correct directory in which to install the vlc access plugins.
 
@@ -45,4 +45,4 @@ so you must set VLCAPP to where the VLC app has been installed
 (typically /Applications/VLC.app) and VLCSRC to where the unpacked
 VLC source is present (e.g., /Users/example/Software/vlc-2.0.3)
 
-Note that to VLC, a CCN URI must start ccnx:/// (because of the URI parser in VLC).
+Note that to VLC, a NDN URI must start ndn:/// (because of the URI parser in VLC).

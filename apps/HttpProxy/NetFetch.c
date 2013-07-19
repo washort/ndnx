@@ -1,8 +1,11 @@
 /*
  * HttpProxy/NetFetch.c
  * 
- * A CCNx program.
+ * A NDNx program.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2010, 2011, 2013 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -18,7 +21,7 @@
  */
 
 /**
- * Serves chunks of data to ccn from a file directory, with missing files
+ * Serves chunks of data to ndn from a file directory, with missing files
  * fetched using a simple HTTP protocol.
  *
  */
@@ -34,19 +37,19 @@
 #include <signal.h>
 #include <string.h>
 #include <strings.h>
-#include <ccn/ccn.h>
-#include <ccn/charbuf.h>
-#include <ccn/uri.h>
-#include <ccn/keystore.h>
-#include <ccn/signing.h>
+#include <ndn/ndn.h>
+#include <ndn/charbuf.h>
+#include <ndn/uri.h>
+#include <ndn/keystore.h>
+#include <ndn/signing.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 
 // TBD: the following constants should be more principled
-#define CCN_CHUNK_SIZE 4096
-#define CCN_MAP_SIZE (64*CCN_CHUNK_SIZE)
+#define NDN_CHUNK_SIZE 4096
+#define NDN_MAP_SIZE (64*NDN_CHUNK_SIZE)
 #define MaxFileName 1024
 #define MainPollMillis 10
 #define KeepAliveDefault 115
@@ -56,7 +59,7 @@
 
 #define UsePread 1
 
-typedef struct ccn_charbuf *MyCharbuf;
+typedef struct ndn_charbuf *MyCharbuf;
 typedef intmax_t seg_t;
 
 static void
@@ -154,10 +157,10 @@ struct StatsStruct {
 struct MainDataStruct {
 	SockBase sockBase;
 	NetRequest requests;
-	struct ccn *ccn;
+	struct ndn *ndn;
 	FileNode files;
 	int nFiles;
-	struct ccn_keystore *keystore;
+	struct ndn_keystore *keystore;
 	char *progname;
 	int64_t mapped;
 	int debug;
@@ -169,7 +172,7 @@ struct MainDataStruct {
 	uint64_t changes;
 	char *recentHost;
 	char *fsRoot;
-	char *ccnRoot;
+	char *ndnRoot;
 	struct StatsStruct stats;
 };
 
@@ -207,20 +210,20 @@ struct FileNodeStruct {
 	void * *tempBufs;
 	seg_t *tempSegs;
 	int *tempLengths;
-    struct ccn_signing_params signing_params; // must be per-file
+    struct ndn_signing_params signing_params; // must be per-file
 };
 
 struct InterestDataStruct {
 	MainData md;
-	struct ccn_charbuf *rootName;
+	struct ndn_charbuf *rootName;
 	char *fsRoot;
-	char *ccnRoot;
+	char *ndnRoot;
 };
 
 struct NetRequestStruct {
 	MainData md;
 	NetRequest next;
-	char *ccnRoot;
+	char *ndnRoot;
 	char *fsRoot;
 	char *host;
 	char *kind;
@@ -337,7 +340,7 @@ ExpandTempSegments(FileNode fn) {
 	fn->tempSegs = newSegs;
 	fn->tempLengths = newLengths;
 	fn->nTemp = nTemp;
-	newBufs[oTemp] = ProxyUtil_Alloc(CCN_CHUNK_SIZE, char);
+	newBufs[oTemp] = ProxyUtil_Alloc(NDN_CHUNK_SIZE, char);
 	newSegs[oTemp] = -1;
 	newLengths[oTemp] = 0;
 	return oTemp;
@@ -346,8 +349,8 @@ ExpandTempSegments(FileNode fn) {
 static int
 FillTempSegments(FileNode fn, void *buf, int n) {
 	off_t fileSize = fn->fileSize;
-	seg_t seg = fileSize / CCN_CHUNK_SIZE;
-	int off = fileSize % CCN_CHUNK_SIZE;
+	seg_t seg = fileSize / NDN_CHUNK_SIZE;
+	int off = fileSize % NDN_CHUNK_SIZE;
 	// first, try to transfer bytes to the 
 	while (n > 0) {
 		int vic = -1;
@@ -380,7 +383,7 @@ FillTempSegments(FileNode fn, void *buf, int n) {
 			// we have stuff already written?
 			return retErr("FillTempSegments bad state");
 		}
-		int rem = CCN_CHUNK_SIZE - pos;
+		int rem = NDN_CHUNK_SIZE - pos;
 		if (rem > 0) {
 			// non-zero to move
 			if (n < rem) rem = n;
@@ -394,8 +397,8 @@ FillTempSegments(FileNode fn, void *buf, int n) {
                 
 			}
 			off = off + rem;
-			seg = seg + (off / CCN_CHUNK_SIZE);
-			off = off % CCN_CHUNK_SIZE;
+			seg = seg + (off / NDN_CHUNK_SIZE);
+			off = off % NDN_CHUNK_SIZE;
 			n = n - rem;
 			fn->tempLengths[vic] = pos + rem;
 		}
@@ -504,12 +507,12 @@ AdvanceChunks(string buf, int pos, int len, ChunkInfo info) {
 	}
 }
 
-static struct ccn_charbuf *
+static struct ndn_charbuf *
 NewSegBlob(seg_t seg) {
 	// make a new charbuf that is a blob for a seg number
 	// (especially as needed for the final segment)
 	// see doc/technical/NameConventions.html
-	// see cc_name_util.c:ccn_name_append_numeric for an alternate impl
+	// see cc_name_util.c:ndn_name_append_numeric for an alternate impl
 	unsigned char junk[32];
 	unsigned char *jp = junk+sizeof(junk);
 	int nj = 0;
@@ -521,9 +524,9 @@ NewSegBlob(seg_t seg) {
 		seg = seg >> 8;
 		if (seg == 0) break;
 	}
-	struct ccn_charbuf *blob = ccn_charbuf_create();
-	ccn_charbuf_append_tt(blob, nj, CCN_BLOB);
-    ccn_charbuf_append(blob, jp, nj);
+	struct ndn_charbuf *blob = ndn_charbuf_create();
+	ndn_charbuf_append_tt(blob, nj, NDN_BLOB);
+    ndn_charbuf_append(blob, jp, nj);
 	return blob;
 }
 
@@ -541,8 +544,8 @@ HaveSegment(FileNode fn, seg_t seg) {
 
 static int
 AssertFinalSize(FileNode fn, off_t fileSize) {
-    struct ccn_charbuf *templ;
-    struct ccn_charbuf *finalBlock;
+    struct ndn_charbuf *templ;
+    struct ndn_charbuf *finalBlock;
     int res;
 	// only to be used when the file size was not previously known
 	// once the final size is set it cannot be changed
@@ -552,24 +555,24 @@ AssertFinalSize(FileNode fn, off_t fileSize) {
     fn->final = 1;
     fn->fileSize = fileSize;
     md->stats.fileBytes = md->stats.fileBytes + fileSize;
-	seg_t nSegs = (fileSize + CCN_CHUNK_SIZE - 1) / CCN_CHUNK_SIZE;
+	seg_t nSegs = (fileSize + NDN_CHUNK_SIZE - 1) / NDN_CHUNK_SIZE;
 	fn->nSegs = nSegs;
 	fn->lastUsed = GetCurrentTime();
-    templ = ccn_charbuf_create();
-    res = ccnb_element_begin(templ, CCN_DTAG_SignedInfo);
+    templ = ndn_charbuf_create();
+    res = ndnb_element_begin(templ, NDN_DTAG_SignedInfo);
     finalBlock = NewSegBlob(nSegs - 1);
-    ccnb_element_begin(templ, CCN_DTAG_FinalBlockID);
-    res |= ccn_charbuf_append_charbuf(templ, finalBlock);
-    res |= ccnb_element_end(templ);
-    res |= ccnb_element_end(templ);    /* </SignedInfo> */
-    fn->signing_params.sp_flags |= CCN_SP_TEMPL_FINAL_BLOCK_ID;
-    fn->signing_params.template_ccnb = templ;
+    ndnb_element_begin(templ, NDN_DTAG_FinalBlockID);
+    res |= ndn_charbuf_append_charbuf(templ, finalBlock);
+    res |= ndnb_element_end(templ);
+    res |= ndnb_element_end(templ);    /* </SignedInfo> */
+    fn->signing_params.sp_flags |= NDN_SP_TEMPL_FINAL_BLOCK_ID;
+    fn->signing_params.template_ndnb = templ;
 	if (md->debug) {
 		fprintf(stdout, "-- AssertFinalSize, %s, fileSize %jd, final %jd\n",
 				fn->id, (intmax_t) fileSize, (intmax_t) nSegs-1);
         flushLog();
 	};
-    ccn_charbuf_destroy(&finalBlock);
+    ndn_charbuf_destroy(&finalBlock);
 	return (res);
 }
 
@@ -623,10 +626,10 @@ MapBig(FileNode fn, seg_t seg) {
 	MainData md = fn->md;
 	seg_t nSegs = fn->nSegs;
 	if (seg < 0 || seg >= nSegs) return NULL;
-	off_t off = seg * CCN_CHUNK_SIZE;
-	off_t lim = off + CCN_CHUNK_SIZE;
+	off_t off = seg * NDN_CHUNK_SIZE;
+	off_t lim = off + NDN_CHUNK_SIZE;
 	off_t mapLim = fn->mapOff + fn->mapLen;
-	off_t maxOff = nSegs * CCN_CHUNK_SIZE;
+	off_t maxOff = nSegs * NDN_CHUNK_SIZE;
 	if (off >= maxOff || lim > maxOff) return NULL;
 	if (fn->mapLen > 0 && off >= fn->mapOff && off <= mapLim) {
 		// we have a valid mapping, maybe including this segment
@@ -653,16 +656,16 @@ MapBig(FileNode fn, seg_t seg) {
 	if (dseg > 1 && dseg <= 8) {
 		// adjust to fit the gap
 		mseg = fn->maxSegPut + 1;
-		off = mseg * CCN_CHUNK_SIZE;
-		lim = off + CCN_CHUNK_SIZE;
+		off = mseg * NDN_CHUNK_SIZE;
+		lim = off + NDN_CHUNK_SIZE;
 		dseg = seg - mseg;
 	}
 	
 	off_t d = fn->fileSize - off;
-	if (d < CCN_CHUNK_SIZE && fn->final == 0)
+	if (d < NDN_CHUNK_SIZE && fn->final == 0)
 		// we only have a partial, and the file is not final
 		return 0;
-	if (d > CCN_MAP_SIZE) d = CCN_MAP_SIZE;
+	if (d > NDN_MAP_SIZE) d = NDN_MAP_SIZE;
 	void *addr = mmap(NULL,
 					  d,
 					  PROT_READ,
@@ -684,7 +687,7 @@ MapBig(FileNode fn, seg_t seg) {
 		fflush(stdout);
 		if (mseg != seg)
 			// the returned address should be for the initially requested seg
-			addr = (void *) ((char *) addr + dseg*CCN_CHUNK_SIZE);
+			addr = (void *) ((char *) addr + dseg*NDN_CHUNK_SIZE);
 		return addr;
 	}
 	fprintf(stdout, "** %s: MapBig, %jd\n", strerror(errno), seg);
@@ -755,7 +758,7 @@ OpenFileNode(MainData md, char *root, char *dir, char *shortName,
 		create = 0;
 	}
 	if (fd >= 0) {
-        struct ccn_signing_params sp = CCN_SIGNING_PARAMS_INIT;
+        struct ndn_signing_params sp = NDN_SIGNING_PARAMS_INIT;
 		// looks ok from here, so return the new node
 		fstat(fd, &ss);
 		FileNode fn = ProxyUtil_StructAlloc(1, FileNodeStruct);
@@ -783,7 +786,7 @@ OpenFileNode(MainData md, char *root, char *dir, char *shortName,
 		fn->create = create;
 		if (md->debug) {
 			double dt = DeltaTime(md->startTime, GetCurrentTime());
-            seg_t nSegs = (fileSize + CCN_CHUNK_SIZE - 1) / CCN_CHUNK_SIZE;
+            seg_t nSegs = (fileSize + NDN_CHUNK_SIZE - 1) / NDN_CHUNK_SIZE;
 			if (create)
 				fprintf(stdout, "@%4.3f, CreateFile %s\n",
 						dt, fn->id);
@@ -847,7 +850,7 @@ CloseFileNode(FileNode fn) {
 					free(fn->tempSegs);
 					free(fn->tempLengths);
 				}
-                ccn_charbuf_destroy(&fn->signing_params.template_ccnb);
+                ndn_charbuf_destroy(&fn->signing_params.template_ndnb);
 				struct timeval tv[2];
 				tv[0].tv_sec = fn->modTime.tv_sec;
 				tv[0].tv_usec = fn->modTime.tv_nsec / 1000;
@@ -873,11 +876,11 @@ MapSeg(FileNode fn, seg_t seg) {
 	MainData md = fn->md;
 	seg_t nSegs = fn->nSegs;
 	if (seg < 0 || seg >= nSegs) return NULL;
-	if (CCN_CHUNK_SIZE == CCN_MAP_SIZE) {
-		off_t off = seg * CCN_CHUNK_SIZE;
+	if (NDN_CHUNK_SIZE == NDN_MAP_SIZE) {
+		off_t off = seg * NDN_CHUNK_SIZE;
 		
 		void *addr = mmap(NULL,
-						  CCN_CHUNK_SIZE,
+						  NDN_CHUNK_SIZE,
 						  PROT_READ,
 #ifdef _DARWIN_C_SOURCE
 						  MAP_FILE | MAP_PRIVATE,
@@ -888,7 +891,7 @@ MapSeg(FileNode fn, seg_t seg) {
 						  off);
 		if (addr != NULL && addr != MAP_FAILED) {
 			// it's mapped
-			int len = CCN_CHUNK_SIZE;
+			int len = NDN_CHUNK_SIZE;
 			fn->mapLen = len;
 			md->mapped = md->mapped + len;
 			return addr;
@@ -904,7 +907,7 @@ MapSeg(FileNode fn, seg_t seg) {
 
 static int
 UnMapSeg(FileNode fn) {
-	if (CCN_CHUNK_SIZE == CCN_MAP_SIZE) {
+	if (NDN_CHUNK_SIZE == NDN_MAP_SIZE) {
 		void *addr = fn->mapAddr;
 		int len = fn->mapLen;
 		if (len > 0 && addr != NULL && addr != MAP_FAILED) {
@@ -921,10 +924,10 @@ UnMapSeg(FileNode fn) {
 }
 
 static MainData
-NewMainData(struct ccn *h) {
+NewMainData(struct ndn *h) {
 	MainData md = ProxyUtil_StructAlloc(1, MainDataStruct);
 	md->startTime = GetCurrentTime();
-	md->ccn = h;
+	md->ndn = h;
 	md->changes = 1;
 	return md;
 }
@@ -942,12 +945,12 @@ CloseMainData(MainData md) {
 
 
 ////////////////////////////////////////////////////////////////
-// Keystore support, adapted from ccnd_internal_client.c
+// Keystore support, adapted from ndnd_internal_client.c
 ////////////////////////////////////////////////////////////////
 
 
-#ifndef CCN_PATH_VAR_TMP
-#define CCN_PATH_VAR_TMP "/var/tmp"
+#ifndef NDN_PATH_VAR_TMP
+#define NDN_PATH_VAR_TMP "/var/tmp"
 #endif
 
 /*
@@ -955,46 +958,46 @@ CloseMainData(MainData md) {
  * to add integrity checking and defense against accidental misuse.
  * The file permissions serve for restricting access to the private keys.
  */
-#ifndef CCNK_KEYSTORE_PASS
-#define CCNK_KEYSTORE_PASS "\010\103\043\375\327\237\051\152\155\347"
+#ifndef NDNK_KEYSTORE_PASS
+#define NDNK_KEYSTORE_PASS "\010\103\043\375\327\237\051\152\155\347"
 #endif
 
 static int
 init_internal_keystore(MainData md) {
-    struct ccn_charbuf *temp = NULL;
+    struct ndn_charbuf *temp = NULL;
     char *culprit = NULL;
     struct stat statbuf;
     char *dir = NULL;
     int res = -1;
     char *keystore_path = NULL;
     
-    temp = ccn_charbuf_create();
-    dir = getenv("CCNK_KEYSTORE_DIRECTORY");
+    temp = ndn_charbuf_create();
+    dir = getenv("NDNK_KEYSTORE_DIRECTORY");
     if (dir != NULL && dir[0] == '/')
-        ccn_charbuf_putf(temp, "%s/", dir);
+        ndn_charbuf_putf(temp, "%s/", dir);
     else
-        ccn_charbuf_putf(temp, CCN_PATH_VAR_TMP "/.ccnx-user%d/", (int)geteuid());
-    res = stat(ccn_charbuf_as_string(temp), &statbuf);
+        ndn_charbuf_putf(temp, NDN_PATH_VAR_TMP "/.ndnx-user%d/", (int)geteuid());
+    res = stat(ndn_charbuf_as_string(temp), &statbuf);
     if (res == -1) {
         if (errno == ENOENT)
-            res = mkdir(ccn_charbuf_as_string(temp), 0700);
+            res = mkdir(ndn_charbuf_as_string(temp), 0700);
         if (res != 0) {
-            culprit = ccn_charbuf_as_string(temp);
+            culprit = ndn_charbuf_as_string(temp);
             goto Finish;
         }
     }
-	char *kPrefix = "ccnk";
-    ccn_charbuf_putf(temp, ".%s_keystore", kPrefix);
-    keystore_path = Concat(ccn_charbuf_as_string(temp), "");
-    res = ccn_load_default_key(md->ccn, keystore_path, CCNK_KEYSTORE_PASS);
+	char *kPrefix = "ndnk";
+    ndn_charbuf_putf(temp, ".%s_keystore", kPrefix);
+    keystore_path = Concat(ndn_charbuf_as_string(temp), "");
+    res = ndn_load_default_key(md->ndn, keystore_path, NDNK_KEYSTORE_PASS);
     if (res >= 0)
         goto Finish;
-    res = ccn_keystore_file_init(keystore_path, CCNK_KEYSTORE_PASS, "NetFetch", 0, 0);
+    res = ndn_keystore_file_init(keystore_path, NDNK_KEYSTORE_PASS, "NetFetch", 0, 0);
     if (res != 0) {
         culprit = keystore_path;    
         goto Finish;
     }
-    res = ccn_load_default_key(md->ccn, keystore_path, CCNK_KEYSTORE_PASS);
+    res = ndn_load_default_key(md->ndn, keystore_path, NDNK_KEYSTORE_PASS);
     if (res != 0)
         culprit = keystore_path;
 Finish:
@@ -1005,7 +1008,7 @@ Finish:
 		flushLog();
         culprit = NULL;
     }
-    ccn_charbuf_destroy(&temp);
+    ndn_charbuf_destroy(&temp);
     if (keystore_path != NULL)
         free(keystore_path);
     return res;
@@ -1016,25 +1019,25 @@ Finish:
 ////////////////////////////////////////////////////////////////
 
 static int
-SetNameCCN(struct ccn_charbuf *cb, char *ccnRoot, char *dir, char *name) {
+SetNameNDN(struct ndn_charbuf *cb, char *ndnRoot, char *dir, char *name) {
 	char temp[MaxFileName];
-	snprintf(temp, sizeof(temp), "ccnx:/%s/", ccnRoot);
-	int res = ccn_name_from_uri(cb, temp);
+	snprintf(temp, sizeof(temp), "ndn:/%s/", ndnRoot);
+	int res = ndn_name_from_uri(cb, temp);
 	if (dir != NULL) {
 		// use our HTTP convention
-		res = res | ccn_name_append_str(cb, (const char *) "http");
-		res = res | ccn_name_append_str(cb, (const char *) dir);
+		res = res | ndn_name_append_str(cb, (const char *) "http");
+		res = res | ndn_name_append_str(cb, (const char *) dir);
 	}
 	// name
-	res = res | ccn_name_append_str(cb, (const char *) name);
-	if (res < 0) return retErr("SetNameCCN bad name");
+	res = res | ndn_name_append_str(cb, (const char *) name);
+	if (res < 0) return retErr("SetNameNDN bad name");
 	return 0;
 }
 
 static int
-PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
+PutSegment(FileNode fn, char *ndnRoot, seg_t seg) {
 	// PutSegment takes the indicated segment from the file and stores it
-	// as a CCN segment
+	// as a NDN segment
 	// returns -1 on failure, 0 on success
 	MainData md = fn->md;
 	char *dir = fn->dir;
@@ -1042,7 +1045,7 @@ PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
 	if (md->debug) {
 		if (fn->nSegsPut > 0) {
 			uint64_t now = GetCurrentTime();
-			double rate = ((fn->nSegsPut)*CCN_CHUNK_SIZE
+			double rate = ((fn->nSegsPut)*NDN_CHUNK_SIZE
 						   / (1.0e6*DeltaTime(fn->firstUsed, now)));
 			fprintf(stdout, "-- PutSegment, %s, seg %jd, %4.3f MB/s\n",
 					fn->id, seg, rate);
@@ -1059,10 +1062,10 @@ PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
 		flushLog();
 		return -1;
 	}
-	int segLen = CCN_CHUNK_SIZE;
+	int segLen = NDN_CHUNK_SIZE;
 	if (seg+1 == fn->nSegs) {
 		// last part may not be a complete segment
-		int mod = fn->fileSize % CCN_CHUNK_SIZE;
+		int mod = fn->fileSize % NDN_CHUNK_SIZE;
 		if (mod > 0) segLen = mod;
 	}
 	int usePRead = 0;
@@ -1076,8 +1079,8 @@ PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
 	if (usePRead) {
 		// this is the slower, but possibly safer, way to read near
 		// the end of the file as currently written
-		addr = ProxyUtil_Alloc(CCN_CHUNK_SIZE, char);
-		ssize_t nr = pread(fn->fd, addr, segLen, seg*CCN_CHUNK_SIZE);
+		addr = ProxyUtil_Alloc(NDN_CHUNK_SIZE, char);
+		ssize_t nr = pread(fn->fd, addr, segLen, seg*NDN_CHUNK_SIZE);
 		if (md->debug) {
 			fprintf(stdout, "-- PutSegment, pread, seg %jd, nr %zd\n",
 					seg, nr);
@@ -1102,31 +1105,31 @@ PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
 	fn->lastUsed = GetCurrentTime();
 	
 	// serve up the segment
-    struct ccn_charbuf *cb = ccn_charbuf_create();
-	int res = SetNameCCN(cb, ccnRoot, dir, fn->unPercName);
+    struct ndn_charbuf *cb = ndn_charbuf_create();
+	int res = SetNameNDN(cb, ndnRoot, dir, fn->unPercName);
 	if (res < 0) {
 		// don't let this get farther
-		ccn_charbuf_destroy(&cb);
+		ndn_charbuf_destroy(&cb);
 		return retErr("bad name?");
 	}
 	
-	// see ccn_versioning.c: ccn_create_version
-	ccn_create_version(md->ccn, cb, 0,
+	// see ndn_versioning.c: ndn_create_version
+	ndn_create_version(md->ndn, cb, 0,
 					   fn->modTime.tv_sec, fn->modTime.tv_nsec);
-	ccn_name_append_numeric(cb, CCN_MARKER_SEQNUM, seg);
+	ndn_name_append_numeric(cb, NDN_MARKER_SEQNUM, seg);
 	
-    struct ccn_charbuf *temp = ccn_charbuf_create();
-    ret = ccn_sign_content(md->ccn, temp, cb, &fn->signing_params, addr, segLen);
+    struct ndn_charbuf *temp = ndn_charbuf_create();
+    ret = ndn_sign_content(md->ndn, temp, cb, &fn->signing_params, addr, segLen);
 	if (ret != 0) {
-		fprintf(stdout, "** ccn_sign_content failed (res == %d)\n",
+		fprintf(stdout, "** ndn_sign_content failed (res == %d)\n",
 				ret);
 		ret = -1;
 	} else {
 		// OK, try to put the data
-		ret = ccn_put(md->ccn, temp->buf, temp->length);
+		ret = ndn_put(md->ndn, temp->buf, temp->length);
 		if (ret < 0) {
 			fprintf(stdout,
-					"** ccn_put failed (%s, %jd, res == %d)\n",
+					"** ndn_put failed (%s, %jd, res == %d)\n",
 					fn->id, seg, ret);
 			ret = -1;
 		} else {
@@ -1135,7 +1138,7 @@ PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
 		}
 	}
     // Only the first segment gets the key locator
-    fn->signing_params.sp_flags |= CCN_SP_OMIT_KEY_LOCATOR;
+    fn->signing_params.sp_flags |= NDN_SP_OMIT_KEY_LOCATOR;
 	// cleanup
 	if (usePRead) {
 		free(addr);
@@ -1143,8 +1146,8 @@ PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
 		UnMapSeg(fn);
 	}
 	flushLog();
-	ccn_charbuf_destroy(&cb);
-	ccn_charbuf_destroy(&temp);
+	ndn_charbuf_destroy(&cb);
+	ndn_charbuf_destroy(&temp);
 	md->stats.segmentsPut++;
 	md->stats.bytesPut = md->stats.bytesPut + segLen;
 	md->changes++;
@@ -1152,17 +1155,17 @@ PutSegment(FileNode fn, char *ccnRoot, seg_t seg) {
 }
 
 static seg_t
-GetSegmentNumber(struct ccn_upcall_info *info) {
+GetSegmentNumber(struct ndn_upcall_info *info) {
 	// gets the current segment number for the info
 	// returns -1 if not known
 	if (info == NULL) return -1;
-	const unsigned char *ccnb = info->content_ccnb;
-	struct ccn_indexbuf *cc = info->content_comps;
-	if (cc == NULL || ccnb == NULL) {
+	const unsigned char *ndnb = info->content_ndnb;
+	struct ndn_indexbuf *cc = info->content_comps;
+	if (cc == NULL || ndnb == NULL) {
 		// go back to the interest
 		cc = info->interest_comps;
-		ccnb = info->interest_ccnb;
-		if (cc == NULL || ccnb == NULL) return -1;
+		ndnb = info->interest_ndnb;
+		if (cc == NULL || ndnb == NULL) return -1;
 	}
 	int ns = cc->n;
 	if (ns > 2) {
@@ -1172,11 +1175,11 @@ GetSegmentNumber(struct ccn_upcall_info *info) {
 		if (start < stop) {
 			size_t len = 0;
 			const unsigned char *data = NULL;
-			ccn_ref_tagged_BLOB(CCN_DTAG_Component, ccnb, start, stop, &data, &len);
+			ndn_ref_tagged_BLOB(NDN_DTAG_Component, ndnb, start, stop, &data, &len);
 			if (len > 0 && data != NULL) {
 				// parse big-endian encoded number
 				// TBD: where is this in the library?
-				if (data[0] != CCN_MARKER_SEQNUM) return -1;
+				if (data[0] != NDN_MARKER_SEQNUM) return -1;
 				seg_t n = 0;
 				size_t i = 1;
 				for (; i < len; i++) {
@@ -1195,27 +1198,27 @@ GetSegmentNumber(struct ccn_upcall_info *info) {
 // translating any weird characters into using percent hex encoding (like %00).
 
 // The following conventions are used for components (numbering from 1):
-// C1: protocol marker (ccnPrefix)
+// C1: protocol marker (ndnPrefix)
 // C2: kind (most likely "http")
 // C3: host (a string)
 // C4: short name (any characters at all)
 
 static char *
 GetShortName(MainData md,
-			 struct ccn_upcall_info *info,
-			 char *ccnPrefix) {
+			 struct ndn_upcall_info *info,
+			 char *ndnPrefix) {
 	// extracts the short name from the interest
 	// as a side effect, stores the host, kind, and port to md
 	// ignores the version ID and segment number
 	// TBD: handle the version and segment#
 	if (info == NULL) return NULL;
-	const unsigned char *ccnb = info->content_ccnb;
-	struct ccn_indexbuf *cc = info->content_comps;
-	if (cc == NULL || ccnb == NULL) {
+	const unsigned char *ndnb = info->content_ndnb;
+	struct ndn_indexbuf *cc = info->content_comps;
+	if (cc == NULL || ndnb == NULL) {
 		// go back to the interest
 		cc = info->interest_comps;
-		ccnb = info->interest_ccnb;
-		if (cc == NULL || ccnb == NULL) return NULL;
+		ndnb = info->interest_ndnb;
+		if (cc == NULL || ndnb == NULL) return NULL;
 	}
 	char temp[1024+4]; // TBD: make this limit more principled
 	static int maxTemp = sizeof(temp)-4;
@@ -1233,7 +1236,7 @@ GetShortName(MainData md,
 		int stop = cc->buf[i];
 		const unsigned char *data = NULL;
 		len = 0;
-		ccn_ref_tagged_BLOB(CCN_DTAG_Component, ccnb, start, stop, &data, &len);
+		ndn_ref_tagged_BLOB(NDN_DTAG_Component, ndnb, start, stop, &data, &len);
 		size_t j = 0;
 		for (; j < len; j++) {
 			char c = (char) data[j];
@@ -1259,7 +1262,7 @@ GetShortName(MainData md,
 			compCase++;
 			switch (compCase) {
 				case 1: {
-					if (strcmp(ccnPrefix, temp) != 0)
+					if (strcmp(ndnPrefix, temp) != 0)
 						// prefix mismatch
 						return NULL;
 					break;
@@ -1403,7 +1406,7 @@ StartHttpStream(NetRequest nr) {
 		return retErr("StartHttpStream no connect");
 	int needExtras = 0;
 	int pos = 0;
-	int lim = CCN_CHUNK_SIZE;
+	int lim = NDN_CHUNK_SIZE;
 	char *buf = nr->buf;
 	if (pos < lim) {
 		char *upn = nr->unPercName;
@@ -1416,7 +1419,7 @@ StartHttpStream(NetRequest nr) {
 		pos = pos + snprintf(buf+pos, lim-pos, "Host: %s\r\n", host);
 	if (pos < lim)
 		pos = pos + snprintf(buf+pos, lim-pos,
-							 "User-Agent: CCNx-Bridge/0.1\r\n");
+							 "User-Agent: NDNx-Bridge/0.1\r\n");
 	if (pos < lim)
 		pos = pos + snprintf(buf+pos, lim-pos,
 							 "Keep-Alive: %d\r\n",
@@ -1537,7 +1540,7 @@ NewNetRequest(InterestData iData, char *shortName) {
 	nr->md = md;
 	nr->maxSegRequest = -1;
 	nr->maxSegStored = -1;
-	nr->ccnRoot = Concat(iData->ccnRoot, "");
+	nr->ndnRoot = Concat(iData->ndnRoot, "");
 	nr->fsRoot = Concat(iData->fsRoot, "");
 	nr->host = Concat(host, "");
 	nr->kind = Concat(kind, "");
@@ -1627,7 +1630,7 @@ EndNetRequest(NetRequest nr) {
 			SegList pending = nr->segRequests;
 			if (pending == NULL) break;
 			if (pending->seg < fn->nSegs)
-				PutSegment(fn, nr->ccnRoot, pending->seg);
+				PutSegment(fn, nr->ndnRoot, pending->seg);
 			RemSegRequest(nr, pending->seg);
 		}
 		nr->fn = NULL;
@@ -1660,7 +1663,7 @@ EndNetRequest(NetRequest nr) {
 	nr->shortName = Freestr(nr->shortName);
 	nr->unPercName = Freestr(nr->unPercName);
 	nr->id = Freestr(nr->id);
-	nr->ccnRoot = Freestr(nr->ccnRoot);
+	nr->ndnRoot = Freestr(nr->ndnRoot);
 	nr->fsRoot = Freestr(nr->fsRoot);
 	nr->host = Freestr(nr->host);
 	nr->kind = Freestr(nr->kind);
@@ -1674,7 +1677,7 @@ EndNetRequest(NetRequest nr) {
 static int
 ReadFromHttp(NetRequest nr) {
 	// ReadFromHttp reads the next buffer from the HTTP stream associated
-	// with the file, and outputs CCN segments as needed
+	// with the file, and outputs NDN segments as needed
 	// returns 0 on success, -1 on failure
 	SockEntry se = nr->se;
 	if (se == NULL) return -1;
@@ -1744,7 +1747,7 @@ ReadFromHttp(NetRequest nr) {
 		}
 		
 		fn->fileSize = fn->fileSize + nWrite;
-		fn->nSegs = (fn->fileSize + CCN_CHUNK_SIZE - 1) / CCN_CHUNK_SIZE;
+		fn->nSegs = (fn->fileSize + NDN_CHUNK_SIZE - 1) / NDN_CHUNK_SIZE;
 		
 		
 		if (nWrite < n) {
@@ -1795,7 +1798,7 @@ ReadFromHttp(NetRequest nr) {
 		if (pending == NULL) break;
 		seg_t seg = pending->seg;
 		if (HaveSegment(fn, seg)) {
-			PutSegment(fn, nr->ccnRoot, seg);
+			PutSegment(fn, nr->ndnRoot, seg);
 			RemSegRequest(nr, seg);
 		} else break;
 	}
@@ -1810,39 +1813,39 @@ ReadFromHttp(NetRequest nr) {
 
 // NoteInterest handles interests matching the global filter
 // The main action to perform is to put a content object for a requested
-// segment back to the ccn handle.  There are cases where there is no segment
+// segment back to the ndn handle.  There are cases where there is no segment
 // number, as when we are trying to resolve a version, so we respond with
 // segment 0 (this may be somewhat inefficient if segment 0 is not really
 // needed by the client, but we don't have a good way to avoid this yet).
 //
 // TBD: add code for enumeration?
 //
-enum ccn_upcall_res
-NoteInterest(struct ccn_closure *selfp,
-			 enum ccn_upcall_kind kind,
-			 struct ccn_upcall_info *info) {
+enum ndn_upcall_res
+NoteInterest(struct ndn_closure *selfp,
+			 enum ndn_upcall_kind kind,
+			 struct ndn_upcall_info *info) {
     InterestData iData = selfp->data;
 	
-    if (kind == CCN_UPCALL_FINAL) {
+    if (kind == NDN_UPCALL_FINAL) {
 		if (iData != NULL) {
 			if (iData->rootName != NULL)
-				ccn_charbuf_destroy(&iData->rootName);
+				ndn_charbuf_destroy(&iData->rootName);
 			iData->fsRoot = Freestr(iData->fsRoot);
-			iData->ccnRoot = Freestr(iData->ccnRoot);
+			iData->ndnRoot = Freestr(iData->ndnRoot);
 			free(iData);
 		}
 		free(selfp);
-        return(CCN_UPCALL_RESULT_OK);
+        return(NDN_UPCALL_RESULT_OK);
 	}
-    if (kind != CCN_UPCALL_INTEREST || iData == NULL) {
-        return(CCN_UPCALL_RESULT_ERR);
+    if (kind != NDN_UPCALL_INTEREST || iData == NULL) {
+        return(NDN_UPCALL_RESULT_ERR);
 	}
-    if ((info->pi->answerfrom & CCN_AOK_DEFAULT) != 0) {
+    if ((info->pi->answerfrom & NDN_AOK_DEFAULT) != 0) {
 		// got a new interest
 		// TBD: check this conditional with an expert
 		MainData md = iData->md;
 		seg_t seg = GetSegmentNumber(info);
-		char *shortName = GetShortName(md, info, iData->ccnRoot);
+		char *shortName = GetShortName(md, info, iData->ndnRoot);
 		if (shortName != NULL) {
 			// request looks valid
 			char *host = md->recentHost;
@@ -1895,7 +1898,7 @@ NoteInterest(struct ccn_closure *selfp,
 					AddSegRequest(nr, seg);
 				} else if (seg < nSegs) {
 					// we should have the segment in the file
-					if (PutSegment(fn, iData->ccnRoot, seg) < 0) {
+					if (PutSegment(fn, iData->ndnRoot, seg) < 0) {
 						// should not happen
 						fprintf(stdout,
 								"** PutSegment failed, %s:%s, seg %jd\n",
@@ -1920,32 +1923,32 @@ NoteInterest(struct ccn_closure *selfp,
 			}
 		}
 	}
-	return(CCN_UPCALL_RESULT_OK);
+	return(NDN_UPCALL_RESULT_OK);
 }
 
 // RegisterInterest performs the setup to register the global interest
-// with the ccn handle.  Any reasonable number of interests can be
+// with the ndn handle.  Any reasonable number of interests can be
 // registered, but they all use the same handler.
 static int
-RegisterInterest(MainData md, char *ccnRoot, char *fsRoot) {
-	struct ccn_charbuf *name = ccn_charbuf_create();
+RegisterInterest(MainData md, char *ndnRoot, char *fsRoot) {
+	struct ndn_charbuf *name = ndn_charbuf_create();
 	char temp[256];
-	snprintf(temp, sizeof(temp), "ccnx:/%s/", ccnRoot);
-	int res = ccn_name_from_uri(name, temp);
+	snprintf(temp, sizeof(temp), "ndn:/%s/", ndnRoot);
+	int res = ndn_name_from_uri(name, temp);
 	if (res < 0) {
-        fprintf(stdout, "%s, bad ccn URI, %s\n", md->progname, temp);
+        fprintf(stdout, "%s, bad ndn URI, %s\n", md->progname, temp);
 		flushLog();
         return -1;
 	}
 	InterestData iData = ProxyUtil_StructAlloc(1, InterestDataStruct);
 	iData->fsRoot = Concat(fsRoot, "");
-	iData->ccnRoot = Concat(ccnRoot, "");
+	iData->ndnRoot = Concat(ndnRoot, "");
 	iData->rootName = name;
 	iData->md = md;
-	struct ccn_closure *cc = ProxyUtil_StructAlloc(1, ccn_closure);
+	struct ndn_closure *cc = ProxyUtil_StructAlloc(1, ndn_closure);
 	cc->data = iData;
 	cc->p = &NoteInterest;
-	ccn_set_interest_filter(md->ccn, name, cc);
+	ndn_set_interest_filter(md->ndn, name, cc);
 	return 0;
 }
 
@@ -1974,7 +1977,7 @@ MainLoop(MainData md) {
 	fprintf(stdout, "NetFetch started, baseTime %7.6f\n", bt);
 	flushLog();
 	// start up server
-	RegisterInterest(md, md->ccnRoot, md->fsRoot);
+	RegisterInterest(md, md->ndnRoot, md->fsRoot);
 	
 	// wait for done
 	uint64_t lagChanges = 0;
@@ -1982,25 +1985,25 @@ MainLoop(MainData md) {
 	for (;;) {
 		uint64_t lastChanges = md->changes;
 		SH_PrepSelect(base, MainPollMillis*1000);
-		int ccnFD = -1;
+		int ndnFD = -1;
 		// adaptive way to determine the connection FD
-		// if ccnd has disappeared while we were busy, try to reconnect
+		// if ndnd has disappeared while we were busy, try to reconnect
 		for (;;) {
-			ccnFD = ccn_get_connection_fd(md->ccn);
-			if (ccnFD >= 0) break;
-			int connRes = ccn_connect(md->ccn, NULL);
+			ndnFD = ndn_get_connection_fd(md->ndn);
+			if (ndnFD >= 0) break;
+			int connRes = ndn_connect(md->ndn, NULL);
 			if (connRes < 0) break;
 		}
-		if (ccnFD < 0) {
-			retErr("broken CCN connection");
+		if (ndnFD < 0) {
+			retErr("broken NDN connection");
 			break;
 		}
-		FD_SET(ccnFD, &base->readFDS);
-		FD_SET(ccnFD, &base->errorFDS);
-		base->fdLen = ccnFD+1;
+		FD_SET(ndnFD, &base->readFDS);
+		FD_SET(ndnFD, &base->errorFDS);
+		base->fdLen = ndnFD+1;
 		SH_DoSelect(base);
-		int ccnReady = ( FD_ISSET(ccnFD, &base->readFDS)
-						| FD_ISSET(ccnFD, &base->errorFDS));
+		int ndnReady = ( FD_ISSET(ndnFD, &base->readFDS)
+						| FD_ISSET(ndnFD, &base->errorFDS));
 		if (lastChanges != lagChanges && md->debug)
 			ShowStats(md);
 		// scan the requests, looking for reads that were done
@@ -2028,12 +2031,12 @@ MainLoop(MainData md) {
 			nr = next;
 		}
 		
-		if (ccnReady) {
-			// if there are CCN interests, go get them
-			FD_CLR(ccnFD, &base->readFDS);
-			FD_CLR(ccnFD, &base->errorFDS);
-			ccn_run(md->ccn, 0);
-			// now all of the CCN callbacks should have finished
+		if (ndnReady) {
+			// if there are NDN interests, go get them
+			FD_CLR(ndnFD, &base->readFDS);
+			FD_CLR(ndnFD, &base->errorFDS);
+			ndn_run(md->ndn, 0);
+			// now all of the NDN callbacks should have finished
 		}
 		
 		uint64_t now = GetCurrentTime();
@@ -2066,10 +2069,10 @@ MainLoop(MainData md) {
 int
 main(int argc, char **argv) {
     char *progname = argv[0];
-	struct ccn *h = ccn_create();
-	int connRes = ccn_connect(h, NULL);
+	struct ndn *h = ndn_create();
+	int connRes = ndn_connect(h, NULL);
 	if (connRes < 0) {
-		return retErr("ccn_connect failed");
+		return retErr("ndn_connect failed");
 	}
 	int status = 0;
 	MainData md = NewMainData(h);
@@ -2081,7 +2084,7 @@ main(int argc, char **argv) {
 	md->maxBusySameHost = 4;
 	md->keepAliveDefault = KeepAliveDefault;
 	md->progname = progname;
-	md->ccnRoot = "TestCCN";
+	md->ndnRoot = "TestNDN";
 	
 	int i = 1;
 	for (; i <= argc; i++) {
@@ -2092,10 +2095,10 @@ main(int argc, char **argv) {
 				i++;
 				arg = argv[i];
 				md->fsRoot = arg;
-			} else if (strcasecmp(arg, "-ccnRoot") == 0) {
+			} else if (strcasecmp(arg, "-ndnRoot") == 0) {
 				i++;
 				arg = argv[i];
-				md->ccnRoot = arg;
+				md->ndnRoot = arg;
 			} else if (strcasecmp(arg, "-noDebug") == 0) {
 				md->debug = 0;
 			} else if (strcasecmp(arg, "-absTime") == 0) {
@@ -2112,7 +2115,7 @@ main(int argc, char **argv) {
 				md->maxBusySameHost = n;
 			} else {
 				fprintf(stdout, "** bad arg: %s\n", arg);
-                fprintf(stdout, "Usage: %s -fsRoot <root> -ccnRoot <uri> -noDebug -absTime -fanOut <n>\n", argv[0]);
+                fprintf(stdout, "Usage: %s -fsRoot <root> -ndnRoot <uri> -noDebug -absTime -fanOut <n>\n", argv[0]);
 				return -1;
 			}
 		}
@@ -2125,7 +2128,7 @@ main(int argc, char **argv) {
 		status = MainLoop(md);
     
 	md = CloseMainData(md);
-	ccn_disconnect(h);
-	ccn_destroy(&h);
+	ndn_disconnect(h);
+	ndn_destroy(&h);
 	exit(status);
 }

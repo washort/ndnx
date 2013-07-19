@@ -3,9 +3,9 @@
 \tolerance=10000
 
 \renewcommand{\paragraph}[1]{\medskip\noindent{\bf{#1}}}
-\newcommand{\ccnxpath}[1] {\medskip\noindent{\tt{#1}}}
+\newcommand{\ndnxpath}[1] {\medskip\noindent{\tt{#1}}}
 
-\def \Obj {{\textbf{O}}}        % ccnx object
+\def \Obj {{\textbf{O}}}        % ndnx object
 \def \Ko {{\textbf{K}_O}}       % Encryption key for object O
 \def \Kc {{\textbf{K}_c}}       % Content key
 \def \KDF {{\textbf{KDF}}}      % Key derivation function
@@ -25,40 +25,40 @@
 \label{sec:introduction}
 
 This document describes the current support for encryption and access
-control in CCNx.  It begins, for reference and convenience, with the
-documentation of signing and signature formats used by CCNx.
+control in NDNx.  It begins, for reference and convenience, with the
+documentation of signing and signature formats used by NDNx.
 It then presents a description of the content encryption and access control
-mechanisms provided by the CCNx Java library.
+mechanisms provided by the NDNx Java library.
 
 Content encryption can be performed using symmetric keys managed by an
 application in any way it chooses, or can be used together with a key
 distribution scheme to automatically manage encryption keys for
 content. The most general notion of a key distribution scheme for
 content protection is an encryption-based access control scheme;
-CCNx's general architecture for defining and managing encryption-based
+NDNx's general architecture for defining and managing encryption-based
 access control schemes is described in
 section~\ref{sec:AccessControl}. Implementing any key distribution
 scheme requires the ability to wrap keys -- encrypt keys in other
-keys. The default key wrapping mechanisms present in CCNx are
+keys. The default key wrapping mechanisms present in NDNx are
 described in section~\ref{sec:KeyWrapping}. We can also use key
 derivation to turn one key into many different keys, used to protect
-multiple pieces of content.  CCNx's example access control scheme uses
+multiple pieces of content.  NDNx's example access control scheme uses
 a generic key derivation algorithm, which is also available for more
 general use. This algorithm is defined in
 section~\ref{sec:KeyDerivation}. Finally, we can gather up these
 individual components -- encryption, key wrapping, key derivation, and
 put them together to define new access control or key distribution
-schemes that are useful for various application scenarios. CCNx
+schemes that are useful for various application scenarios. NDNx
 contains an example of one such scheme; a scheme for encryption-based
 access control providing (eventually) many of the features of standard
-file system access control, and implemented using the CCNx pluggable
+file system access control, and implemented using the NDNx pluggable
 access control framework. This scheme is described in
 section~\ref{sec:GroupBasedAccessControl}.
 
 \section{Signing}
 \label{sec:Signing}
 
-A ContentObject in CCNx consists of:
+A ContentObject in NDNx consists of:
 
 \begin{verbatim}
 ContentObject ::= Signature
@@ -68,7 +68,7 @@ ContentObject ::= Signature
 \end{verbatim}
 
 The {\tt Signature}, described below, is computed over the
-concatenated ccnb binary encoding of the {\tt Name}, {\tt SignedInfo}
+concatenated ndnb binary encoding of the {\tt Name}, {\tt SignedInfo}
 and {\tt Content} components of the {\tt ContentObject}, with all of
 their start and end tags, but without the start or end tag of the {\tt
   ContentObject} itself, or any component of the {\tt Signature}. This
@@ -155,7 +155,7 @@ specification of signature algorithm).
 
 \subsection{Signature Generation}
 
-Signature generation in CCNx takes one of two forms: either individual
+Signature generation in NDNx takes one of two forms: either individual
 blocks are individually digitally signed with a standard public key
 signature algorithm, or multiple blocks are signed at once using an
 aggregated signature.
@@ -216,7 +216,7 @@ that it was signed as part of the set by the designated public key,
 and that it has not been altered since (up to the security of the
 cryptographic algorithms used).
 
-The CCNx standard library currently implements a single aggregated
+The NDNx standard library currently implements a single aggregated
 signature algorithm, using Merkle hash trees. However, the intent is
 to make the aggregated, or bulk signature implementation sufficiently
 parameterizable that other algorithms (for experimental or production
@@ -238,7 +238,7 @@ able to reuse cached verification data.)
 \subsubsection{Merkle Hash Tree Aggregated Signatures}
 
 We describe here the aggregated signature algorithm implemented in the
-CCNx library. Some of the design elements used in this algorithm were
+NDNx library. Some of the design elements used in this algorithm were
 selected to maximize overlap with the standard signing implementation,
 and would be good common elements to use for any aggregated signature
 implementation. Additional details of the implementation can be seen
@@ -263,13 +263,13 @@ signed. Assuming the security of the cryptographic digest algorithm
 used to compute the tree, this verifies the content and position of
 the leaf in the tree.
 
-CCNx uses binary Merkle hash trees, with a parameterizable digest
+NDNx uses binary Merkle hash trees, with a parameterizable digest
 algorithm used to compute the leaf and interior (node) digests. Given
 a set of 2 or more {\tt ContentObjects}, the leaf digest of each of
 those {\tt ContentObjects} is computed using the same method used to
 compute an individual signature over a single {\tt ContentObject}. In
 other words, each leaf is represented by the cryptographic digest of
-the concatenated ccnb binary encodings of its contained {\tt Name},
+the concatenated ndnb binary encodings of its contained {\tt Name},
 {\tt SignedInfo} and {\tt Content} fields. The node (interior) digests
 of the tree are computed as described above: as the digest of the
 concatenation of the two children of the node to be computed. If that
@@ -284,7 +284,7 @@ could just wrap it up in some PKCS\#1 padding and sign it with our
 private key. But there are basically no crypto software packages that
 provide signature primitives that take already-digested data and just
 do the padding and encryption, and so we would be asking anyone
-attempting to implement CCNx MHT signing (including ourselves) to
+attempting to implement NDNx MHT signing (including ourselves) to
 re-implement a number of signature algorithms. We might also want to
 sign with a key that does not support the digest algorithm we used to
 compute the root (for example, DSA). So we take the slightly more
@@ -337,7 +337,7 @@ that specifies both that this is a Merkle path, and the component
 digest algorithm used to compute the leaf and interior node
 digests. The OCTET STRING of that {\tt DigestInfo} contains the
 DER-encoded {\tt MerklePath} for this leaf. OIDs for initial MHT
-algorithms are below. The default for the CCNx library is SHA256MHT.
+algorithms are below. The default for the NDNx library is SHA256MHT.
 
 \begin{verbatim}
 SHA-1-Merkle-Hash-Tree ::= 1.2.840.113550.11.1.2.1  
@@ -356,7 +356,7 @@ standard, segmented content, under a symmetric key. It relies on the
 can be performed using keys managed by an application in any way it
 chooses, or can be used together with a key distribution scheme to
 automatically manage encryption keys for content. Note that the current
-CCNx release supports only counter (CTR) mode; support for CBC mode
+NDNx release supports only counter (CTR) mode; support for CBC mode
 is in progress.
 
 \subsection{Goals}
@@ -378,7 +378,7 @@ The goals of this encryption specification are, in order of importance:
   structures to manage decryption of that data. This does not preclude
   segmentation-opaque approaches to encryption, such as applications
   that encrypt their data completely at the application level and then
-  add it to CCNx. Such approaches will just require more sophisticated
+  add it to NDNx. Such approaches will just require more sophisticated
   application-level machinery to allow completely random access to the
   data.
 \item space efficiency: we use algorithms without length expansion
@@ -392,7 +392,7 @@ The goals of this encryption specification are, in order of importance:
   their own preferred algorithms when necessary. Ideally we want to
   enable this without requiring those applications to lose the
   benefits of the tight integration of encryption with efficient
-  low-level networking code. The advantage of CCNx is that encryption
+  low-level networking code. The advantage of NDNx is that encryption
   algorithms must only be agreed on between content producers and
   consumers, removing the requirement that all potential communication
   partners agree on the universe of available algorithms.
@@ -422,7 +422,7 @@ segments.
 
 \subsection{Supported Algorithms: AES-CTR and AES-CBC}
 
-The default algorithm for encryption of CCNx content is AES in counter
+The default algorithm for encryption of NDNx content is AES in counter
 mode (AES-CTR). Counter mode is in effect a stream cipher: it
 generates a stream of encrypted bytes (a key stream), which is then
 XORed with the data to produce the ciphertext. Its advantage is that
@@ -436,7 +436,7 @@ decrypted has been received. Encryption and decryption use exactly the
 same operations. AES-CTR is a malleable mode of encryption (if you
 know the plaintext, you can easily alter unauthenticated ciphertext to
 contain any plaintext you want) and so it must be used with
-authentication. However, this is not a problem as all CCNx data is
+authentication. However, this is not a problem as all NDNx data is
 authenticated. The key stream is generated by encrypting sequential
 values of an incrementing counter using the underlying cipher. As this
 is a stream cipher, it is imperative that no key stream segment
@@ -588,8 +588,8 @@ separately from the {\tt ContentObject}; for now we store a copy of
 the content inside the {\tt ContentObject} object itself.) So that is
 the one copy we can't avoid.
 
-The CCNSegmenter takes content stored in buffers specified by its
-caller (in general a stream with internal buffers, or a CCNWriter
+The NDNSegmenter takes content stored in buffers specified by its
+caller (in general a stream with internal buffers, or a NDNWriter
 which takes a buffer from a higher-level user directly; network
 objects use streams for their output so reduce to a pass-through
 version of that case where there is no standing buffer, save perhaps
@@ -618,21 +618,21 @@ that might incur length expansion.
 \newpage
 
 
-\section{Access Control in CCNx}
+\section{Access Control in NDNx}
 \label{sec:AccessControl}
 
-CCNx is beginning to provide a general framework for ``plugging'' in
+NDNx is beginning to provide a general framework for ``plugging'' in
 access control schemes -- schemes for automatically distributing
 encryption keys over content. In this section we describe the
 high-level functionality available to support such schemes, and in
 section~\ref{sec:GroupBasedAccessControl} below we describe one such
-scheme currently supported by CCNx.
+scheme currently supported by NDNx.
 
 \subsection{Access Control Model}
 \label{sec:model}
 
 Our initial approach to making it easy to implement new access control and/
-or key distribution models in CCNx is to organize access control around
+or key distribution models in NDNx is to organize access control around
 the concepts of ``namespaces'' -- subtrees of the content tree rooted
 at some particular node $n$, where the entire subtree's content is
 controlled according to some particular access control scheme.\footnote{
@@ -648,7 +648,7 @@ We provide some generic mechanisms to make it easy to associate an
 access control scheme with a namespace, and to use that ``scheme'' to
 provide keys to encrypt and decrypt content automatically as that
 content is read. This automatic key creation and retrieval
-functionality is currently supported by the CCNx Java library, for
+functionality is currently supported by the NDNx Java library, for
 reading and writing content with the io streams and their subclasses,
 and the network objects. (Encryption/decryption keys can also be explicitly
 provided and this automated process avoided, when desired.)
@@ -788,8 +788,8 @@ caching). This puts steep minimum performance bound on writes in the
 absence of access control, as they must time out looking for policy
 markers.
 
-As the access control support in CCN is still relatively early
-in its development, and the predominant use of CCN is for pilot
+As the access control support in NDN is still relatively early
+in its development, and the predominant use of NDN is for pilot
 applications without encryption-based access control, we have currently
 disabled the automatic search functionality. Applications wishing
 to use access control must arrange to explicitly load access control
@@ -818,7 +818,7 @@ derivation, see section~\ref{sec:KeyDerivation}) that are then used to
 encrypt content or wrap keys for nodes at or below this one in the
 name tree.
 
-Such wrapped keys are stored in standard CCNx content blocks marked as
+Such wrapped keys are stored in standard NDNx content blocks marked as
 type DATA. The absence of keys (signalling that they may be somewhere
 else) will be marked with blocks of type GONE, and blocks of type LINK
 may be used by higher level protocols to refer to wrapped keys at
@@ -915,7 +915,7 @@ be specified in the clear if need be, and the standard key wrap
 routines (which tend not to take associated data to wrap, even if the
 specification allows it) to be used.
 
-We represent wrapped keys as ccnb-encoded XML objects. 
+We represent wrapped keys as ndnb-encoded XML objects. 
 
 \newpage
 
@@ -941,31 +941,31 @@ to be stored explicitly) but unpredictable IV/counter source material,
 and key diversity, protecting a non-security savvy programmer from
 shooting themselves in the foot by reusing keys.
 
-Taken together with a high-level mechanism for mapping keys onto CCNx
-namespaces, such as CCNAccessControl, this provides an efficient set
+Taken together with a high-level mechanism for mapping keys onto NDNx
+namespaces, such as NDNAccessControl, this provides an efficient set
 of mechanisms for encryption-mediated access control of content.
 
 \subsection{Specification}
 
 A cohort of objects in this sense is usually defined as a
-namespace. For example, given a file or other piece of CCNx content,
-$\ccnxpath{/bigco/divisions/finance/report.xls}$, we can expect to see
+namespace. For example, given a file or other piece of NDNx content,
+$\ndnxpath{/bigco/divisions/finance/report.xls}$, we can expect to see
 that high-level (user-oriented) content name act as the root of a
 content subtree. That subtree will contain a number of versions of the
 file, e.g.:
 \begin{flushleft}
-  $\ccnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6W\%7De\%DB}$ \\ $\ccnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B}$
+  $\ndnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6W\%7De\%DB}$ \\ $\ndnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B}$
 \end{flushleft}
 Those versions will have associated metadata, e.g.:
 \begin{flushleft}
-  $\ccnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\_meta\_/STAT\_INFO}$ \\ $\ccnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\_meta\_/AUTHOR}$
+  $\ndnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\_meta\_/STAT\_INFO}$ \\ $\ndnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\_meta\_/AUTHOR}$
 \end{flushleft}
 as defined in the MetadataProfile. Those versions and metadata items
 will have content associated with them (and the metadata items may
 themselves have versions). If that content is large enough, it will be
 broken into individual segments such as:
 \begin{flushleft}
-  $\ccnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\%F8}$ \\ $\ccnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\%F801}$
+  $\ndnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\%F8}$ \\ $\ndnxpath{/bigco/divisions/finance/report.xls/\%FD\%12\%05\%E6bE\%E8\%8B/\%F801}$
 \end{flushleft}
 Let $\Kc$ denote a content key associated with a particular version of
 a file and its intrinsic metadata. Our goal is that the object key
@@ -984,7 +984,7 @@ where $\mbox{Label}$ indicates the function of this key,
 $\mbox{Data}_{\Obj}$ is a set of auxiliary data specific to $\Obj$,
 and $h$ is the desired total length of $\Ko$ and $\IV_{\Obj}$ in bits.
 
-We define $\mbox{Data}_{\Obj}$ as the concatenation of the ccnb
+We define $\mbox{Data}_{\Obj}$ as the concatenation of the ndnb
 encoding of the name of $\Obj$, prior to segmentation (so the prefix
 of the name of any specific block of $\Obj$ prior to segmentation
 information and implicit content digest), and the PublisherID of the
@@ -1033,7 +1033,7 @@ follows:
 \item Return $\Ko || \IV_{\Obj}$ as the leftmost $\ell$ bits of $\mbox{Result}(n)$. 
 \end{enumerate}
 
-In our CCNx implementation, the pseudo-random function $\PRF$ is
+In our NDNx implementation, the pseudo-random function $\PRF$ is
 specified to be HMAC-SHA256. An alternative would be to use CMAC, as
 it removes the dependency on a message digest algorithm and should be
 equivalent in speed, or even better the faster Rogaway-Shrimpton
@@ -1061,7 +1061,7 @@ wrap or derive other keys. In this case, the length of $\IV_{\Obj}$ is
 \label{sec:GroupBasedAccessControl}
 
 We describe a scheme for achieving group-based access control by
-encryption. Although our description is in the context of the CCNx
+encryption. Although our description is in the context of the NDNx
 naming hierarchy, our scheme, in fact, applies to general hierarchies
 of named content.
 
@@ -1079,7 +1079,7 @@ lower level of the content hiearchy (e.g. /test/foo).
 \subsection{Overview}
 
 We support a simplified access control model for nodes in a hierarchy
-of named content. This could be CCNx content or standard file system
+of named content. This could be NDNx content or standard file system
 content. Our model supports a notion of named groups composed of users
 and other groups, and grants of access can be made to either such
 groups, or directly to individual users. Publicly readable data is
@@ -1097,7 +1097,7 @@ change the permission, you can always add yourself to the list of
 writers.
 
 We specify access rights, or access control lists (ACLs) at nodes of
-the name tree. In the CCNx name tree, all nodes, including interior
+the name tree. In the NDNx name tree, all nodes, including interior
 nodes, may contain content. In theory, we can support ACLs for a piece
 of content, or a specific version of the content. However, we do not
 support ACLs at the granularity of individual content segments,
@@ -1153,7 +1153,7 @@ context of those applications.
 In distributed environments, content deletion or revoking access to
 old content is not always possible. In particular, previous rights
 holders may have cached a copy of the old content already. For this
-reason, in CCNx, we cannot guarantee clean up of old
+reason, in NDNx, we cannot guarantee clean up of old
 contents. However, in cooperative environments (e.g., within a
 corporation), we support cooperative deletion -- where you can ask
 people to delete things for you, and hope that they will cooperate and
@@ -1170,7 +1170,7 @@ access data behind a firewall.
 
 The choice to support only lazy revocation also means we never have to
 re-encrypt data; cooperative deletion is achieved by deletion of
-keys. Re-encryption (essentially re-publication) of CCNx data is
+keys. Re-encryption (essentially re-publication) of NDNx data is
 possible, but changes the semantics of that data, as the publisher
 that signs the re-encryption may not be the same publisher that signed
 the original data.
@@ -1257,13 +1257,13 @@ ACL of the root node.
 To change the access rights associated with some subtree of this
 access-controlled tree from those specified for the root node, a user
 associates an ACL with that subtree. For example, if the root node
-$\ccnxpath{/}$ were marked as access controlled, with a default ACL,
+$\ndnxpath{/}$ were marked as access controlled, with a default ACL,
 to attach different access rights to a subtree rooted at
-$\ccnxpath{/project/secret}$, we would attach an ACL to
-$\ccnxpath{/project/secret}$ specifying those rights. The root node
-$\ccnxpath{/}$, and all of its subtrees other than
-$\ccnxpath{/project/secret}$ would still be controlled by the root ACL
-associated with $\ccnxpath{/}$.
+$\ndnxpath{/project/secret}$, we would attach an ACL to
+$\ndnxpath{/project/secret}$ specifying those rights. The root node
+$\ndnxpath{/}$, and all of its subtrees other than
+$\ndnxpath{/project/secret}$ would still be controlled by the root ACL
+associated with $\ndnxpath{/}$.
 
 To effect read access, we associate a node key, $\NK$ with each node
 $\N$ that has an ACL. That node key is used to derive the keys used to
@@ -1344,7 +1344,7 @@ schemes on the cost of key updates as access control settings change.
 
 Data keys, $\DK$ are used to encrypt individual ``files'' or
 content. In a standard file system, they are used for file-level
-encryption. In CCNx, they are used to derive the keys for a family of
+encryption. In NDNx, they are used to derive the keys for a family of
 data blocks. In general, data keys are stored at the level of a
 version of a file, and may cover metadata associated with that version
 as well as the file data itself. To do this securely, we use the
@@ -1593,7 +1593,7 @@ Enforcement of write/manage rights is not yet implemented.
 
 \subsubsection{Group-Related Rights}
 
-In CCNx, groups are stored as special nodes in the name
+In NDNx, groups are stored as special nodes in the name
 tree. Therefore, the ability to modify group membership translates to
 the write right for the content node corresponding to the
 group. Similarly, ``group management right" -- the ability to modify
@@ -1607,13 +1607,13 @@ Enforcement of write control over group membership is not yet implemented.
 We need to generate efficient data representations for access
 control-related items that allow retrieval and update of necessary
 data in a minimum number of round-trips and packets. We have
-implemented a prototype of this access control scheme in the CCNx Java
+implemented a prototype of this access control scheme in the NDNx Java
 library (it will be ported to C when stable). We describe in this
 section the implementation of both the overall access control
 framework (section~\ref{sec:model}) and the particular group-based
 access control scheme we have implemented using it
 (section~\ref{sec:GroupBasedAccessControl}). Code can be found in the
-{\tt org.ccnx.ccn.profiles.security.access} package. Most operations
+{\tt org.ndnx.ndn.profiles.security.access} package. Most operations
 are mediated by {\tt GroupAccessControlManager}, the group-based
 access control-specific subclass of {\tt AccessControlManager} (see
 section~\ref{sec:AccessControl}).
@@ -1638,16 +1638,16 @@ namespace root and the variable group or user name, and the ``suffix''
 -- the portion of the name (if any) between the individual group or
 user name and the actual encryption public key of that group or
 user. For example, if we define that the namespace
-$\ccnxpath{/bigco/finance/}$ is to be protected using group-based
+$\ndnxpath{/bigco/finance/}$ is to be protected using group-based
 access control, we might specify prefix of a {\tt ParameterizedName}
 for group definition of ``Groups'', meaning that groups are defined
-under the prefix $\ccnxpath{/bigco/finance/Groups}$ --
-e.g. $\ccnxpath{/bigco/finance/Groups/Managers}$,
-$\ccnxpath{/bigco/finance/Groups/Accountants}$, and so on. If the
+under the prefix $\ndnxpath{/bigco/finance/Groups}$ --
+e.g. $\ndnxpath{/bigco/finance/Groups/Managers}$,
+$\ndnxpath{/bigco/finance/Groups/Accountants}$, and so on. If the
 policy also specifies a suffix for that group namespace of
 ``EncryptionKey'', then the actual public key of those groups would be
-stored at $\ccnxpath{/bigco/finance/Groups/Managers/EncryptionKey}$
-and $\ccnxpath{/bigco/finance/Groups/Accountants/EncryptionKey}$, each
+stored at $\ndnxpath{/bigco/finance/Groups/Managers/EncryptionKey}$
+and $\ndnxpath{/bigco/finance/Groups/Accountants/EncryptionKey}$, each
 followed by a version. If no such parameterized names are given to control
 the locations at which group and user keys are expected to be published,
 they are placed at the default locations mentioned below.
@@ -1690,20 +1690,20 @@ namespace of $N$; a group defined to contain members from namespaces
 $A$, $B$ and $C$ all of which are in some sense ``members'' of a
 shared namespace $D$ is likely best defined in $D$. However, such
 policies are specific to the set of use cases operating for particular
-classes of content, and as such are not prescribed by the CCNx
+classes of content, and as such are not prescribed by the NDNx
 library.
 
 \subsection{User Keys}
 
 We identify users in our access control system by public keys. These
 public keys may evolve over time and can be versioned. They can be
-associated with a friendly name either by being published under a CCNx
+associated with a friendly name either by being published under a NDNx
 from which software constructs friendly name, or through a trust
 management infrastructure that allows users to associate names with
 keys, as in a Simple Distributed Security Infrastructure (SDSI).
 
 In our implementation, we support an open universe of users -- you can
-refer to any user's public key (as a CCNx Name) in a group membership
+refer to any user's public key (as a NDNx Name) in a group membership
 specification. For convenience, we provide a {\bf user namespace} -- a
 location under which users can write (or link, but we'll start out
 with writing) their public keys. This namespace can be a corporation's
@@ -1724,9 +1724,9 @@ parameter; software wishing to offer the ability to list available
 users will publish a link to each participating user's key in this
 namespace. If unspecified, it defaults to:
 
-\ccnxpath{<protected namespace root>/Users/}
+\ndnxpath{<protected namespace root>/Users/}
 
-Where \ccnxpath{<protected namespace root>} is the root of the
+Where \ndnxpath{<protected namespace root>} is the root of the
 namespace which is access controlled. If available, a namespace policy
 marker stored at this root can point to an alternate user (and group)
 namespace.
@@ -1734,7 +1734,7 @@ namespace.
 The user's public key is stored under the following. Its latest
 version is the up-to-date public key of that user.
 
-\ccnxpath{<protected namespace root>/Users/<username>}\\
+\ndnxpath{<protected namespace root>/Users/<username>}\\
 
 For now, we link to user keys using fully-demarcated names or
 publisher identifiers.
@@ -1762,7 +1762,7 @@ namespace targeted for this particular set of protected content. This
 group namespace is given to an AccessControlManager as a parameter. If
 unspecified, it defaults to
 
-\ccnxpath{GROUP\_PREFIX := <protected namespace root>/Groups/}\\
+\ndnxpath{GROUP\_PREFIX := <protected namespace root>/Groups/}\\
 
 It can be specified in the policy marker marking the namespace
 root. It is meant to be publicly visible, and enumerated by software.
@@ -1773,7 +1773,7 @@ root. It is meant to be publicly visible, and enumerated by software.
 Each group is associated with a human-readable ``friendly
 name''. Information associated with that group is stored under:
 
-\ccnxpath{GROUP\_PREFIX := <protected namespace root>/Groups/<Group Friendly Name (UTF-8)>}\\
+\ndnxpath{GROUP\_PREFIX := <protected namespace root>/Groups/<Group Friendly Name (UTF-8)>}\\
 
 Friendly names of group members are obtained by looking at the keys
 pointed to by the group membership list (usually the last component of
@@ -1786,7 +1786,7 @@ or a user-specified name associated with that key).
 A group membership list is represented as a versioned collection,
 where the latest version indicates the current set of members. The
 collection contains links to the keys of the members of the group,
-authenticated using any of the means available to the CCNx
+authenticated using any of the means available to the NDNx
 links. Child groups are specified in the collection using the
 unversioned name of the group (under the same group
 namespace). Without active freshness protection, this is vulnerable to
@@ -1795,7 +1795,7 @@ defend against that well enough for standard levels of threat.
 
 The group membership list is stored under the following name:
 
-\ccnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/Members/<version marker>}\\
+\ndnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/Members/<version marker>}\\
 
 which contains a collection containing a list of members of this
 group, as links pointing to either groups (as /, with optional
@@ -1813,7 +1813,7 @@ SubjectPublicKeyInfo.
 
 A group public key is stored under the following name:
 
-\ccnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/<segmentation>}\\
+\ndnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/<segmentation>}\\
 
 which contains the DER-encoded public key for this version of the
 group membership, as a KEY block (or blocks)
@@ -1839,35 +1839,35 @@ We assume the universe of groups is small, so that each user can scan
 the available groups to determine whether they are a member of any of
 them. For each group they are a member of, they remember the group
 name to look for updates, and retrieve the private key associated with
-the group and cache it. Using CCNx's Interest mechanism, they can
+the group and cache it. Using NDNx's Interest mechanism, they can
 generate interests that will let them know if the group public key is
 ever updated.
 
-\ccnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/PrivateKey}\\
+\ndnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/PrivateKey}\\
 contains the private key for this version of the group membership, as
 a WrappedKey, wrapped under a nonce symmetric key -- the private key
 wrapping key.
 
-\ccnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/keyid:<KeyID>}\\
+\ndnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/keyid:<KeyID>}\\
 contains a set of WrappedKey blocks containing the private key
 wrapping key for this group encrypted under the current public key of
 its members, identified by the key ID of the target public key.
 
-\ccnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/p:<PrincipalName>:<PrincipalVersion>}\\
+\ndnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/p:<PrincipalName>:<PrincipalVersion>}\\
 contains a link from a friendly identifier of the target principal
 (group friendly name or user friendly name as listed in the User or
 Group namespace), and the version identifier (as 12-bit timestamp) of
 their current key (at the time of wrapping), to the wrapped key block
 containing that principal's version of the group wrapping key.
 
-\ccnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/PreviousKey} (optional) \\
+\ndnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/PreviousKey} (optional) \\
 contains a WrappedKey block containing the previous key for this group
 encrypted under the current key for this group. The label of this
 WrappedKey block provides a reference to the version of the group
 where the previous key is stored (to allow chaining backwards through
 multiple previous keys).
 
-\ccnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/SupersedingKey} (optional) \\
+\ndnxpath{<GROUP\_PREFIX>/<Group Friendly Name (UTF-8)>/KEY/<version marker>/SupersedingKey} (optional) \\
 contains a link pointing to the next version of this key (e.g. for
 this group); in a small number of instances this contains a WrappedKey
 block containing this key wrapped in the superseding key.
@@ -1879,12 +1879,12 @@ At a node $\N$ where an ACL is set, we represent the ACL in an access
 subnamespace. This is intended to be a namespace we expect only
 programs, not people, to look into.
 
-\ccnxpath{<N>/\_access\_/ACL/<version marker>}\\
+\ndnxpath{<N>/\_access\_/ACL/<version marker>}\\
 points to a collection containing a version of the ACL information for
 this node. If there was an ACL at a given level but it has been
 deleted, we may store a block at:
 
-\ccnxpath{<N>/\_access\_/ACL/<version marker>}\\
+\ndnxpath{<N>/\_access\_/ACL/<version marker>}\\
 for the latest version of the ACL.
 
 An ACL is stored as a collection, a list of links where the links
@@ -1902,15 +1902,15 @@ MANAGE ::= rw+ (implies read, write)
 
 Each principal is listed on the ACL only once -- as MANAGE rights imply WRITE access, and WRITE access implies READ access, this allows total specification of rights for each named principal.
 
-\ccnxpath{<N>/\_access\_/DK}\\
+\ndnxpath{<N>/\_access\_/DK}\\
 points to the data key used to encrypt the content at this node (the
 data key is stored in the repository).
 
-\ccnxpath{<N>/\_access\_/NK/<version marker>}\\
+\ndnxpath{<N>/\_access\_/NK/<version marker>}\\
 points to a collection containing a version of the node key
 information for this node. If there was a node key (and ACL) at a
 given level but it has been deleted, we store a block at
-\ccnxpath{/\_access\_/NK/} for the latest version of the node
+\ndnxpath{/\_access\_/NK/} for the latest version of the node
 key. Under that version, we store a Superseded link pointing to the
 new node key in force at this node.
 
@@ -1926,21 +1926,21 @@ the group as the group member list for that version, the group public
 key, and the list of WrappedKey blocks for the group private
 key. Similarly, we represent version n of the node key as a name:
 
-\ccnxpath{NK/<version marker>}\\
+\ndnxpath{NK/<version marker>}\\
 under which we store the wrapped keys for that version of the node
 key. When we update the access control list and node key in parallel
 (e.g. when we remove someone from the access control list), we give
 the updated node key and access control list the same version
 identifier.
 
-\ccnxpath{<N>/\_access\_/NK/<version marker>/p:<PrincipalName>:<PrincipalVersion>}\\
+\ndnxpath{<N>/\_access\_/NK/<version marker>/p:<PrincipalName>:<PrincipalVersion>}\\
 contains a link from a friendly identifier of the target principal
 (group friendly name or user friendly name as listed in the User or
 Group namespace), and the version identifier (as 12-bit timestamp) of
 their current key (at the time of wrapping) to the wrapped key block
 containing that principal's encrypted copy of the node key.
 
-\ccnxpath{<N>/\_access\_/NK/<version marker>/keyid:<key\_id>}\\
+\ndnxpath{<N>/\_access\_/NK/<version marker>/keyid:<key\_id>}\\
 contains blocks all making up this version of the node key, each of
 which contains a WrappedKey object targeted for a particular entity on
 the ACL. For now we name them using the key digest under which the
@@ -1949,7 +1949,7 @@ $\NK$ is wrapped.
 \subsection{Reader Operation}
 
 To use this access control scheme, readers must perform a series of
-steps (embodied in the CCNx library, and largely unseen by users).
+steps (embodied in the NDNx library, and largely unseen by users).
 \begin{enumerate}
 \item A reader retrieves a piece of content, and discovers that it is encrypted (marked as type ENCR).
 

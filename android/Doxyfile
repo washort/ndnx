@@ -1,7 +1,10 @@
 # Doxyfile 1.5.6
 #
-# Part of the CCNx Java Library.
+# Part of the NDNx Java Library.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2008-2013 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -19,7 +22,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "CCNx for Android"
+PROJECT_NAME           = "NDNx for Android"
 PROJECT_NUMBER         = 0.7.2
 OUTPUT_DIRECTORY       = ../doc/android
 CREATE_SUBDIRS         = NO
@@ -113,11 +116,11 @@ INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.java *.c ANNOTATIONS
 RECURSIVE              = YES
 EXAMPLE                = 
-EXCLUDE                = CCNx-Android-Services/jni/openssl/
+EXCLUDE                = NDNx-Android-Services/jni/openssl/
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = */gen/* */gen_ant/* \
                          */external/* \
-                         */csrc/ccnd/ccnd* \
+                         */csrc/ndnd/ndnd* \
                          */csrc/cmd/* \
                          */csrc/libexec/* \
                          */csrc/lib/*

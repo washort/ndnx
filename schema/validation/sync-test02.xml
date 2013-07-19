@@ -2,43 +2,43 @@
 <SyncConfigSlice>
   <SyncVersion>20110614</SyncVersion>
   <Name>
-    <Component ccnbencoding="base64Binary">c3luYw==</Component>
+    <Component ndnbencoding="base64Binary">c3luYw==</Component>
     <!--       sync -->
-    <Component ccnbencoding="base64Binary">dGhpcw==</Component>
+    <Component ndnbencoding="base64Binary">dGhpcw==</Component>
     <!--       this -->
   </Name>
   <Name>
-    <Component ccnbencoding="base64Binary">ZXZlcnk=</Component>
+    <Component ndnbencoding="base64Binary">ZXZlcnk=</Component>
     <!--       every -->
-    <Component ccnbencoding="base64Binary">cGxhY2U=</Component>
+    <Component ndnbencoding="base64Binary">cGxhY2U=</Component>
     <!--       place -->
   </Name>
   <SyncConfigSliceList>
     <SyncConfigSliceOp>0</SyncConfigSliceOp>
     <Name>
-      <Component ccnbencoding="base64Binary">/w==</Component>
+      <Component ndnbencoding="base64Binary">/w==</Component>
       <!--       %FF -->
-      <Component ccnbencoding="base64Binary">AA==</Component>
+      <Component ndnbencoding="base64Binary">AA==</Component>
       <!--       %00 -->
     </Name>
     <SyncConfigSliceOp>0</SyncConfigSliceOp>
     <Name>
-      <Component ccnbencoding="base64Binary">/w==</Component>
+      <Component ndnbencoding="base64Binary">/w==</Component>
       <!--       %FF -->
-      <Component ccnbencoding="base64Binary">/w==</Component>
+      <Component ndnbencoding="base64Binary">/w==</Component>
       <!--       %FF -->
-      <Component ccnbencoding="base64Binary">AA==</Component>
+      <Component ndnbencoding="base64Binary">AA==</Component>
       <!--       %00 -->
     </Name>
     <SyncConfigSliceOp>0</SyncConfigSliceOp>
     <Name>
-      <Component ccnbencoding="base64Binary">/w==</Component>
+      <Component ndnbencoding="base64Binary">/w==</Component>
       <!--       %FF -->
-      <Component ccnbencoding="base64Binary">/w==</Component>
+      <Component ndnbencoding="base64Binary">/w==</Component>
       <!--       %FF -->
-      <Component ccnbencoding="base64Binary">/w==</Component>
+      <Component ndnbencoding="base64Binary">/w==</Component>
       <!--       %FF -->
-      <Component ccnbencoding="base64Binary">AA==</Component>
+      <Component ndnbencoding="base64Binary">AA==</Component>
       <!--       %00 -->
     </Name>
   </SyncConfigSliceList>

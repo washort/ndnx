@@ -1,6 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <!--
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2013 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -16,12 +19,12 @@
   -->
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.ccnx</groupId>
-  <artifactId>project-ccnx</artifactId>
+  <groupId>org.ndnx</groupId>
+  <artifactId>project-ndnx</artifactId>
   <version>0.7.2-SNAPSHOT</version><!-- Probably use a plugin to handle versioning -->
   <packaging>pom</packaging>
-  <name>Project CCNx</name>
-  <url>http://ccnx.org</url>
+  <name>Project NDNx</name>
+  <url>http://ndnx.org</url>
   <modules>
       <module>./javasrc</module>
   </modules>

@@ -16,9 +16,9 @@ parser.add_argument('-q', '--quiet', dest='quiet', action='store_true', default=
 
 def clean (name):
     """
-    Remove ccnx:/ and any leading or trailing slashes
+    Remove ndn:/ and any leading or trailing slashes
     """
-    if name.lower ().startswith ("ccnx:"):
+    if name.lower ().startswith ("ndn:"):
         name = name[5:]
     elif name[0] != '/':
         raise NameError ('Not a valid NDN name')

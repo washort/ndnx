@@ -1,8 +1,11 @@
 #!/bin/sh
 # multicast/connectsource
 # 
-# Part of the CCNx distribution.
+# Part of the NDNx distribution.
 #
+# Portions Copyright (C) 2013 Regents of the University of California.
+# 
+# Based on the CCNx C Library by PARC.
 # Copyright (C) 2009 Palo Alto Research Center, Inc.
 #
 # This work is free software; you can redistribute it and/or modify it under
@@ -14,4 +17,4 @@
 #
 . ./settings
 ping -c 1 ${1:-$DATAHOST}
-ccndc add ccnx:/experiments/multicast/DATA udp ${1:-$DATAHOST}
+ndndc add ndn:/experiments/multicast/DATA udp ${1:-$DATAHOST}

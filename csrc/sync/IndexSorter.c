@@ -3,8 +3,11 @@
  *  
  * @file IndexSorter.c
  * 
- * Part of the CCNx C Library.
+ * Part of the NDNx C Library.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2011 Palo Alto Research Center, Inc.
  *
  * This library is free software; you can redistribute it and/or modify it

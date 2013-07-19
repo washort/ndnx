@@ -1,8 +1,11 @@
 /**
  * @file dataresponsetest.c
  *
- * A CCNx command-line utility.
+ * A NDNx command-line utility.
  *
+ * Portions Copyright (C) 2013 Regents of the University of California.
+ * 
+ * Based on the CCNx C Library by PARC.
  * Copyright (C) 2008, 2009, 2011 Palo Alto Research Center, Inc.
  *
  * This work is free software; you can redistribute it and/or modify it under
@@ -23,7 +26,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <ccn/ccn.h>
+#include <ndn/ndn.h>
 
 static struct options {
     int logging;
@@ -38,24 +41,24 @@ struct handlerstate {
         char *filename;
         unsigned char *contents;
         size_t	size;
-        struct ccn_parsed_ContentObject x;
-        struct ccn_indexbuf *components;
+        struct ndn_parsed_ContentObject x;
+        struct ndn_indexbuf *components;
     } *items;
 };
 
-enum ccn_upcall_res interest_handler(struct ccn_closure *selfp,
-                                     enum ccn_upcall_kind,
-                                     struct ccn_upcall_info *info);
+enum ndn_upcall_res interest_handler(struct ndn_closure *selfp,
+                                     enum ndn_upcall_kind,
+                                     struct ndn_upcall_info *info);
 
 int
 main (int argc, char *argv[]) {
-    struct ccn *ccn = NULL;
-    struct ccn_closure *action;
-    struct ccn_charbuf *namebuf = NULL;
-    struct ccn_charbuf *interestnamebuf = NULL;
-    struct ccn_charbuf *interesttemplatebuf = NULL;
-    struct ccn_buf_decoder decoder;
-    struct ccn_buf_decoder *d;
+    struct ndn *ndn = NULL;
+    struct ndn_closure *action;
+    struct ndn_charbuf *namebuf = NULL;
+    struct ndn_charbuf *interestnamebuf = NULL;
+    struct ndn_charbuf *interesttemplatebuf = NULL;
+    struct ndn_buf_decoder decoder;
+    struct ndn_buf_decoder *d;
     struct handlerstate *state;
     char *filename;
     char rawbuf[1024 * 1024];
@@ -63,36 +66,36 @@ main (int argc, char *argv[]) {
     int i, n, res;
     int fd = -1;
 
-    ccn = ccn_create();
-    if (ccn_connect(ccn, NULL) == -1) {
-        perror("ccn_connect");
+    ndn = ndn_create();
+    if (ndn_connect(ndn, NULL) == -1) {
+        perror("ndn_connect");
         exit(1);
     }
     
     state = calloc(1, sizeof(struct handlerstate));
-    action = calloc(1, sizeof(struct ccn_closure));
+    action = calloc(1, sizeof(struct ndn_closure));
     action->p = interest_handler;
 
-    namebuf = ccn_charbuf_create();
+    namebuf = ndn_charbuf_create();
     if (namebuf == NULL) {
-        fprintf(stderr, "ccn_charbuf_create\n");
+        fprintf(stderr, "ndn_charbuf_create\n");
         exit(1);
     }
-    res = ccn_name_init(namebuf);
+    res = ndn_name_init(namebuf);
     if (res < 0) {
-        fprintf(stderr, "ccn_name_init\n");
+        fprintf(stderr, "ndn_name_init\n");
         exit(1);
     }
 
-    interestnamebuf = ccn_charbuf_create();
-    interesttemplatebuf = ccn_charbuf_create();
+    interestnamebuf = ndn_charbuf_create();
+    interesttemplatebuf = ndn_charbuf_create();
     if (interestnamebuf == NULL || interesttemplatebuf == NULL) {
-        fprintf(stderr, "ccn_charbuf_create\n");
+        fprintf(stderr, "ndn_charbuf_create\n");
         exit(1);
     }
-    res = ccn_name_init(interestnamebuf);
+    res = ndn_name_init(interestnamebuf);
     if (res < 0) {
-        fprintf(stderr, "ccn_name_init\n");
+        fprintf(stderr, "ndn_name_init\n");
         exit(1);
     }
 
@@ -126,21 +129,21 @@ main (int argc, char *argv[]) {
             continue;
         }
         
-        d = ccn_buf_decoder_start(&decoder, (unsigned char *)rawbuf, rawlen);
+        d = ndn_buf_decoder_start(&decoder, (unsigned char *)rawbuf, rawlen);
 
-        if (ccn_buf_match_dtag(d, CCN_DTAG_ContentObject)) {
+        if (ndn_buf_match_dtag(d, NDN_DTAG_ContentObject)) {
             state->items = realloc(state->items, (n + 1) * sizeof(*(state->items)));
             if (state->items == NULL) {
                 perror(" - realloc failed");
                 exit(1);
             }
             memset(&(state->items[n]), 0, sizeof(*(state->items)));
-            state->items[n].components = ccn_indexbuf_create();
-            res = ccn_parse_ContentObject((unsigned char *)rawbuf, rawlen, &(state->items[n].x), state->items[n].components);
+            state->items[n].components = ndn_indexbuf_create();
+            res = ndn_parse_ContentObject((unsigned char *)rawbuf, rawlen, &(state->items[n].x), state->items[n].components);
             if (res < 0) {
                 if (options.logging > 0) fprintf(stderr, "Processing %s ", filename);
                 fprintf(stderr, "- skipping: ContentObject error %d\n", res);
-                ccn_indexbuf_destroy(&state->items[n].components);
+                ndn_indexbuf_destroy(&state->items[n].components);
                 continue;
             }
             if (options.logging > 0) fprintf(stderr, "- ok\n");
@@ -149,19 +152,19 @@ main (int argc, char *argv[]) {
             state->items[n].size = rawlen;
             memcpy(state->items[n].contents, rawbuf, rawlen);
             n++;
-        } else if (ccn_buf_match_dtag(d, CCN_DTAG_Interest)) {
-            struct ccn_parsed_interest interest = {0};
+        } else if (ndn_buf_match_dtag(d, NDN_DTAG_Interest)) {
+            struct ndn_parsed_interest interest = {0};
             if (options.nointerest == 0) {
                 size_t name_start;
                 size_t name_size;
                 interestnamebuf->length = 0;
                 interesttemplatebuf->length = 0;
-                res = ccn_parse_interest((unsigned char *)rawbuf, rawlen, &interest, NULL);
-                name_start = interest.offset[CCN_PI_B_Name];
-                name_size = interest.offset[CCN_PI_E_Name] - name_start;
-                ccn_charbuf_append(interestnamebuf, rawbuf + name_start, name_size);
-                ccn_charbuf_append(interesttemplatebuf, rawbuf, rawlen);
-                res = ccn_express_interest(ccn, interestnamebuf, action, interesttemplatebuf);
+                res = ndn_parse_interest((unsigned char *)rawbuf, rawlen, &interest, NULL);
+                name_start = interest.offset[NDN_PI_B_Name];
+                name_size = interest.offset[NDN_PI_E_Name] - name_start;
+                ndn_charbuf_append(interestnamebuf, rawbuf + name_start, name_size);
+                ndn_charbuf_append(interesttemplatebuf, rawbuf, rawlen);
+                res = ndn_express_interest(ndn, interestnamebuf, action, interesttemplatebuf);
             }
         } else {
             if (options.logging == 0) fprintf(stderr, "Processing %s ", filename);
@@ -171,27 +174,27 @@ main (int argc, char *argv[]) {
     state->count = n;
     action->data = state;
 
-    if (ccn_name_init(namebuf) == -1) {
-        fprintf(stderr, "ccn_name_init\n");
+    if (ndn_name_init(namebuf) == -1) {
+        fprintf(stderr, "ndn_name_init\n");
         exit(1);
     }
 
-    res = ccn_set_interest_filter(ccn, namebuf, action);
+    res = ndn_set_interest_filter(ndn, namebuf, action);
     for (;;) {
-        res = ccn_run(ccn, -1);
-        ccn_disconnect(ccn);
+        res = ndn_run(ndn, -1);
+        ndn_disconnect(ndn);
         if (!options.reconnect)
             break;
         sleep(2);
-        ccn_connect(ccn, NULL);
+        ndn_connect(ndn, NULL);
     }
-    ccn_destroy(&ccn);
+    ndn_destroy(&ndn);
     exit(0);
 }
 
 int
-match_components(unsigned char *msg1, struct ccn_indexbuf *comp1,
-                 unsigned char *msg2, struct ccn_indexbuf *comp2) {
+match_components(unsigned char *msg1, struct ndn_indexbuf *comp1,
+                 unsigned char *msg2, struct ndn_indexbuf *comp2) {
     int matched;
     int lc1, lc2;
     unsigned char *c1p, *c2p;
@@ -208,33 +211,33 @@ match_components(unsigned char *msg1, struct ccn_indexbuf *comp1,
     return (matched);
 }
 
-enum ccn_upcall_res
-interest_handler(struct ccn_closure *selfp,
-                 enum ccn_upcall_kind upcall_kind,
-                 struct ccn_upcall_info *info)
+enum ndn_upcall_res
+interest_handler(struct ndn_closure *selfp,
+                 enum ndn_upcall_kind upcall_kind,
+                 struct ndn_upcall_info *info)
 {
     int i, c, mc, match, res;
     struct handlerstateitem item;
     struct handlerstate *state;
-    size_t ccnb_size = 0;
+    size_t ndnb_size = 0;
 
     state = selfp->data;
     switch(upcall_kind) {
-    case CCN_UPCALL_FINAL:
+    case NDN_UPCALL_FINAL:
         fprintf(stderr, "Upcall final\n");
         return (0);
 
-    case CCN_UPCALL_INTEREST_TIMED_OUT:
+    case NDN_UPCALL_INTEREST_TIMED_OUT:
         fprintf(stderr, "refresh\n");
-        return (CCN_UPCALL_RESULT_REEXPRESS);
+        return (NDN_UPCALL_RESULT_REEXPRESS);
         
-    case CCN_UPCALL_CONTENT:
-    case CCN_UPCALL_CONTENT_UNVERIFIED:
-        ccnb_size = info->pco->offset[CCN_PCO_E];
+    case NDN_UPCALL_CONTENT:
+    case NDN_UPCALL_CONTENT_UNVERIFIED:
+        ndnb_size = info->pco->offset[NDN_PCO_E];
         c = state->count;
         for (i = 0; i < c; i++) {
             if (info->content_comps->n == state->items[i].components->n) {
-                mc = match_components((unsigned char *)info->content_ccnb, info->content_comps,
+                mc = match_components((unsigned char *)info->content_ndnb, info->content_comps,
                                   state->items[i].contents, state->items[i].components);
                 if (mc == (info->content_comps->n - 1)) {
                     fprintf(stderr, "Duplicate content\n");
@@ -249,42 +252,42 @@ interest_handler(struct ccn_closure *selfp,
             exit(1);
         }
         memset(&(state->items[c]), 0, sizeof(*(state->items)));
-        state->items[c].components = ccn_indexbuf_create();
+        state->items[c].components = ndn_indexbuf_create();
         /* XXX: probably should not have to do this re-parse of the content object */
-        res = ccn_parse_ContentObject(info->content_ccnb, ccnb_size, &(state->items[c].x), state->items[c].components);
+        res = ndn_parse_ContentObject(info->content_ndnb, ndnb_size, &(state->items[c].x), state->items[c].components);
         if (res < 0) {
             fprintf(stderr, "- skipping: Not a ContentObject\n");
-            ccn_indexbuf_destroy(&state->items[c].components);
+            ndn_indexbuf_destroy(&state->items[c].components);
             return (-1);
         }
         fprintf(stderr, "- ok\n");
         state->items[c].filename = "ephemeral";
-        state->items[c].contents = malloc(ccnb_size);
-        state->items[c].size = ccnb_size;
-        memcpy(state->items[c].contents, info->content_ccnb, ccnb_size);
+        state->items[c].contents = malloc(ndnb_size);
+        state->items[c].size = ndnb_size;
+        memcpy(state->items[c].contents, info->content_ndnb, ndnb_size);
         state->count = c + 1;
         return (0);
 
-    case CCN_UPCALL_CONTENT_BAD:
+    case NDN_UPCALL_CONTENT_BAD:
 	fprintf(stderr, "Content signature verification failed! Discarding.\n");
 	return (-1);
 
-    case CCN_UPCALL_CONSUMED_INTEREST:
+    case NDN_UPCALL_CONSUMED_INTEREST:
         fprintf(stderr, "Upcall consumed interest\n");
         return (-1); /* no data */
 
-    case CCN_UPCALL_INTEREST:
+    case NDN_UPCALL_INTEREST:
         c = state->count;
         for (i = 0; i < c; i++) {
-            match = ccn_content_matches_interest(state->items[i].contents,
+            match = ndn_content_matches_interest(state->items[i].contents,
                                                  state->items[i].size,
                                                  1,
                                                  NULL,
-                                                 info->interest_ccnb,
-                                                 info->pi->offset[CCN_PI_E],
+                                                 info->interest_ndnb,
+                                                 info->pi->offset[NDN_PI_E],
                                                  info->pi);
             if (match) {
-                ccn_put(info->h, state->items[i].contents, state->items[i].size);
+                ndn_put(info->h, state->items[i].contents, state->items[i].size);
                 fprintf(stderr, "Sending %s\n", state->items[i].filename);
                 if (i < c - 1) {
                     item = state->items[i];
@@ -295,8 +298,8 @@ interest_handler(struct ccn_closure *selfp,
             }
         }
         return(0);
-    case CCN_UPCALL_CONTENT_KEYMISSING:
-    case CCN_UPCALL_CONTENT_RAW:
+    case NDN_UPCALL_CONTENT_KEYMISSING:
+    case NDN_UPCALL_CONTENT_RAW:
         /* should not happen */
         return (-1);
     }
