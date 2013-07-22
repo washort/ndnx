@@ -1,9 +1,16 @@
-Content-Centric Networking NDNx Reference Implementation
-========================================================
+Named Data Networking Reference Implementation (NDNx)
+=====================================================
 
 The NDNx reference implementation provides the libraries and components
 required to build and run applications that use and demonstrate the
 basic NDNx protocols for experimental and research purposes.
+
+NDNx is authored by participants in the Named Data Networking research
+project (NDN) described at http://named-data.net/.   It is based on a
+fork of the open source CCNx codebase created by PARC and published at 
+https://github.com/ProjectCCNx. 
+
+-----------------------------------------------------
 
 The protocol specifications and the reference implementation are at an
 early research stage of development, and are released to enable
@@ -404,49 +411,7 @@ in that case you must tell the program what directory to use.
 
 ## 6. Support and contact information ##
 
-Support for NDNx is primarily found on the ndnx.org mailing lists.  There
-are three lists: ndnx-dev@ndnx.org (For Developers), ndnx-users@ndnx.org
-(for Users) and ndnx-interest@ndnx.org (for NEW and Updates).  Find out
-more at:
-    http://www.ndnx.org/subscribe-to-the-mailing-lists/
-
-Live support can be found in realtime on IRC: #ndnx
-
-Please see our website at http://www.ndnx.org.
 
 ## 7. Contributions ##
 
-For developers looking to provide bug fixes, documentation, code samples, or
-new features, we recommend first reviewing our process for contributing code
-online:
-    http://www.ndnx.org/support/contributing-code/
 
-All code contributions and patches will require individuals to sign a
-Contributor Agreement.  Individuals representing an organization should
-first consult with their own legal departments before singing anything.
-Once we have a ratified document, we are free to take in source
-contributions.  We strongly recommend using the Fork feature of Github
-described here:
-    http://help.github.com/fork-a-repo/
-
-When code is ready for review, send a Pull Request, described here:
-    http://help.github.com/send-pull-requests/
-
-This process creates a nice dialogue and fosters transparency in the
-process.
-
-For organizations interested in contributing large bodies of work, we
-recommend contacting the project leads to discuss a Software Grant
-Agreement.
-
-If signing a Contributor Agreement is not possible due to organizational
-or legal restrictions, there are other ways to get involved, including
-contributing interesting code on our WIKI at: https://www.ndnx.org/wiki
-
-## 8. Related Work ##
-
-We are actively interested in promoting and fostering development and
-collaboration within the NDNx Community.  If you have something great to
-share related to NDNx, built on, forked from, or otherwise of interest to
-this Community, please contact us.  We will be looking for ways to publish
-community project via http://www.ndnx.org on our WIKI.
