@@ -15,12 +15,13 @@ This software is released under the GPL and/or LPGL with the
 additional exemption that compiling, linking, and/or using OpenSSL is
 allowed.
 
-Some third-party software is distributed together with the CCNx
+Some third-party software is distributed together with the NDNx
 software.  Please see the file README for notices concerning such
 software.
 
-For more information about CCNx licensing, please visit our website at
-http://www.ccnx.org.
+For more information about NDNx licensing, please visit http://named-data.net. 
+
+For more information about CCNx licensing, please visit http://www.ccnx.org.
 
 The GPL and LGPL licenses are provided below in this file.  For more
 information about these licenses, see http://www.gnu.org/licenses/.

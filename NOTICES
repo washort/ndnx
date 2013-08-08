@@ -10,6 +10,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
 LICENSE for more information.
 
 -------------------------
+PROJECT CCNX
+
+The NDNx project draws significantly from the open source CCNx 
+project by PARC, and follows the same GPLv2 / LGPLv2 license 
+scheme.  The original CCNx code can be obtained at:
+    http://github.com/ProjectCCNx
+
+-------------------------
 CRYPTOGRAPHIC SOFTWARE 
 
 This distribution includes cryptographic software.  The country in
@@ -22,13 +30,14 @@ to see if this is permitted.  See <http://www.wassenaar.org/> for more
 information.  In addition, this software is subject to U.S. export
 laws and regulations.
 
-Any use of information here by you is without recourse to the Palo
-Alto Research Center, Inc. (PARC) and is at your own risk. PARC makes
-NO WARRANTY or representation that the information contained here is
-accurate, current, or complete.  PARC is in no way responsible for any
-damages, whether direct, consequential, incidental, or otherwise,
-suffered by you as a result of using or relying upon such information
-for any purpose.
+Any use of information here by you is without recourse to the Regents
+of the University of California and other contributors, and is at your
+own risk. The Regents of the UC make NO WARRANTY or representation
+that the information contained here is accurate, current, or complete.
+ The Regents of the UC are in no way responsible for any damages,
+whether direct, consequential, incidental, or otherwise, suffered by
+you as a result of using or relying upon such information for any
+purpose.
 
 The U.S. Government Department of Commerce, Bureau of Industry and
 Security (BIS), has classified this software as Export Commodity 
@@ -44,9 +53,6 @@ The included cryptographic software is the Bouncy Castle provider which
 is itself classified under ENDN 5D002 and approved for export under
 License Exception TSU.  It is included in this distribution for the
 convenience of users.
-
-For more information about export control of NDNx software, please see
-the page http://www.ndnx.org/exports
 
 -------------------------
 BOUNCY CASTLE 

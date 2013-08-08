@@ -84,7 +84,7 @@ F. Experimental plugins for vlc (media transport) and wireshark
 
 G. An Android implementation for smartphones.  The Android implementation
    has a service wrapper for ndnd and the repository.  It also has
-   a NDN Chat implementation.
+   an NDN Chat implementation.
 
 Documentation is built from source files of various kinds (using a
 combination of doxygen and asciidoc) BUT the distribution includes pre-built
@@ -411,7 +411,15 @@ in that case you must tell the program what directory to use.
 
 ## 6. Support and contact information ##
 
+For support information, please contact the NDN project PIs at http://named-data.net.
 
 ## 7. Contributions ##
+
+Contributions with compatible license agreements are welcome.  For more information,
+please contact the NDN project PIs at http://named-data.net or issue a pull request 
+on http://github.com/named-data/NDNx. 
+
+
+
 
 
