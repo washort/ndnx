@@ -3,6 +3,7 @@ ndn_xmltondnb.1.html
 ndnacl.1.html
 ndngroup.1.html
 ndnc.1.html
+ndnd-autoconfig.1.html
 ndnd.1.html
 ndndc.1.html
 ndndcontrol.1.html
@@ -21,6 +22,7 @@ ndngetmeta.1.html
 ndnlibtest.1.html
 ndnnamelist.1.html
 ndnrm.1.html
+ndnrpolicyedit.1.html
 ndnseqwriter.1.html
 ndn_repo.1.html
 ndncat.1.html

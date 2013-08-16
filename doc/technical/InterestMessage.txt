@@ -176,14 +176,14 @@ Here is an example of an Interest containing a name prefix with 2
  components.
 
 In the link:URI.html[NDNx URI scheme] the name for this example is
-`ndn:/PARC/%00%01%02`.
+`ndn:/NDN/%00%01%02`.
 
 In XML, the Interest Message is:
 
 ...........................................................
 <Interest>
   <Name>
-    <Component ndnbencoding="base64Binary">UEFSQw==</Component>
+    <Component ndnbencoding="base64Binary">TkRO</Component>
     <Component ndnbencoding="base64Binary">AAEC</Component>
   </Name>
 </Interest>
@@ -192,7 +192,7 @@ or, equivalently,
 ...........................................................
 <Interest>
   <Name>
-    <Component ndnbencoding="text">PARC</Component>
+    <Component ndnbencoding="text">NDN</Component>
     <Component ndnbencoding="base64Binary">AAEC</Component>
   </Name>
 </Interest>
@@ -202,8 +202,8 @@ The link:BinaryEncoding.html[ndnb binary encoding] for this message would appear
 in hexdump form as 
 
 ..............................................................................
-00000000  01 d2 f2 fa a5 50 41 52  43 00 fa 9d 00 01 02 00  |.....PARC.......|
-00000010  00 00                                             |..|
+00000000  01 d2 f2 fa 9d 4e 44 4e  00 fa 9d 00 01 02 00 00  |.....NDN........|
+00000010  00                                                |.|
 ..............................................................................
 
 This is the form that actually appears on the wire.
