@@ -26,30 +26,30 @@ ndn_xmltondnb -w - << 'EOF' > keyfetchdata.ndnb
 <?xml version="1.0" encoding="UTF-8"?>
 <ContentObject>
   <Signature>
-    <SignatureBits ndnbencoding="base64Binary">H3PgCBsmwrNCP23kSgoQeeSdVivcaG0xly35ZEi7CDZRjAJguc2SA0XWTlgsPLBu
-UitKZ3+uyh9BmaUjB/EDM+bTzoz0Td+CnADKYAz/MORLYr9VTjyFqENaXFdnE5Vp
-TEzqUnoIrDIdh7rIXLXE2AkhucB3QEYAfY/TI1sU3zU=</SignatureBits>
+    <SignatureBits ndnbencoding="base64Binary">4HeGcQkknNER9zOt6/4PeTqT+mSw21QtuEFKbvOw6SXRiNzMCg5shJ
+wj0GlfjF+G8Ems1sxrwm1TTtolBBHf64cC/zORxp9dso2Q22VDCCh3iiUbllwez2kvTh6Ova7/nEmCvY2ZrGfz1VariXGWQNNQMgI
+8cvzOgwYw1DMzzKE=</SignatureBits>
   </Signature>
   <Name>
-    <Component ndnbencoding="text">ccnd</Component>
+    <Component ndnbencoding="text">ndnd</Component>
     <Component ndnbencoding="text">test_keyfetch</Component>
     <Component ndnbencoding="base64Binary">/QSghfBVTA==</Component>
     <Component ndnbencoding="base64Binary">+A==</Component>
   </Name>
   <SignedInfo>
-    <PublisherPublicKeyDigest ndnbencoding="base64Binary">18raJi+VnDbQZjSE9Z1UJUjBTA1/BhTDaI1Nrx9yo28=</PublisherPublicKeyDigest>
-    <Timestamp ndnbencoding="base64Binary">BKCF8HuA</Timestamp>
+    <PublisherPublicKeyDigest ndnbencoding="base64Binary">tVBrGro9p3YbD41hpKp+O20VtCb+tb2oI4msp2WjuBw=</PublisherPublicKeyDigest>
+    <Timestamp ndnbencoding="base64Binary">BSDsZgAA</Timestamp>
     <FinalBlockID ndnbencoding="base64Binary">+A==</FinalBlockID>
     <KeyLocator>
       <KeyName>
         <Name>
-          <Component ndnbencoding="text">parc.com</Component>
+          <Component ndnbencoding="text">named-data.net</Component>
           <Component ndnbencoding="text">home</Component>
-          <Component ndnbencoding="text">plass</Component>
+          <Component ndnbencoding="text">default</Component>
           <Component ndnbencoding="text">Key</Component>
-          <Component ndnbencoding="base64Binary">18raJi+VnDbQZjSE9Z1UJUjBTA1/BhTDaI1Nrx9yo28=</Component>
+          <Component ndnbencoding="base64Binary">tVBrGro9p3YbD41hpKp+O20VtCb+tb2oI4msp2WjuBw=</Component>
         </Name>
-        <PublisherPublicKeyDigest ndnbencoding="base64Binary">18raJi+VnDbQZjSE9Z1UJUjBTA1/BhTDaI1Nrx9yo28=</PublisherPublicKeyDigest>
+        <PublisherPublicKeyDigest ndnbencoding="base64Binary">tVBrGro9p3YbD41hpKp+O20VtCb+tb2oI4msp2WjuBw=</PublisherPublicKeyDigest>
       </KeyName>
     </KeyLocator>
   </SignedInfo>
@@ -61,38 +61,37 @@ ndn_xmltondnb -w - << 'EOF' > keyfetchpkey.ndnb
 <?xml version="1.0" encoding="UTF-8"?>
 <ContentObject>
   <Signature>
-    <SignatureBits ndnbencoding="base64Binary">AKE6k54oWcHgr+Yr0yHgrsR60TVzukzZ4YKyIJJ2w+i9fT+U66U/d0/pPvC0ChlP
-3CFHroPMhzUWwLIUC2eNBGgqVK3cXjSnTuWDnhcZ++huha08KxopBTXqVSYQEXFb
-bvcQwKj00Md01XQdJA+UsrZzH3GOM1aHn1SzoC4IQqQ=</SignatureBits>
+    <SignatureBits ndnbencoding="base64Binary">YNqcsci9qnDgf9cT9VU/bS57In14ccsNjJXh8QuIo0bucHmAAJHhnGsuCrrR6
+QRpomgd/P4ZQoiKEF9e+xJK3ERQrWvTRHHMJZDIHi0/E4HTT8Gz4Dgaicu6kY4tGesWQYoLqHZpgl/GuOH+bH1mAC1mBUridpIQOk6OybWnr
+gk=</SignatureBits>
   </Signature>
   <Name>
-    <Component ndnbencoding="text">parc.com</Component>
+    <Component ndnbencoding="text">named-data.net</Component>
     <Component ndnbencoding="text">home</Component>
-    <Component ndnbencoding="text">plass</Component>
+    <Component ndnbencoding="text">default</Component>
     <Component ndnbencoding="text">Key</Component>
-    <Component ndnbencoding="base64Binary">18raJi+VnDbQZjSE9Z1UJUjBTA1/BhTDaI1Nrx9yo28=</Component>
+    <Component ndnbencoding="base64Binary">tVBrGro9p3YbD41hpKp+O20VtCb+tb2oI4msp2WjuBw=</Component>
   </Name>
   <SignedInfo>
-    <PublisherPublicKeyDigest ndnbencoding="base64Binary">18raJi+VnDbQZjSE9Z1UJUjBTA1/BhTDaI1Nrx9yo28=</PublisherPublicKeyDigest>
-    <Timestamp ndnbencoding="base64Binary">BKCF8IvA</Timestamp>
+    <PublisherPublicKeyDigest ndnbencoding="base64Binary">tVBrGro9p3YbD41hpKp+O20VtCb+tb2oI4msp2WjuBw=</PublisherPublicKeyDigest>
+    <Timestamp ndnbencoding="base64Binary">BSDsZgAA</Timestamp>
     <Type ndnbencoding="text">(F?</Type>
     <KeyLocator>
       <KeyName>
         <Name>
-          <Component ndnbencoding="text">parc.com</Component>
+          <Component ndnbencoding="text">named-data.net</Component>
           <Component ndnbencoding="text">home</Component>
-          <Component ndnbencoding="text">plass</Component>
+          <Component ndnbencoding="text">default</Component>
           <Component ndnbencoding="text">Key</Component>
-          <Component ndnbencoding="base64Binary">18raJi+VnDbQZjSE9Z1UJUjBTA1/BhTDaI1Nrx9yo28=</Component>
+          <Component ndnbencoding="base64Binary">tVBrGro9p3YbD41hpKp+O20VtCb+tb2oI4msp2WjuBw=</Component>
         </Name>
-        <PublisherPublicKeyDigest ndnbencoding="base64Binary">18raJi+VnDbQZjSE9Z1UJUjBTA1/BhTDaI1Nrx9yo28=</PublisherPublicKeyDigest>
+        <PublisherPublicKeyDigest ndnbencoding="base64Binary">tVBrGro9p3YbD41hpKp+O20VtCb+tb2oI4msp2WjuBw=</PublisherPublicKeyDigest>
       </KeyName>
     </KeyLocator>
   </SignedInfo>
-  <Content ndnbencoding="base64Binary">MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCi5OJGBGO0O8t73keokEVl4RJC
-hjb1oITo2+AaS8w8jfapmlkeN7U22qgcWZGaKMEMKjjqoR2mDvKj3AbhEZmailXn
-Z3mfVZH6wODy6amzmd92jvZqmF9fvVwijHEO+avhUk9q0xiRGl+CXqyqPVXKa2G/
-dT9ZtpcTlnhdUwLzNwIDAQAB</Content>
+  <Content ndnbencoding="base64Binary">MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDhfTCn2CirG4QLF1QtyvYgev0iHgh
+rKmDRbLf1REi6nz8IvNCZ2yHdFip3nmGqie7lVNOkfeIwvHrFkNUkBnw4mLum9dxDYLhF7aSMvZzxJqcjRF8OGVLXMlp1+vVWFE+amK9xh
+rAnhoW44sCL6ocXG03uWFwYKClbU5XrShd3nwIDAQAB</Content>
 </ContentObject>
 EOF
 
@@ -134,9 +133,9 @@ ndnpeek -c /check/dataresponsetest || SkipTest dataresponsetest not responding
 
 # This is the heart of the test.
 # First, do a vanilla ndnls, which does not attempt to fetch the key.
-ndnls ndn:/ccnd/test_keyfetch > unverified.out
+ndnls ndn:/ndnd/test_keyfetch > unverified.out
 # Next, tell ndnls that it should fetch the key.
-NDN_VERIFY=1 ndnls ndn:/ccnd/test_keyfetch > verified.out
+NDN_VERIFY=1 ndnls ndn:/ndnd/test_keyfetch > verified.out
 
 # Now make sure that we got what we were expecting.
 fgrep '[unverified]' unverified.out || Fail should have gotten unverified data without key
@@ -159,11 +158,11 @@ rm -rf ~/test_key_fetch.ndnx
 test -d ~/x.ndnx || mv ~/.ndnx ~/x.ndnx
 tools/ndn_repo /tmp/test_key_fetch_repo
 echo "Where are my keys?" > /tmp/test_key_fetch.data
-ndnputfile ndn:/ccnd/test_keyfetch /tmp/test_key_fetch.data
+ndnputfile ndn:/ndnd/test_keyfetch /tmp/test_key_fetch.data
 ndn_repo stop
 killall java
 mv ~/.ndnx ~/test_key_fetch.ndnx && mv ~/x.ndnx ~/.ndnx
-ndnpeek ndn:/ccnd/test_keyfetch > keyfetchdata.ndnb
+ndnpeek ndn:/ndnd/test_keyfetch > keyfetchdata.ndnb
 cat ~/test_key_fetch.ndnx/*/*.ndnb > keyfetchpkey.ndnb
 ndndumpnames
 ndndsmoketest kill
