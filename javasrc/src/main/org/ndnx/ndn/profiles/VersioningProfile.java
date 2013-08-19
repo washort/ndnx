@@ -388,8 +388,8 @@ public class VersioningProfile implements NDNProfile {
 	/**
 	 * Finds out if you have a versioned name, and a ContentObject that might have a versioned name which is
 	 * a later version of the given name, even if that CO name might not refer to a segment of the original name.
-	 * For example, given a name /parc/foo.txt/<version1> or /parc/foo.txt/<version1>/<segment>
-	 * and /parc/foo.txt/<version2>/<stuff>, return true, whether <stuff> is a segment marker, a whole
+	 * For example, given a name /ndn/foo.txt/<version1> or /ndn/foo.txt/<version1>/<segment>
+	 * and /ndn/foo.txt/<version2>/<stuff>, return true, whether <stuff> is a segment marker, a whole
 	 * bunch of repo write information, or whatever.
 	 * @param newName Will check to see if this name begins with something which is a later version of previousVersion.
 	 * @param previousVersion The name to compare to, must have a terminal version or be unversioned.

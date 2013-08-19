@@ -38,7 +38,7 @@ public class RepositoryInfoTest {
 
 	private static String CURRENT_VERSION = LogStructRepoStore.CURRENT_VERSION;
 	private static String DEFAULT_LOCAL_NAME = "Repository";
-	private static String DEFAULT_GLOBAL_NAME = "/parc.com/csl/ndn/Repos";
+	private static String DEFAULT_GLOBAL_NAME = "/named-data.net/ndn/Repos";
 	/**
 	 * @throws java.lang.Exception
 	 */

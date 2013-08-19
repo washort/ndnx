@@ -50,7 +50,7 @@ import org.ndnx.ndn.io.content.ContentEncodingException;
  * <br>
  * b) pulled out as metadata rather than baked into the names both to allow this opaqueness and
  *    to deal with the fact that name matching is strictly component-wise ordered (you can't
- *    look for /parc/foo/&#42;/bar for reasons of routing efficiency, except through a slower
+ *    look for /ndn/foo/&#42;/bar for reasons of routing efficiency, except through a slower
  *    search style interaction), and these items want to be matched in any order -- in other
  *    words, sometimes you want to find /obj/timestamp and sometimes /obj/publisher and
  *    you can't decide which should go first in the name.

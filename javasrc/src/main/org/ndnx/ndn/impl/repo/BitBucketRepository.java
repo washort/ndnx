@@ -58,7 +58,7 @@ public class BitBucketRepository extends RepositoryStoreBase {
 
 	public byte[] getRepoInfo(ArrayList<ContentName> names) {
 		try {
-			return (new RepositoryInfo("1.0", "/parc.com/csl/ndn/Repos", "Repository")).encode();
+			return (new RepositoryInfo("1.0", "/named-data.net/ndn/Repos", "Repository")).encode();
 		} catch (Exception e) {}
 		return null;
 	}

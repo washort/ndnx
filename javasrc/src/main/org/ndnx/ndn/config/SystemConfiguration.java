@@ -123,12 +123,12 @@ public class SystemConfiguration {
 	/**
 	 * Property to set debug flags.
 	 */
-	public static final String DEBUG_FLAG_PROPERTY = "com.parc.ndn.DebugFlags";
+	public static final String DEBUG_FLAG_PROPERTY = "net.named-data.ndn.DebugFlags";
 
 	/**
 	 * Property to set directory to dump debug data.
 	 */
-	public static final String DEBUG_DATA_DIRECTORY_PROPERTY = "com.parc.ndn.DebugDataDirectory";
+	public static final String DEBUG_DATA_DIRECTORY_PROPERTY = "net.named-data.ndn.DebugDataDirectory";
 	protected static final String DEFAULT_DEBUG_DATA_DIRECTORY = "./NDN_DEBUG_DATA";
 	public static String DEBUG_DATA_DIRECTORY = null;
 
@@ -309,7 +309,7 @@ public class SystemConfiguration {
 	 * @return
 	 */
 	protected static final String DEFAULT_ENCODING_PROPERTY = 
-		"com.parc.ndn.data.DefaultEncoding";
+		"net.named-data.ndn.data.DefaultEncoding";
 
 	public static final int DEBUG_RADIX = 34;
 	
@@ -705,7 +705,7 @@ public class SystemConfiguration {
 	 * Property to turn off access control flags. Set it to any value and it will turn off
 	 * access control; used for testing.
 	 */
-	public static final String LOGGING_CONFIGURATION_PROPERTY = "com.parc.ndn.LoggingConfiguration";
+	public static final String LOGGING_CONFIGURATION_PROPERTY = "net.named-data.ndn.LoggingConfiguration";
 
 	/**
 	 * Strings of interest to be set in the logging configuration
@@ -790,7 +790,7 @@ public class SystemConfiguration {
 	 * Property to turn off access control flags. Set it to any value and it will turn off
 	 * access control; used for testing.
 	 */
-	public static final String ACCESS_CONTROL_DISABLED_PROPERTY = "com.parc.ndn.DisableAccessControl";
+	public static final String ACCESS_CONTROL_DISABLED_PROPERTY = "net.named-data.ndn.DisableAccessControl";
 
 	/**
 	 * Allow control of access control at the command line.

@@ -39,7 +39,7 @@ import org.junit.Test;
  *
  */
 public class SampleTestRepoOld {
-	static final String base = "/parc.com/csl/ndn/repositories/SampleTestRepo";
+	static final String base = "/named-data.net/ndn/repositories/SampleTestRepo";
 	static final String file_name = "/simon.txt";
 	static final String txt =  "Sample text file from Simon.";
 

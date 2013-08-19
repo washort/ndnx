@@ -97,7 +97,7 @@ public class WrappedKeyTest {
 		wrappingKeyPair = kpg.generateKeyPair();
 		wrappedKeyPair = kpg.generateKeyPair();
 		wrappingKeyID = PublisherID.generatePublicKeyDigest(wrappingKeyPair.getPublic());
-		wrappingKeyName = VersioningProfile.addVersion(ContentName.fromNative("/parc/Users/briggs/KEY"));
+		wrappingKeyName = VersioningProfile.addVersion(ContentName.fromNative("/ndn/Users/briggs/KEY"));
 				
 		kpg = KeyPairGenerator.getInstance("DSA");
         kpg.initialize(1024);

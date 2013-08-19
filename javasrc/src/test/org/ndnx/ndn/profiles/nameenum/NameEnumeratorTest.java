@@ -44,18 +44,18 @@ public class NameEnumeratorTest extends NDNTestBase implements BasicNameEnumerat
 
 	Random rand = new Random();
 
-	String namespaceString = "/parc.com";
+	String namespaceString = "/named-data.net";
 	ContentName namespace;
-	String name1String = "/parc.com/registerTest/name1";
+	String name1String = "/named-data.net/registerTest/name1";
 	ContentName name1;
-	String name2String = "/parc.com/registerTest/name2";
+	String name2String = "/named-data.net/registerTest/name2";
 	ContentName name2;
-	String name2aString = "/parc.com/registerTest/name2/namea";
+	String name2aString = "/named-data.net/registerTest/name2/namea";
 	ContentName name2a;
-	String name1StringDirty = "/parc.com/registerTest/name1TestDirty";
+	String name1StringDirty = "/named-data.net/registerTest/name1TestDirty";
 	ContentName name1Dirty;
 
-	String prefix1String = "/parc.com/registerTest";
+	String prefix1String = "/named-data.net/registerTest";
 	String prefix1StringError = "/park.com/registerTest";
 	ArrayList<ContentName> names;
 	Object namesLock = new Object();

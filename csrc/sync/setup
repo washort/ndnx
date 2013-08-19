@@ -356,7 +356,7 @@ StoreFile () {
 }
 Setup () {
   export SyncTestDebug=1
-  export SyncTestTopo=/parc/sync
+  export SyncTestTopo=/ndn/sync
   export SyncTestNames=simple
   export SyncTestDir=`pwd`/test
   export SyncTestRepos=2

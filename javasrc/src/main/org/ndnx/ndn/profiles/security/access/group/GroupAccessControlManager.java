@@ -448,9 +448,9 @@ public class GroupAccessControlManager extends AccessControlManager {
 		// for each group manager/user namespace, there is a prefix, then a "friendly" name component,
 		// then optionally a postfix that gets tacked on to go from the prefix to the public key
 		// e.g. Alice's key in the user namespace might be:
-		// /parc.com/Users/Alice/Keys/EncryptionKey
-		// where the distinguising prefix would be computed from /parc.com/Users, Alice is the friendly
-		// name, and the rest is stored in the group manager for /parc.com/Users, generated out of the 
+		// /named-data.net/Users/Alice/Keys/EncryptionKey
+		// where the distinguising prefix would be computed from /named-data.net/Users, Alice is the friendly
+		// name, and the rest is stored in the group manager for /named-data.net/Users, generated out of the 
 		// relevant entry in the Roots spec, and just used in a function to go from (distinguishing hash, friendly name)
 		// to key name
 

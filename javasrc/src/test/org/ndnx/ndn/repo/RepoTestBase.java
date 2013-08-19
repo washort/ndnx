@@ -48,7 +48,7 @@ public class RepoTestBase extends LibraryTestBase {
 	protected static String _fileTestDir2;
 	protected static String _fileTestDir3;
 	protected static String _repoName = "TestRepository";
-	protected static String _globalPrefix = "/parc.com/csl/ndn/repositories/" + _repoName;
+	protected static String _globalPrefix = "/named-data.net/ndn/repositories/" + _repoName;
 	protected static File _fileTest;
 	protected static ContentName testprefix = new ContentName("repoTest","pubidtest");
 	protected static ContentName keyprefix = new ContentName(testprefix,"keys");

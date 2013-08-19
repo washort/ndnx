@@ -56,7 +56,7 @@
 	<property name="REPO_ROOT2" value="${testout}/repotest2"/>
 	<property name="REPO_LOCAL" value="TestRepository"/>
 	<property name="REPO_LOCAL_ROOT" value="repotest"/>
-	<property name="REPO_GLOBAL" value="/parc.com/csl/ndn/repositories/TestRepository"/>
+	<property name="REPO_GLOBAL" value="/named-data.net/ndn/repositories/TestRepository"/>
 	<property name="repo2" value="true"/>
 	<property name="USE_KEY_CONFIG_KEY" value="org.ndnx.config.UseKeyConfiguration"/>
 	<property name="USE_KEY_CONFIG_VAL" value="false"/>

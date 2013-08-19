@@ -38,7 +38,7 @@ public class NDNCryptoProvider extends Provider {
 
  	private static final long serialVersionUID = -5805180476448219009L;
  	
-	private static String info = "PARC NDN internal cryptographic provider v0.01";
+	private static String info = "NDN internal cryptographic provider v0.01";
     public static String PROVIDER_NAME = "NDN";
 
     static final DERObjectIdentifier id_aes128_wrapWithPad = new DERObjectIdentifier(NISTObjectIdentifiers.aes + ".8");
@@ -51,7 +51,7 @@ public class NDNCryptoProvider extends Provider {
 	}
 
     private void addAlgorithms() {
-        put("Cipher.AESWRAPWITHPAD", "com.parc.ndn.security.crypto.jce.AESWrapWithPad");
+        put("Cipher.AESWRAPWITHPAD", "net.named-data.ndn.security.crypto.jce.AESWrapWithPad");
          put("Alg.Alias.Cipher." + id_aes128_wrapWithPad, "AESWRAPWITHPAD");
         put("Alg.Alias.Cipher." + id_aes192_wrapWithPad, "AESWRAPWITHPAD");
         put("Alg.Alias.Cipher." + id_aes256_wrapWithPad, "AESWRAPWITHPAD");

@@ -51,7 +51,7 @@ import org.junit.Test;
 @SuppressWarnings("deprecation")
 public class InterestTest extends NDNTestBase {
 	
-	public static String testName = "/test/parc/home/smetters/interestingData.txt/v/5";
+	public static String testName = "/test/ndn/home/smetters/interestingData.txt/v/5";
 	public static ContentName tcn = null;
 	public static PublisherID pubID = null;
 	

@@ -45,7 +45,7 @@ The variable elements of the returned +RepositoryInfo+ object are as follows:
 
 * `RepositoryVersion` is "2.0".
 
-* `GlobalPrefixName` is the Global Prefix (e.g., "/parc.com/csl/ndn/Repos"), which is the name under which the Repository stores its own objects.
+* `GlobalPrefixName` is the Global Prefix (e.g., "/named-data.net/ndn/Repos"), which is the name under which the Repository stores its own objects.
 
 * `LocalName` is "Repository".
 
@@ -85,7 +85,7 @@ If the object is 'not' present, variable elements of the returned +RepositoryInf
 
 * `RepositoryVersion` is "2.0".
 
-* `GlobalPrefixName` is the Global Prefix (e.g., "/parc.com/csl/ndn/Repos"), which is the name under which the Repository stores its own objects.
+* `GlobalPrefixName` is the Global Prefix (e.g., "/named-data.net/ndn/Repos"), which is the name under which the Repository stores its own objects.
 
 * `LocalName` is "Repository".
 
@@ -99,7 +99,7 @@ If the object 'is' present, variable elements of the returned +RepositoryInfo+ o
 
 * `RepositoryVersion` is "2.0".
 
-* `GlobalPrefixName` is the Global Prefix (e.g., "/parc.com/csl/ndn/Repos").
+* `GlobalPrefixName` is the Global Prefix (e.g., "/named-data.net/ndn/Repos").
 
 * `LocalName` is "Repository".
 
@@ -139,7 +139,7 @@ The variable elements of the returned +RepositoryInfo+ object are as follows:
 
 * `RepositoryVersion` is "2.0".
 
-* `GlobalPrefixName` is the Global Prefix (e.g., "/parc.com/csl/ndn/Repos"), which is the name under which the Repository stores its own objects.
+* `GlobalPrefixName` is the Global Prefix (e.g., "/named-data.net/ndn/Repos"), which is the name under which the Repository stores its own objects.
 
 * `LocalName` is "Repository".
 

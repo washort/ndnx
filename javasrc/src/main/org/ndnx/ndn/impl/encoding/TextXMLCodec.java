@@ -42,7 +42,7 @@ import org.ndnx.ndn.protocol.NDNTime;
  */
 public class TextXMLCodec implements XMLCodec {
 
-	public static final String NDN_NAMESPACE = "http://www.parc.com/ndn";
+	public static final String NDN_NAMESPACE = "http://www.named-data.net/ndn";
 	public static final String NDN_PREFIX = "ndn";	
 	public static final String CODEC_NAME = "Text";
 	public static final String BINARY_ATTRIBUTE = "ndnbencoding";

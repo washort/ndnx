@@ -143,7 +143,7 @@ public class ExpandedWrappedKeyTest {
 		wrappingKeyPair = kpg.generateKeyPair();
 		wrappedKeyPair = kpg.generateKeyPair();
 		wrappingKeyID = PublisherID.generatePublicKeyDigest(wrappingKeyPair.getPublic());
-		wrappingKeyName = VersioningProfile.addVersion(ContentName.fromNative("/parc/Users/briggs/KEY"));
+		wrappingKeyName = VersioningProfile.addVersion(ContentName.fromNative("/ndn/Users/briggs/KEY"));
 		
 		ElGamalParameterSpec egp = new ElGamalParameterSpec(new BigInteger(1, pbytes), new BigInteger(1, gbytes));
 		KeyPairGenerator ekpg = KeyPairGenerator.getInstance("ElGamal");

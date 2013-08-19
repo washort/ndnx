@@ -114,7 +114,7 @@ public class ContentObject extends GenericXMLEncodable implements XMLEncodable, 
 		}
 		
 		/* (non-Javadoc)
-		 * @see com.parc.ndn.data.security.ContentVerifier#verifyBlock(com.parc.ndn.data.ContentObject)
+		 * @see net.named-data.ndn.data.security.ContentVerifier#verifyBlock(net.named-data.ndn.data.ContentObject)
 		 */
 		public boolean verify(ContentObject object) {
 			if (null == object)

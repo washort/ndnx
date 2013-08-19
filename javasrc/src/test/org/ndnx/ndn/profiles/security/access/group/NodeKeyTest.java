@@ -47,7 +47,7 @@ public class NodeKeyTest {
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		testPrefix = ContentName.fromNative("/parc/test/content/");
+		testPrefix = ContentName.fromNative("/ndn/test/content/");
 		nodeKeyPrefix = GroupAccessControlProfile.nodeKeyName(testPrefix);
 		nodeKeyPrefix = VersioningProfile.addVersion(nodeKeyPrefix);
 
