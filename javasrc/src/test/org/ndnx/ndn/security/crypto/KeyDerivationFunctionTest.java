@@ -62,7 +62,7 @@ public class KeyDerivationFunctionTest {
 		byte [] ppd = new byte[32];
 		random.nextBytes(ppd);
 		publisher = new PublisherPublicKeyDigest(ppd);
-		testName = ContentName.fromNative("/parc/test/media/NathanAtTheBeach.m4v");
+		testName = ContentName.fromNative("/ndn/test/media/NathanAtTheBeach.m4v");
 		testNameVersion1 = VersioningProfile.addVersion(testName);
 		Thread.sleep(3); // make sure version is different
 		testNameVersion2 = VersioningProfile.addVersion(testName);

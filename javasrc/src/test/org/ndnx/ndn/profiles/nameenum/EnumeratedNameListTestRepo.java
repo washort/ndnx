@@ -57,9 +57,9 @@ public class EnumeratedNameListTestRepo {
 	
 	static Random rand = new Random();
 	
-	static final String directoryString = "/test/parc" + "/directory-";
-	static final String directoryString2 = "/test/parc" + "/directory2-";
-	static final String directoryString3 = "/test/parc" + "/directory3-";
+	static final String directoryString = "/test/ndn" + "/directory-";
+	static final String directoryString2 = "/test/ndn" + "/directory2-";
+	static final String directoryString3 = "/test/ndn" + "/directory3-";
 	static ContentName directory;
 	static ContentName directory2;
 	static ContentName directory3;

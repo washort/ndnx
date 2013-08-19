@@ -58,7 +58,7 @@ import org.ndnx.ndn.protocol.MalformedContentNameStringException;
  * 	<Policy>
  *		<PolicyVersion> 1.5 </PolicyVersion>
  *		<LocalName> TestRepository </LocalName>
- *		<GlobalPrefix> parc.com/csl/ndn/repositories </GlobalPrefix>
+ *		<GlobalPrefix> named-data.net/ndn/repositories </GlobalPrefix>
  *		<Namespace> /testNameSpace </Namespace>
  *		<Namespace> /testNameSpace2 </Namespace>
  * 	</Policy>

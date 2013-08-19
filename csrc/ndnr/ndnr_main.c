@@ -72,7 +72,7 @@ static const char *ndnr_usage_message =
 "      Directory where ndnr data is kept\n"
 "      Defaults to current directory\n"
 "      Ignored in config file\n"
-"    NDNR_GLOBAL_PREFIX=ndn:/parc.com/csl/ndn/Repos\n"
+"    NDNR_GLOBAL_PREFIX=ndn:/named-data.net/ndn/Repos\n"
 "      NDNx URI representing the prefix where data/policy.xml is stored.\n"
 "      Only meaningful if no policy file exists at startup.\n"
 "    NDNR_START_WRITE_SCOPE_LIMIT=3\n"

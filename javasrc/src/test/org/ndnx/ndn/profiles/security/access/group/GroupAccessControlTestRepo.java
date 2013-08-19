@@ -44,7 +44,7 @@ public class GroupAccessControlTestRepo {
 	public static void createAC() throws Exception {
 		// mark the namespace as under access control
     //  ACL acl = new ACL();
-		acName = ContentName.fromNative("/parc.com/ac_repo");
+		acName = ContentName.fromNative("/named-data.net/ac_repo");
 	//	NamespaceManager.Root.create(acName, acl, SaveType.REPOSITORY, NDNHandle.getHandle());
 
 		// create a file in the namespace under access control

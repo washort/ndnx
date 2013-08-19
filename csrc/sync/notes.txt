@@ -27,7 +27,7 @@ export NDNS_DEBUG=INFO
 . functions
 WithNDND 0 gdb ./sync_trax
 
-run -topo /parc/sync -prefix /root/beer -secs 600 >gdb.txt
+run -topo /ndn/sync -prefix /root/beer -secs 600 >gdb.txt
 
 # In Shell 1
 

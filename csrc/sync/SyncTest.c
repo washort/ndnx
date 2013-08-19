@@ -535,7 +535,7 @@ genTestRootRepos(struct SyncTestParms *parms) {
     
     struct SyncNameAccum *filter = SyncAllocNameAccum(4);
     struct ndn_charbuf *clause = ndn_charbuf_create();
-    ndn_name_from_uri(clause, "/PARC");
+    ndn_name_from_uri(clause, "/NDN");
     SyncNameAccumAppend(filter, clause, 0);
     
     struct SyncRootStruct *root = SyncAddRoot(base,
@@ -646,7 +646,7 @@ testRootBasic(struct SyncTestParms *parms) {
     root = testRootCoding(parms, root);
     res = testRootLookup(parms, root,
                          "ndn:/ndn/test/routing/XXX",
-                         "ndn:/ndn/test/repos/PARC/XXX");
+                         "ndn:/ndn/test/repos/NDN/XXX");
     SyncRemRoot(root);
     if (res < 0) return res;
     
@@ -654,7 +654,7 @@ testRootBasic(struct SyncTestParms *parms) {
     root = genTestRootRepos(parms);
     root = testRootCoding(parms, root);
     res = testRootLookup(parms, root,
-                         "ndn:/ndn/test/repos/PARC/XXX",
+                         "ndn:/ndn/test/repos/NDN/XXX",
                          "ndn:/ndn/test/routing/XXX");
     SyncRemRoot(root);
     if (res < 0) {

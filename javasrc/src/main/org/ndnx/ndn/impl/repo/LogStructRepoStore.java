@@ -72,7 +72,7 @@ public class LogStructRepoStore extends RepositoryStoreBase implements Repositor
 		public static final String REPO_IMPORT_DIR = "import";
 
 		private static String DEFAULT_LOCAL_NAME = "Repository";
-		private static String DEFAULT_GLOBAL_NAME = "/parc.com/csl/ndn/Repos";
+		private static String DEFAULT_GLOBAL_NAME = "/named-data.net/ndn/Repos";
 		private static final String VERSION = "version";
 		private static final String REPO_LOCALNAME = "local";
 		private static final String REPO_GLOBALPREFIX = "global";

@@ -66,7 +66,7 @@ public class CollectionTest {
 		name = new ContentName(baseName, subName, document1);
 		name2 = new ContentName(baseName, subName, document2);
 		name3 = new ContentName(baseName, subName, document3);
-		name4 = ContentName.fromURI("/parc/home/briggs/collaborators.txt");
+		name4 = ContentName.fromURI("/ndn/home/briggs/collaborators.txt");
 		ns = new ContentName[]{name,name2,name3,name4};
 		Arrays.fill(contenthash1, (byte)2);
 		Arrays.fill(contenthash2, (byte)4);

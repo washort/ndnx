@@ -21,7 +21,7 @@
 <Policy>
 	<PolicyVersion> 1.5 </PolicyVersion>
 	<LocalName> TestRepository </LocalName>
-	<GlobalPrefix> parc.com/csl/ndn/repositories/TestRepository </GlobalPrefix>
+	<GlobalPrefix> named-data.net/ndn/repositories/TestRepository </GlobalPrefix>
 	<Namespace> /testNameSpace </Namespace>
 	<Namespace> /testNameSpace2 </Namespace>
 </Policy>

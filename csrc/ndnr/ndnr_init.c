@@ -913,7 +913,7 @@ Bail:
  * target to extract the actual policy.
  * If a policy file does not exist a new one is created, with a link to a policy
  * based either on the environment variable NDNR_GLOBAL_PREFIX or the system
- * default value of ndn:/parc.com/csl/ndn/Repos, plus the system defaults for
+ * default value of ndn:/named-data.net/ndn/Repos, plus the system defaults for
  * other fields.
  * This routine must be called after the btree code is initialized and capable
  * of returning content objects.
@@ -1039,7 +1039,7 @@ CreateNewPolicy:
     if (global_prefix != NULL)
         ndnr_msg(ndnr, "NDNR_GLOBAL_PREFIX=%s", global_prefix);
     else 
-        global_prefix = "ndn:/parc.com/csl/ndn/Repos";
+        global_prefix = "ndn:/named-data.net/ndn/Repos";
     policy = ndn_charbuf_create();
     r_proto_policy_append_basic(ndnr, policy, "1.5", "Repository", global_prefix);
     r_proto_policy_append_namespace(ndnr, policy, "/");

@@ -101,17 +101,17 @@ A policy file can most usefully be used to restrict the NDNx namespace(s)
 --
 +
 Here's an example policy file which restricts the namespace backed by the
-     repo to `/parc.com/Users/rasmussen` and `/parc.com/NDNx/documentation` as
+     repo to `/named-data.net/Users/rasmussen` and `/named-data.net/NDNx/documentation` as
      well as the key namespace:
 +
 ...........
      <?xml version="1.0" encoding="UTF-8"?>
      <Policy>
      	<PolicyVersion> 1.5 </PolicyVersion>
-	<LocalName> /ParcRepositories/TestRepository </LocalName>
-	<GlobalPrefix> parc.com/csl/ndn/repositories/TestRepository </GlobalPrefix>
-	<Namespace> /parc.com/Users/rasmussen </Namespace>
-	<Namespace> /parc.com/NDNx/documentation </Namespace>
+	<LocalName> /NamedDataRepositories/TestRepository </LocalName>
+	<GlobalPrefix> named-data.net/ndn/repositories/TestRepository </GlobalPrefix>
+	<Namespace> /named-data.net/Users/rasmussen </Namespace>
+	<Namespace> /named-data.net/NDNx/documentation </Namespace>
 	<Namespace> /ndnx.org/Users </Namespace>
      </Policy>
 ..........

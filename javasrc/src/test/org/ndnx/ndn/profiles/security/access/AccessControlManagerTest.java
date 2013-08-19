@@ -45,7 +45,7 @@ public class AccessControlManagerTest {
 
 		NDNHandle handle = null;
 		try {
-			ContentName testPrefix = ContentName.fromNative("/parc/test/content/");
+			ContentName testPrefix = ContentName.fromNative("/ndn/test/content/");
 			Flosser flosser = new Flosser(testPrefix);
 			
 			ContentName versionPrefix = VersioningProfile.addVersion(testPrefix);

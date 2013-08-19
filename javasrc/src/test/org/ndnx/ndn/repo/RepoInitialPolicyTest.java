@@ -37,14 +37,14 @@ public class RepoInitialPolicyTest extends RepoTestBase {
 
 		RepoDaemonTest rdt = new RepoDaemonTest(new String[]{"-root", _fileTestDir2, 
 						"-policy", _topdir + "/org/ndnx/ndn/repo/policyTest.xml",
-						"-global", "/parc.com/csl/ndn/repositories/TestRepository"}, this);
+						"-global", "/named-data.net/ndn/repositories/TestRepository"}, this);
 		startAndStopRepo(rdt);
 		File testFile = new File(_fileTestDir2 + "/" + LogStructRepoStoreProfile.CONTENT_FILE_PREFIX + "1");
 		long testLength = testFile.length();
 		startAndStopRepo(rdt);
 		Assert.assertEquals(testLength, testFile.length());
 		RepoDaemonTest rdtNoChange = new RepoDaemonTest(new String[]{"-root", _fileTestDir2,
-				"-global", "/parc.com/csl/ndn/repositories/TestRepository"}, this);
+				"-global", "/named-data.net/ndn/repositories/TestRepository"}, this);
 		Thread th = new Thread(rdtNoChange);
 		th.start();
 		synchronized (this) {
@@ -56,7 +56,7 @@ public class RepoInitialPolicyTest extends RepoTestBase {
 		th.join();
 		rdt = new RepoDaemonTest(new String[]{"-root", _fileTestDir2, 
 				"-prefix", "/policyTest/foo",
-				"-global", "/parc.com/csl/ndn/repositories/TestRepository"}, this);
+				"-global", "/named-data.net/ndn/repositories/TestRepository"}, this);
 		startAndStopRepo(rdt);
 		testLength = testFile.length();
 		startAndStopRepo(rdt);

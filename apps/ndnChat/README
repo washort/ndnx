@@ -48,11 +48,11 @@ To run ndnchat in this multi-player multi-machine mode, on all the machines exce
 
 ndndstart
 ndndc add ndn:/ndnx.org udp route_machine_name
-ndnchat ndn:/ndnx.org/parc_test_room
+ndnchat ndn:/ndnx.org/ndn_test_room
 
 Please replace 'route_machine_name' with the actual name or ip address of the chosen route machine. 
 One the machine chosen as the route_machine, first run 
 ndndstart
 Add entries using ndndc for all the remaining machines. Then run 
-ndnchatndn:/ndnx.org/parc_test_room
+ndnchatndn:/ndnx.org/ndn_test_room
 
