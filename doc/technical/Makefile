@@ -69,103 +69,103 @@ clean:
 	rm -f $(DEBRIS)
 
 DigestComponent.html: DigestComponent.txt
-	asciidoc DigestComponent.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  DigestComponent.txt
 
 DTAG.html: DTAG.txt $(SCHEMA)/tagname.csvdict
 	sed -e 's/$$/,,,,/g' $(SCHEMA)/tagname.csvdict | \
 					cut -d , -f 1-3   > .tagname.csv
-	asciidoc --unsafe DTAG.txt || : might fail if your asciidoc is too old
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe DTAG.txt || : might fail if your asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  is too old
 	rm -f .tagname.csv
 
 dtd.html: dtd.txt $(XSDSRC)
-	asciidoc --unsafe dtd.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe dtd.txt
 
 xsd.html: xsd.txt $(DTDSRC)
-	asciidoc --unsafe xsd.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe xsd.txt
 
 repository.dtd.html: repository.dtd.txt $(XSDSRC)
-	asciidoc --unsafe repository.dtd.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe repository.dtd.txt
 
 repository.xsd.html: repository.xsd.txt $(DTDSRC)
-	asciidoc --unsafe repository.xsd.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe repository.xsd.txt
 
 sync.dtd.html: sync.dtd.txt $(XSDSRC)
-	asciidoc --unsafe sync.dtd.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe sync.dtd.txt
 
 sync.xsd.html: sync.xsd.txt $(DTDSRC)
-	asciidoc --unsafe sync.xsd.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe sync.xsd.txt
 
 CryptographicAlgorithms.html: CryptographicAlgorithms.txt
-	asciidoc CryptographicAlgorithms.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  CryptographicAlgorithms.txt
 
 InterestMessage.html: InterestMessage.txt
-	asciidoc InterestMessage.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  InterestMessage.txt
 
 CanonicalOrder.html: CanonicalOrder.txt
-	asciidoc CanonicalOrder.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  CanonicalOrder.txt
 
 NameConventions.html: NameConventions.txt
-	asciidoc NameConventions.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  NameConventions.txt
 
 Timestamp.html: Timestamp.txt
-	asciidoc Timestamp.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  Timestamp.txt
 
 Registration.html: Registration.txt
-	asciidoc Registration.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  Registration.txt
 
 StatusResponse.html: StatusResponse.txt
-	asciidoc StatusResponse.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  StatusResponse.txt
 
 SignatureGeneration.html: SignatureGeneration.txt
-	asciidoc SignatureGeneration.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  SignatureGeneration.txt
 
 Staleness.html: Staleness.txt
-	asciidoc Staleness.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  Staleness.txt
 
 URI.html: URI.txt
-	asciidoc URI.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  URI.txt
 
 ContentObject.html: ContentObject.txt
-	asciidoc ContentObject.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  ContentObject.txt
 
 Name.html: Name.txt
-	asciidoc Name.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  Name.txt
 
 BinaryEncoding.html: BinaryEncoding.txt
-	asciidoc BinaryEncoding.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  BinaryEncoding.txt
 
 NDNxProtocol.html: NDNxProtocol.txt
-	asciidoc NDNxProtocol.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  NDNxProtocol.txt
 
 NameEnumerationProtocol.html: NameEnumerationProtocol.txt
-	asciidoc NameEnumerationProtocol.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  NameEnumerationProtocol.txt
 
 RepoPolicies.html: RepoPolicies.txt
-	asciidoc RepoPolicies.txt	
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  RepoPolicies.txt	
 
 RepoProtocol.html: RepoProtocol.txt
-	asciidoc RepoProtocol.txt	
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  RepoProtocol.txt	
 
 RepositoryInfoObject.html: RepositoryInfoObject.txt
-	asciidoc RepositoryInfoObject.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  RepositoryInfoObject.txt
 
 SynchronizationProtocol.html: SynchronizationProtocol.txt
-	asciidoc SynchronizationProtocol.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  SynchronizationProtocol.txt
 
 CreateCollectionProtocol.html: CreateCollectionProtocol.txt
-	asciidoc CreateCollectionProtocol.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  CreateCollectionProtocol.txt
 
 LinkMessages.html: LinkMessages.txt
-	asciidoc LinkMessages.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  LinkMessages.txt
 
 NDNDStatus.html: NDNDStatus.txt
-	asciidoc NDNDStatus.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  NDNDStatus.txt
 
 ../index.html: ../index.txt ../../README ../../LICENSE
-	asciidoc --unsafe ../index.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  --unsafe ../index.txt
 
 index.html: index.txt
-	asciidoc index.txt
+	asciidoc -a linkcss -a stylesheet=../styles/ndn_asciidoc.css  index.txt
 
 index.txt: $(INDEXED_HTML) .genindex.sh
 	rm -f index.html
