@@ -57,7 +57,7 @@ Of course, the appropriate permissions are needed.
 
 /*
 This file is processed by doxygen to create the main page for
-the Content-Centric Networking in C Documentation.
+the Named Data Networking in C Documentation.
 
 If we want to refer to the directory ndn/csrc/cmd, with a link to the documentation for the
 directory under that text, we would use (at)link cmd ndn/csrc/cmd (at)endlink (like this)

@@ -14,7 +14,7 @@
 
   <xs:annotation>
     <xs:documentation xml:lang="en">
-      Content-Centric Networks security-related data schema.
+      Named Data Networking security-related data schema.
     </xs:documentation>
   </xs:annotation>
 

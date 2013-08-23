@@ -9,9 +9,9 @@ NDNx Documentation Index
  - link:technical/index.html[All technical docs]
 
 == Documentation derived from the code
- - link:ccode/html/index.html[Content-Centric Networking in C]
- - link:javacode/html/index.html[Content-Centric Networking in Java]
- - link:android/html/index.html[Content-Centric Networking for Android]
+ - link:ccode/html/index.html[Named Data Networking in C]
+ - link:javacode/html/index.html[Named Data Networking in Java]
+ - link:android/html/index.html[Named Data Networking for Android]
 
 == Distribution Docs
 .README

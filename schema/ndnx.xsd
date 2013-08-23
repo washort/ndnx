@@ -10,7 +10,7 @@
 
   <xs:annotation>
     <xs:documentation xml:lang="en">
-      Content-Centric Networks data schema.
+      Named Data Networking data schema.
     </xs:documentation>
   </xs:annotation>
 

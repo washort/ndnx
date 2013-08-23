@@ -6,7 +6,7 @@
 
        <xs:annotation>
                <xs:documentation xml:lang="en">
-                         Content-Centric Networks sync schema.
+                         Named Data Networking sync schema.
                </xs:documentation>
        </xs:annotation>
        

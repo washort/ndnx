@@ -6,7 +6,7 @@ Abstract
 --------
 
 This document describes the NDNx protocol, the transport protocol
-for a communications architecture called Content-Centric
+for a communications architecture called Named Data
 Networking (NDN) built on _named data_.  NDN has no notion of host at
 its lowest level -- a packet "address" names content, not location.
 The NDNx protocol efficiently delivers named content rather than connecting
