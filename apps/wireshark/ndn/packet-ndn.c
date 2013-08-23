@@ -241,7 +241,7 @@ proto_register_ndn(void)
                 0x0, "The nonce to distinguish interests", HFILL}},
     };
     
-    proto_ndn = proto_register_protocol("Content-centric Networking Protocol", /* name */
+    proto_ndn = proto_register_protocol("Named Data Networking Protocol", /* name */
                                         "NDN",		/* short name */
                                         "ndn");	/* abbrev */
     proto_register_subtree_array(ett, array_length(ett));
@@ -356,7 +356,7 @@ dissect_ndn(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
     }
     
     ti = proto_tree_add_protocol_format(tree, proto_ndn, tvb, 0, -1,
-                                        "Content-centric Networking Protocol, %s, %s",
+                                        "Named Data Networking Protocol, %s, %s",
                                         val_to_str(packet_type, VALS(ndn_dtag_dict.dict), "Unknown (0x%02x"),
                                         ndn_charbuf_as_string(c));
     ndn_tree = proto_item_add_subtree(ti, ett_ndn);
