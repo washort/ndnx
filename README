@@ -10,6 +10,9 @@ project (NDN) described at http://named-data.net/.   It is based on a
 fork of the open source CCNx codebase created by PARC and published at 
 https://github.com/ProjectCCNx. 
 
+For more information on the relationship between NDNx and CCNx, see
+http://named-data.net/relationship-ndnx-ccnx/.
+
 -----------------------------------------------------
 
 The protocol specifications and the reference implementation are at an
