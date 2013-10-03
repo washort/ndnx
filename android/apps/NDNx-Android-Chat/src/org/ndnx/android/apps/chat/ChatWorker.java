@@ -160,7 +160,7 @@ public class ChatWorker implements Runnable, NDNxServiceCallback, NDNChatCallbac
 	protected boolean _finished = true;
 	
 	protected String _remotehost = null;
-	protected String _remoteport = "9695";
+	protected String _remoteport = "6363";
 
 	/*********************************************/
 	// These are all run in the NDN thread

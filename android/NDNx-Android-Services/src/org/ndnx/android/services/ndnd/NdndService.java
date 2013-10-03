@@ -53,7 +53,7 @@ public final class NdndService extends NDNxService {
 	private final static char [] KEYSTORE_PASS = "\010\043\103\375\327\237\152\351\155".toCharArray();
 	
 	private final static String OPTION_NDND_CAP_DEFAULT = "500";
-	private final static String OPTION_NDN_PORT_DEFAULT = "9695";
+	private final static String OPTION_NDN_PORT_DEFAULT = "6363";
 	
 	protected static final String [] libs = { "controller" };
 	

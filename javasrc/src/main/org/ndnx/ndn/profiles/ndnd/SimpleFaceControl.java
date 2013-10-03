@@ -40,8 +40,8 @@ import org.ndnx.ndn.impl.support.Log;
  */
 public class SimpleFaceControl {
 	public final static String NDN_MULTICAST_IP = "224.0.23.170";
-	public final static int NDN_PORT = 9695;
-	public final static int NDN_MULTICAST_PORT = 59695;
+	public final static int NDN_PORT = 6363;
+	public final static int NDN_MULTICAST_PORT = 56363;
 
 	public static SimpleFaceControl getInstance() throws NDNDaemonException {
 		return getInstance(NDNHandle.getHandle());
@@ -62,7 +62,7 @@ public class SimpleFaceControl {
 	}
 
 	/**
-	 * Open the default multicast interface on 9695 and register /
+	 * Open the default multicast interface on 6363 and register /
 	 * @return the faceId
 	 * @throws NDNDaemonException 
 	 */
@@ -72,7 +72,7 @@ public class SimpleFaceControl {
 
 	/**
 	 * Open a unicast connection to the given host.
-	 * port = 9695
+	 * port = 6363
 	 * prefix = /
 	 * @return faceId
 	 * @throws NDNDaemonException 
@@ -83,7 +83,7 @@ public class SimpleFaceControl {
 
 	/**
 	 * Open a unicast connection to the given host.
-	 * port = 9695
+	 * port = 6363
 	 * prefix = /
 	 * @return faceId
 	 * @throws NDNDaemonException 

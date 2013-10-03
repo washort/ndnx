@@ -2,7 +2,7 @@ This is an Android UI to the NDNChatNet chat core.
 The UI will automatically open a multicast socket, so please
 make sure you have done something like:
 
-	./ndndc add ndn:/ udp 224.0.23.170 59695
+	./ndndc add ndn:/ udp 224.0.23.170 56363
 
 on any non-Android systems you want to chat with.
 
@@ -21,9 +21,9 @@ To run multiple emulators at the same time, you need to create multiple AVDs.
 Be sure to add SD Card support to each one.
 
 If you start an emulator from the commandline, you can use the option
-"-qemu -redir tcp:x:9695" instead of the telnet commands below.
+"-qemu -redir tcp:x:6363" instead of the telnet commands below.
 
-	emulator -avd avd1 -qemu -redir tcp:9696::9695
+	emulator -avd avd1 -qemu -redir tcp:9696::6363
 
 EXAMPLE:  Host ndnd as hub
 =============================
@@ -36,11 +36,11 @@ EXAMPLE:  Host ndnd as hub
 3) Start ndnd & a repo on your local host
 4) redirect tcp/9996 to avd1
 	telnet localhost 5554
-	redir add tcp:9696:9695
+	redir add tcp:9696:6363
 	exit
 5) redirect tcp/9997 to avd2
 	telnet localhost 5556
-	redir add tcp:9697:9695
+	redir add tcp:9697:6363
 	exit
 6) Setup hub routes
 	ndndc add ndn:/ tcp 127.0.0.1 9696
@@ -48,11 +48,11 @@ EXAMPLE:  Host ndnd as hub
 7) Start chat app on avd1
 	Handle "avd1"
 	Remote host: 13.2.116.104 
-	Remote port: 9695
+	Remote port: 6363
 8) Start chat app on avd1
 	Handle "avd2"
 	Remote host: 13.2.116.104 
-	Remote port: 9695
+	Remote port: 6363
 9) Run chat on host too, everyone should be happy!
 
 

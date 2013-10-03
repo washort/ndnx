@@ -30,7 +30,7 @@ ndn_xmltondnb -w - <<EOF >newface.ndnb
   <PublisherPublicKeyDigest ndnbencoding="hexBinary">$NDNDID</PublisherPublicKeyDigest>
   <IPProto>17</IPProto>
   <Host>10.211.55.8</Host>
-  <Port>9695</Port>
+  <Port>6363</Port>
   <FreshnessSeconds>3600</FreshnessSeconds>
 </FaceInstance>
 EOF

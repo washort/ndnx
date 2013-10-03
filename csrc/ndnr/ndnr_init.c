@@ -414,7 +414,7 @@ try_tcp_instead(int fd)
         return(ans);
     port = getenv("NDN_LOCAL_PORT");
     if (port == NULL || port[0] == 0)
-        port = "9695";
+        port = "6363";
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;

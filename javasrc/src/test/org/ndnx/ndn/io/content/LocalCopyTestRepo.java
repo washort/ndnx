@@ -519,10 +519,10 @@ public class LocalCopyTestRepo {
 	         </meters>
 	      </face>
 		<face><faceid>1</faceid><faceflags>400c</faceflags><pending>0</pending><recvcount>0</recvcount></face>
-		<face><faceid>2</faceid><faceflags>5012</faceflags><pending>0</pending><recvcount>0</recvcount><ip>0.0.0.0:9695</ip></face>
-		<face><faceid>3</faceid><faceflags>5010</faceflags><pending>0</pending><recvcount>0</recvcount><ip>0.0.0.0:9695</ip></face>
-		<face><faceid>4</faceid><faceflags>4042</faceflags><pending>0</pending><recvcount>0</recvcount><ip>[::]:9695</ip></face>
-		<face><faceid>5</faceid><faceflags>4040</faceflags><pending>0</pending><recvcount>0</recvcount><ip>[::]:9695</ip></face>
+		<face><faceid>2</faceid><faceflags>5012</faceflags><pending>0</pending><recvcount>0</recvcount><ip>0.0.0.0:6363</ip></face>
+		<face><faceid>3</faceid><faceflags>5010</faceflags><pending>0</pending><recvcount>0</recvcount><ip>0.0.0.0:6363</ip></face>
+		<face><faceid>4</faceid><faceflags>4042</faceflags><pending>0</pending><recvcount>0</recvcount><ip>[::]:6363</ip></face>
+		<face><faceid>5</faceid><faceflags>4040</faceflags><pending>0</pending><recvcount>0</recvcount><ip>[::]:6363</ip></face>
 		<face>
 		   <faceid>6</faceid>
 		   <faceflags>1014</faceflags>
