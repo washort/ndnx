@@ -1,5 +1,10 @@
+Interim changes since NDNx v0.1 (2013-10-03)
+--------------------------------------------
+Changes
+* http://redmine.named-data.net/issues/1046 Changed port number from 9695 to 6363.
+
 NDNx v0.1 (2013-08-23)
---------
+----------------------
 
 Initial public release.
 
