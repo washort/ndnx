@@ -32,8 +32,8 @@
  * ndnx registered port number
  * see http://www.iana.org/assignments/port-numbers
  */
-#define NDN_DEFAULT_UNICAST_PORT_NUMBER 9695U
-#define NDN_DEFAULT_UNICAST_PORT       "9695"
+#define NDN_DEFAULT_UNICAST_PORT_NUMBER 6363U
+#define NDN_DEFAULT_UNICAST_PORT       "6363"
 
 /**
  * Link adapters sign on by sending this greeting to ndnd.

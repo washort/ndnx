@@ -67,7 +67,7 @@ import java.util.Enumeration;
  */
 public final class Controller extends Activity implements OnClickListener {
 	public final static String TAG = "NDNx Service Controller";
-    public static final String NDNX_WS_URL = "http://127.0.0.1:9695";
+    public static final String NDNX_WS_URL = "http://127.0.0.1:6363";
 	private Button mAllBtn;
 	private ProgressDialog pd;
 

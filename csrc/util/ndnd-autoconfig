@@ -35,7 +35,7 @@ function do-need-to-reconfig {
 }
 
 function run-autoconfig {
-    ndndstatus | grep 224.0.23.170:59695 > /dev/null
+    ndndstatus | grep 224.0.23.170:56363 > /dev/null
     MCAST_EXISTED=$?
 
     # Removing any previously created (either by this script or ndndc srv command) default route
@@ -45,7 +45,7 @@ function run-autoconfig {
     done
 
     # Set temporary multicast face
-    ndndc -t 10 add "/local/ndn" udp  224.0.23.170 59695
+    ndndc -t 10 add "/local/ndn" udp  224.0.23.170 56363
 
     ###########################################################
     # Part one. Auto-discovery of ndnd in the same subnetwork #
@@ -95,7 +95,7 @@ function run-autoconfig {
 
     if [ $MCAST_EXISTED -eq 1 ]; then
        # destroying multicast face
-       ndndstatus | grep 224.0.23.170:59695 | awk '{print $2}' | xargs ndndc destroy face
+       ndndstatus | grep 224.0.23.170:56363 | awk '{print $2}' | xargs ndndc destroy face
     fi
 }
 

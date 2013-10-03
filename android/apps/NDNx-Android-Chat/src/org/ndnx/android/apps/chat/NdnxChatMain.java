@@ -113,7 +113,7 @@ public final class NdnxChatMain extends Activity implements OnClickListener{
 	private static final String DEFAULT_NAMESPACE="/ndnchat";
 	private String DEFAULT_HANDLE="Android";
 	private static final String DEFAULT_REMOTEHOST="";
-	private static final String DEFAULT_REMOTEPORT="9695";
+	private static final String DEFAULT_REMOTEPORT="6363";
 	
 	protected static final String PREF_NAMESPACE="namespace";
 	protected static final String PREF_HANDLE="handle";

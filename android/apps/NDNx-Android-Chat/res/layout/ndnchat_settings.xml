@@ -76,7 +76,7 @@
 				
 			<EditText android:layout_height="wrap_content"
 				android:layout_width="fill_parent" android:id="@+id/etRemotePort" android:textSize="6pt"
-				android:text="9695" android:inputType="number"/>
+				android:text="6363" android:inputType="number"/>
 		</LinearLayout>
 		
 	</LinearLayout>

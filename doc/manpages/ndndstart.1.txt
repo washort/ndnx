@@ -18,7 +18,7 @@ If *ndnd* is already running, it will be shut down and restarted;
 any manually-configured forwarding (with *ndndc*) will need to be re-executed.
 
 *ndndstart* will start using default values for 'NDND_CAP', 'NDND_DEBUG' and
-the default port 9695 for 'NDN_LOCAL_PORT'.  These environment values may
+the default port 6363 for 'NDN_LOCAL_PORT'.  These environment values may
 be set to change the cache size, *ndnd* debug logging, and port number, respectively.
 The values may be set in '$HOME/.ndnx/ndndrc', which is sourced at startup.
 

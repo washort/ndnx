@@ -166,7 +166,7 @@ Routing
 =======
 
 To set up routing, utilize this set of commands with a USB-tethered Android Device:
-adb forward localfilesystem:/tmp/.ndnd.sock.9699 tcp:9695
-adb forward tcp:9699 tcp:9695
+adb forward localfilesystem:/tmp/.ndnd.sock.9699 tcp:6363
+adb forward tcp:9699 tcp:6363
 
 and then run regular ndn commands, with NDN_LOCAL_PORT=9699 including ndndc, ndnputfile, ndnlsrepo, etc.  Note, ndndc commands issued will require the phone to point at an IP address reachable from the phone.  

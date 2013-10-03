@@ -30,7 +30,7 @@ ENVIRONMENT
 -----------
 The 'NDN_LOCAL_PORT' environment variable may be used to identify
 the port that the *ndnd* instance is using; if unset, the default
-port number (9695) is used.
+port number (6363) is used.
 
 AUTHOR
 ------

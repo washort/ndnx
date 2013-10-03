@@ -83,7 +83,7 @@ import org.ndnx.ndn.protocol.PublisherPublicKeyDigest;
  */
 public class NDNNetworkManager implements Runnable {
 
-	public static final int DEFAULT_AGENT_PORT = 9695; // ndnx registered port
+	public static final int DEFAULT_AGENT_PORT = 6363; // ndnx registered port
 	public static final String DEFAULT_AGENT_HOST = "localhost";
 	public static final String PROP_AGENT_PORT = "ndn.agent.port";
 	public static final String PROP_AGENT_HOST = "ndn.agent.host";

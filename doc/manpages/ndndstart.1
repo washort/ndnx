@@ -36,7 +36,7 @@ ndndstart \- Start ndnd in the background and set up forwarding according to con
 .sp
 The \fBndndstart\fR utility starts ndnd in the background\&. \fBndndstart\fR looks for configuration of forwarding information in \fI$HOME/\&.ndnx/ndnd\&.conf\fR; refer to \fBndndc(1)\fR for the format\&. If \fBndnd\fR is already running, it will be shut down and restarted; any manually\-configured forwarding (with \fBndndc\fR) will need to be re\-executed\&.
 .sp
-\fBndndstart\fR will start using default values for \fINDND_CAP\fR, \fINDND_DEBUG\fR and the default port 9695 for \fINDN_LOCAL_PORT\fR\&. These environment values may be set to change the cache size, \fBndnd\fR debug logging, and port number, respectively\&. The values may be set in \fI$HOME/\&.ndnx/ndndrc\fR, which is sourced at startup\&.
+\fBndndstart\fR will start using default values for \fINDND_CAP\fR, \fINDND_DEBUG\fR and the default port 6363 for \fINDN_LOCAL_PORT\fR\&. These environment values may be set to change the cache size, \fBndnd\fR debug logging, and port number, respectively\&. The values may be set in \fI$HOME/\&.ndnx/ndndrc\fR, which is sourced at startup\&.
 .SH "OPTIONS"
 .sp
 This utility does not have have flags or arguments\&.

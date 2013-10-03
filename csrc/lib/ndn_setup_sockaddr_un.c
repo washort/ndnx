@@ -79,7 +79,7 @@ ndn_setup_sockaddr_un(const char *portstr, struct sockaddr_un *result)
  *
  * The name must be of the form "tcp[4|6][:port]"
  * If there is no port specified, the environment variable NDN_LOCAL_PORT is
- * checked. Bad port specifications will result in the default port (9695)
+ * checked. Bad port specifications will result in the default port (6363)
  * being used.  If neither "4" nor "6" is present, the code will prefer the IPv4
  * localhost address.
  * @returns 0 on success, -1 on error
