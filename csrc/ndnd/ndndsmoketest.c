@@ -235,8 +235,9 @@ main(int argc, char **argv)
     int do_pclose = 0;
     const char *host = "localhost";
     const char *cmd = NULL;
+    int xmlout = 0;
 
-    while ((opt = getopt(argc, argv, "bht:T:u:")) != -1) {
+    while ((opt = getopt(argc, argv, "bht:T:u:x")) != -1) {
         switch (opt) {
             case 'b':
                 outstream = stdout;
@@ -252,6 +253,9 @@ main(int argc, char **argv)
             case 'T':
                 tcp = 1;
                 host = optarg;
+                break;
+            case 'x':
+                xmlout = 1;
                 break;
             case 'h':
             default:
@@ -353,7 +357,11 @@ main(int argc, char **argv)
                 cmd = ("tail -n +6");
                 outstream = popen(cmd, "w");
                 wlen = send(sock, "GET /?f=xml " HTTPVERSION CRLF , 14, 0);
-            } else {
+            } else if (xmlout == 1) {
+                cmd = ("tail -n +6");
+                outstream = popen(cmd, "w");
+                wlen = send(sock, "GET /?f=xml " HTTPVERSION CRLF , 14, 0);
+	    } else {
                 cmd = ("sed -e 's=[<]style .*/style[>]==g' -e 's=[<][^>]*[>]==g'|"
                    "tail -n +7");
                 outstream = popen(cmd, "w");
