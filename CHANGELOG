@@ -1,4 +1,4 @@
-Interim changes since NDNx v0.2 (2013-10-22)
+NDNx v0.3 (2013-11-08)
 --------------------------------------------
 Bug fixes
 * http://redmine.named-data.net/issues/1055 'ndndsmoketest status -x' broken on Linux
