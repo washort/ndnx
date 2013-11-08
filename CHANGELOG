@@ -2,6 +2,7 @@ Interim changes since NDNx v0.2 (2013-10-22)
 --------------------------------------------
 Bug fixes
 * http://redmine.named-data.net/issues/1055 'ndndsmoketest status -x' broken on Linux
+* http://redmine.named-data.net/issues/1070 Support CYGWIN_NT-6.1
 
 NDNx v0.2 (2013-10-03)
 --------------------------------------------
