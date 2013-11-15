@@ -168,7 +168,7 @@ enum ndn_dtag {
     NDN_DTAG_SyncConfigSliceOp = 126,
     NDN_DTAG_SyncNodeDeltas = 127,
     NDN_DTAG_SequenceNumber = 256,
-    NDN_DTAG_NDNProtocolDataUnit = 17702112
+    NDN_DTAG_NDNProtocolDataUnit = 20587744 // the encoded empty element, viewed as a string is "NDN\202\000"
 };
 
 struct ndn_dict_entry {
