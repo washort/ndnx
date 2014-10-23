@@ -312,7 +312,7 @@ dissect_ndn(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
     sd = &skel_decoder;
     memset(sd, 0, sizeof(*sd));
     sd->state |= NDN_DSTATE_PAUSE;
-    ndnb = ep_tvb_memdup(tvb, 0, tvb_size);
+    ndnb = tvb_memdup(wmem_packet_scope(), tvb, 0, tvb_size);
     ndn_skeleton_decode(sd, ndnb, tvb_size);
     if (sd->state < 0)
         return (0);
@@ -331,24 +331,18 @@ dissect_ndn(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
     }
     
     /* Make it visible that we're taking this packet */
-    if (check_col(pinfo->cinfo, COL_PROTOCOL)) {
-        col_set_str(pinfo->cinfo, COL_PROTOCOL, "NDN");
-    }
+    col_set_str(pinfo->cinfo, COL_PROTOCOL, "NDN");
     
     /* Clear out stuff in the info column */
-    if (check_col(pinfo->cinfo, COL_INFO)) {
-        col_clear(pinfo->cinfo, COL_INFO);
-    }
+    col_clear(pinfo->cinfo, COL_INFO);
     
     c = ndn_charbuf_create();
     ndn_uri_append(c, ndnb, tvb_size, 1);
     
     /* Add the packet type and NDN URI to the info column */
-    if (check_col(pinfo->cinfo, COL_INFO)) {
-        col_add_str(pinfo->cinfo, COL_INFO,
-                    val_to_str(packet_type, VALS(ndn_dtag_dict.dict), "Unknown (0x%02x"));
-        col_append_sep_str(pinfo->cinfo, COL_INFO, NULL, ndn_charbuf_as_string(c));
-    }
+    col_add_str(pinfo->cinfo, COL_INFO,
+                val_to_str(packet_type, VALS(ndn_dtag_dict.dict), "Unknown (0x%02x"));
+    col_append_sep_str(pinfo->cinfo, COL_INFO, NULL, ndn_charbuf_as_string(c));
     
     if (tree == NULL) {
         ndn_charbuf_destroy(&c);
@@ -547,12 +541,10 @@ dissect_ndn_interest(const unsigned char *ndnb, size_t ndnb_size, tvbuff_t *tvb,
                                 pi->offset[NDN_PI_B_Nonce],
                                 pi->offset[NDN_PI_E_Nonce],
                                 &blob, &blob_size);
-        if (check_col(pinfo->cinfo, COL_INFO)) {
-            col_append_str(pinfo->cinfo, COL_INFO, ", <");
-            for (i = 0; i < blob_size; i++)
-                col_append_fstr(pinfo->cinfo, COL_INFO, "%02x", blob[i]);
-            col_append_str(pinfo->cinfo, COL_INFO, ">");
-        }
+        col_append_str(pinfo->cinfo, COL_INFO, ", <");
+        for (i = 0; i < blob_size; i++)
+          col_append_fstr(pinfo->cinfo, COL_INFO, "%02x", blob[i]);
+        col_append_str(pinfo->cinfo, COL_INFO, ">");
         titem = proto_tree_add_item(tree, hf_ndn_nonce, tvb,
                                     blob - ndnb, blob_size, ENC_NA);
     }

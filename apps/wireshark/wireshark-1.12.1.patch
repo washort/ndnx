@@ -1,0 +1,84 @@
+diff --git a/wireshark-1.12.1/CMakeLists.txt b/wireshark-1.12.1-patched/CMakeLists.txt
+index eb50acc..7e3340d 100644
+--- a/wireshark-1.12.1/CMakeLists.txt
++++ b/wireshark-1.12.1-patched/CMakeLists.txt
+@@ -697,6 +697,7 @@ if(ENABLE_PLUGINS)
+ 	set(PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/@CPACK_PACKAGE_NAME@/plugins/${CPACK_PACKAGE_VERSION}")
+ 	set(PLUGIN_SRC_DIRS
+ 		plugins/docsis
++                plugins/ndn
+ 		plugins/ethercat
+ 		plugins/gryphon
+ 		plugins/irda
+diff --git a/wireshark-1.12.1/Makefile.am b/wireshark-1.12.1-patched/Makefile.am
+index 28eea04..35ba629 100644
+--- a/wireshark-1.12.1/Makefile.am
++++ b/wireshark-1.12.1-patched/Makefile.am
+@@ -298,6 +298,7 @@ PLATFORM_PCAP_SRC = \
+ if HAVE_PLUGINS
+ -include plugins/Custom.make
+ plugin_ldadd = $(_CUSTOM_plugin_ldadd_) \
++	-dlopen plugins/ndn/ndn.la \
+ 	-dlopen plugins/docsis/docsis.la \
+ 	-dlopen plugins/ethercat/ethercat.la \
+ 	-dlopen plugins/gryphon/gryphon.la \
+diff --git a/wireshark-1.12.1/configure.ac b/wireshark-1.12.1-patched/configure.ac
+index d65ffc9..07c65af 100644
+--- a/wireshark-1.12.1/configure.ac
++++ b/wireshark-1.12.1-patched/configure.ac
+@@ -2939,6 +2939,7 @@ AC_OUTPUT(
+   packaging/svr4/pkginfo
+   plugins/Makefile
+   plugins/docsis/Makefile
++  plugins/ndn/Makefile
+   plugins/ethercat/Makefile
+   plugins/gryphon/Makefile
+   plugins/irda/Makefile
+diff --git a/wireshark-1.12.1/epan/Makefile.am b/wireshark-1.12.1-patched/epan/Makefile.am
+index 5173cef..6552568 100644
+--- a/wireshark-1.12.1/epan/Makefile.am
++++ b/wireshark-1.12.1-patched/epan/Makefile.am
+@@ -205,6 +205,7 @@ if ENABLE_STATIC
+ -include ../plugins/Custom.make
+ plugin_src = \
+ 	../plugins/asn1/packet-asn1.c \
++	../plugins/ndn/packet-ndn.c \
+ 	../plugins/docsis/packet-bintrngreq.c \
+ 	../plugins/docsis/packet-bpkmattr.c \
+ 	../plugins/docsis/packet-bpkmreq.c \
+diff --git a/wireshark-1.12.1/plugins/Makefile.am b/wireshark-1.12.1-patched/plugins/Makefile.am
+index 0cca3cd..1ece61f 100644
+--- a/wireshark-1.12.1/plugins/Makefile.am
++++ b/wireshark-1.12.1-patched/plugins/Makefile.am
+@@ -23,6 +23,7 @@
+ 
+ SUBDIRS = $(_CUSTOM_SUBDIRS_) \
+ 	docsis \
++	ndn \
+ 	ethercat \
+ 	gryphon \
+ 	irda \
+diff --git a/wireshark-1.12.1/plugins/Makefile.in b/wireshark-1.12.1-patched/plugins/Makefile.in
+index caefec4..c928a7e 100644
+--- a/wireshark-1.12.1/plugins/Makefile.in
++++ b/wireshark-1.12.1-patched/plugins/Makefile.in
+@@ -470,6 +470,7 @@ wireshark_man = @wireshark_man@
+ wiresharkfilter_man = @wiresharkfilter_man@
+ SUBDIRS = $(_CUSTOM_SUBDIRS_) \
+ 	docsis \
++	ndn \
+ 	ethercat \
+ 	gryphon \
+ 	irda \
+diff --git a/wireshark-1.12.1/plugins/Makefile.nmake b/wireshark-1.12.1-patched/plugins/Makefile.nmake
+index 2bf5a9c..3cea360 100644
+--- a/wireshark-1.12.1/plugins/Makefile.nmake
++++ b/wireshark-1.12.1-patched/plugins/Makefile.nmake
+@@ -5,6 +5,7 @@ include ..\config.nmake
+ ## To add a plugin: Add entry to PLUGIN_LIST
+ 
+ PLUGIN_LIST = \
++	ndn         \
+ 	docsis      \
+ 	ethercat    \
+ 	gryphon     \
